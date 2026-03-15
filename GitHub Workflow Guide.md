@@ -15,7 +15,7 @@ fix/be-database-connection
 fix/fe-button-styling
 feature/cross-offline-mode
 fix/cross-api-sync
-❌ Invalid branch names:
+❌#Invalid branch names:
 user-auth (missing prefix)
 feature-backend-login (wrong format)
 fix/login (missing team code)
