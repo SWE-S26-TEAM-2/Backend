@@ -1,17 +1,19 @@
 from sqlalchemy import Column, String, Boolean, Integer, TIMESTAMP, text
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from app.database.database import Base # <-- Updated for your architecture!
+from app.database.database import Base
 
 class User(Base):
     __tablename__ = "users"
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    password_hash = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
     account_type = Column(String, server_default="listener")
     is_verified = Column(Boolean, server_default="false")
+    is_suspended: Column(Boolean, server_default="false")
+    CAPTCHA_verified: Column(Boolean, server_default="false")
     
     bio = Column(String, nullable=True)
     location = Column(String, nullable=True)
