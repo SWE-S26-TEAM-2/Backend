@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .database.database import engine, Base
-from .models import user
+from .models import user, social_link
 from .routers import user_profile
 
 app = FastAPI()
