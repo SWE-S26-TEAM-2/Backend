@@ -1,14 +1,24 @@
 from fastapi import FastAPI
-from .database.database import engine, Base
-from .models import user, social_link
-from .routers import user_profile
+from app.database.database import engine, Base
 
-app = FastAPI()
+# Import all models so SQLAlchemy knows about them
+from app.models import user, social_link 
 
+# Import routers
+from app.routers.auth import router as auth_router
+from app.routers import user_profile
+
+# Create tables in database (Alembic handles this now, it's safe to keep)
 Base.metadata.create_all(bind=engine)
-app.include_router(user_profile.router)
 
+app = FastAPI(
+    title="SoundCloud Clone API",
+    version="1.0.0"
+)
+
+app.include_router(auth_router)
+app.include_router(user_profile.router)
 
 @app.get("/")
 def root():
-    return {"message": "This is the fastapi instance"}
+    return {"message": "API is running"}
