@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from app.database.database import Base
+from sqlalchemy import Column, ForeignKey, Integer, String  # type: ignore
+
+from app.database.database import Base  # type: ignore
 
 
 class SocialLink(Base):

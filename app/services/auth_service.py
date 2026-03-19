@@ -1,59 +1,240 @@
-import bcrypt
-from fastapi import HTTPException, status
-from app.models.user import User
-from app.repositories.user_repo import UserRepository
+"""
+Service layer for authentication business logic.
+
+Handles registration, login, email verification, and resend
+verification logic. Delegates database operations to repositories
+and token operations to the security module.
+"""
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, status  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
+
+from app.core.security import (  # type: ignore
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_password,
+)
+from app.models.user import User  # type: ignore
+from app.repositories.token_repo import TokenRepository  # type: ignore
+from app.repositories.user_repo import UserRepository  # type: ignore
+
 
 class AuthService:
+    """
+    Business logic layer for all authentication operations.
+    """
 
     @staticmethod
-    def hash_password(password: str) -> str:
-        # Generate salt and hash the password
-        pwd_bytes = password.encode('utf-8')
-        salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(pwd_bytes, salt)
-        return hashed.decode('utf-8')
+    def register_user(db: Session, data) -> dict:
+        """
+        Register a new user account and generate a verification token.
 
-    @staticmethod
-    def verify_password(plain_password: str, hashed_password: str) -> bool:
-        # Check plain password against stored hash
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8'), 
-            hashed_password.encode('utf-8')
-        )
+        Args:
+            db (Session): The database session.
+            data: The RegisterRequest schema with email, password, etc.
 
-    @staticmethod
-    def register_user(db, data):
-    
+        Returns:
+            dict: Success response with user_id, email, display_name.
+
+        Raises:
+            HTTPException: 409 if the email is already registered.
+        """
         existing_user = UserRepository.get_by_email(db, data.email)
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="Email already registered"
+                detail="Email already registered",
             )
 
-    
-        # Replaced pwd_context.hash with direct bcrypt hashing
-        hashed_password = AuthService.hash_password(data.password)
+        hashed = hash_password(data.password)
 
-        
         new_user = User(
             email=data.email,
-            password_hash=hashed_password,   
+            password_hash=hashed,
             display_name=data.display_name,
-            account_type=data.account_type or "listener"
+            account_type=data.account_type or "listener",
         )
 
-    
         UserRepository.create(db, new_user)
 
-        
+        # Generate an email verification token
+        TokenRepository.create(db, new_user.user_id)
+
         return {
             "success": True,
-            "message": "Registration successful. Please check your email to verify your account.",
+            "message": (
+                "Registration successful. "
+                "Please check your email to verify your account."
+            ),
             "data": {
                 "user_id": str(new_user.user_id),
                 "email": new_user.email,
                 "display_name": new_user.display_name,
-                "is_verified": new_user.is_verified
-            }
+                "is_verified": new_user.is_verified,
+            },
+        }
+
+    @staticmethod
+    def verify_email(db: Session, data) -> dict:
+        """
+        Verify a user's email using the token sent to their inbox.
+
+        Args:
+            db (Session): The database session.
+            data: The VerifyEmailRequest schema with the token string.
+
+        Returns:
+            dict: Success message confirming account verification.
+
+        Raises:
+            HTTPException: 400 if the token is invalid or already used.
+            HTTPException: 410 if the token has expired.
+        """
+        token_record = TokenRepository.get_by_token(db, data.token)
+
+        if not token_record:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or malformed token",
+            )
+
+        if token_record.used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token has already been used",
+            )
+
+        if token_record.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail=(
+                    "Token expired. "
+                    "Use /auth/resend-verification to get a new one."
+                ),
+            )
+
+        user = UserRepository.get_by_id(db, token_record.user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        UserRepository.update_verification_status(db, user, True)
+        TokenRepository.mark_used(db, token_record)
+
+        return {
+            "success": True,
+            "message": "Account verified. You can now log in.",
+        }
+
+    @staticmethod
+    def resend_verification(db: Session, data) -> dict:
+        """
+        Resend a verification email to the user.
+
+        Rate-limited to 3 active tokens per user to prevent abuse.
+
+        Args:
+            db (Session): The database session.
+            data: The ResendVerificationRequest schema with email.
+
+        Returns:
+            dict: Success message confirming the email was resent.
+
+        Raises:
+            HTTPException: 404 if the email is not registered.
+            HTTPException: 409 if the account is already verified.
+            HTTPException: 429 if rate limit is exceeded.
+        """
+        user = UserRepository.get_by_email(db, data.email)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Email not found",
+            )
+
+        if user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Account already verified",
+            )
+
+        active_count = TokenRepository.count_recent_for_email(
+            db, user.user_id
+        )
+        if active_count >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded. Try again later.",
+            )
+
+        TokenRepository.create(db, user.user_id)
+
+        return {
+            "success": True,
+            "message": (
+                "Verification email resent. Please check your inbox."
+            ),
+        }
+
+    @staticmethod
+    def login_user(db: Session, data) -> dict:
+        """
+        Authenticate a user and issue JWT tokens.
+
+        Args:
+            db (Session): The database session.
+            data: The LoginRequest schema with email and password.
+
+        Returns:
+            dict: Access token, refresh token, and user info.
+
+        Raises:
+            HTTPException: 401 if credentials are invalid.
+            HTTPException: 403 if the account is not verified.
+            HTTPException: 403 if the account is suspended.
+        """
+        user = UserRepository.get_by_email(db, data.email)
+
+        if not user or not verify_password(
+            data.password, user.password_hash
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account not verified",
+            )
+
+        if user.is_suspended:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account suspended",
+            )
+
+        access_token = create_access_token(str(user.user_id))
+        refresh_token = create_refresh_token(str(user.user_id))
+
+        return {
+            "success": True,
+            "data": {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+                "expires_in": 900,
+                "user": {
+                    "user_id": str(user.user_id),
+                    "display_name": user.display_name,
+                    "account_type": user.account_type,
+                    "is_premium": user.is_premium,
+                },
+            },
         }

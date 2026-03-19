@@ -1,7 +1,9 @@
-from sqlalchemy import Column, String, Boolean, Integer, TIMESTAMP, text
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
-from app.database.database import Base
+
+from sqlalchemy import Boolean, Column, Integer, String, TIMESTAMP, text  # type: ignore
+from sqlalchemy.dialects.postgresql import UUID  # type: ignore
+
+from app.database.database import Base  # type: ignore
 
 
 class User(Base):
