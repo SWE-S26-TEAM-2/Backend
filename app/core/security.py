@@ -112,3 +112,23 @@ def decode_access_token(token: str) -> dict:
     if payload.get("type") != "access":
         raise JWTError("Token is not an access token")
     return payload
+
+
+
+def decode_refresh_token(token: str) -> dict:
+    """
+    Decode and validate a JWT refresh token.
+
+    Args:
+        token (str): The JWT refresh token string.
+
+    Returns:
+        dict: The decoded token payload containing 'sub' (user_id).
+
+    Raises:
+        JWTError: If the token is invalid, expired, or not a refresh token.
+    """
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("type") != "refresh":
+        raise JWTError("Token is not a refresh token")
+    return payload

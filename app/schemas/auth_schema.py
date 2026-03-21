@@ -59,3 +59,13 @@ class ResendVerificationRequest(BaseModel):
     """
 
     email: EmailStr
+
+class RefreshTokenRequest(BaseModel):
+    """
+    Schema for refresh token request.
+
+    Args:
+        refresh_token (str): The current valid refresh token.
+    """
+
+    refresh_token: str
