@@ -40,6 +40,6 @@ jobs:
     
     - run: pytest
       env:
-        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        DATABASE_URL: postgresql://postgres.agbkhtpizxahatjawfdy:[YOUR-PASSWORD]@aws-1-eu-central-2.pooler.supabase.com:6543/postgres
     
     - run: docker build -t backend:test .
