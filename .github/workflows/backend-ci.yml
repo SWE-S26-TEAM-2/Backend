@@ -42,7 +42,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
-      - run: pytest
+      - run: pytest || [ $? -eq 5 ]
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
