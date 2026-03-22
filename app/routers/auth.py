@@ -10,11 +10,15 @@ from sqlalchemy.orm import Session  # type: ignore
 from app.database.database import get_db  # type: ignore
 from app.schemas.auth_schema import (  # type: ignore
     LoginRequest,
+    LogoutRequest,
+    GoogleLoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
     ResendVerificationRequest,
     VerifyEmailRequest,
 )
+from app.core.dependencies import get_current_user  # type: ignore
+from app.models.user import User  # type: ignore
 from app.services.auth_service import AuthService  # type: ignore
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -91,6 +95,22 @@ def login_user(
     """
     return AuthService.login_user(db, request)
 
+@router.post("/google")
+def google_login(
+    request: GoogleLoginRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Authenticate or auto-register a user via Google OAuth2.
+ 
+    Args:
+        request (GoogleLoginRequest): Google ID token from the client SDK.
+        db (Session): Database session injected by FastAPI.
+ 
+    Returns:
+        dict: Access token, refresh token, is_new_user flag, and user info.
+    """
+    return AuthService.google_login(db, request)
 @router.post("/refresh")
 def refresh_token(
     request: RefreshTokenRequest,
@@ -106,4 +126,23 @@ def refresh_token(
     Returns:
         dict: New access token, refresh token, token type, and expiry.
     """
-    return AuthService.refresh_token(db, request)
+    return AuthService.refresh_access_token(db, request)
+
+@router.post("/logout")
+def logout(
+    request: LogoutRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Logout the current user and invalidate their session.
+
+    Args:
+        request (LogoutRequest): The refresh token to invalidate.
+        db (Session): Database session injected by FastAPI.
+        current_user (User): The authenticated user from JWT dependency.
+
+    Returns:
+        dict: Success message confirming logout.
+    """
+    return AuthService.logout(db, request, current_user)

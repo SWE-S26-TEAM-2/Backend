@@ -69,3 +69,26 @@ class RefreshTokenRequest(BaseModel):
     """
 
     refresh_token: str
+
+
+class GoogleLoginRequest(BaseModel):
+    """
+    Schema for Google OAuth2 social login request.
+ 
+    Args:
+        google_token (str): The Google ID token returned by the
+            client-side Google Sign-In SDK.
+    """
+ 
+    google_token: str
+
+
+class LogoutRequest(BaseModel):
+    """
+    Schema for logout request.
+
+    Args:
+        refresh_token (str): The refresh token to invalidate server-side.
+    """
+
+    refresh_token: str
