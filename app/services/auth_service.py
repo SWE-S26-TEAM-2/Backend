@@ -9,13 +9,16 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
+from jose import JWTError  # type: ignore
 
 from app.core.security import (  # type: ignore
     create_access_token,
     create_refresh_token,
+    decode_refresh_token,
     hash_password,
     verify_password,
 )
+from app.models import user
 from app.models.user import User  # type: ignore
 from app.repositories.token_repo import TokenRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
@@ -238,3 +241,57 @@ class AuthService:
                 },
             },
         }
+    
+
+    @staticmethod
+    def refresh_token(db: Session, data) -> dict:
+        """
+        Validate a refresh token and issue a new access/refresh token pair.
+
+        Args:
+            db (Session): The database session.
+            data: The RefreshTokenRequest schema with the refresh token string.
+
+        Returns:
+            dict: New access token, refresh token, token type, and expires_in.
+
+        Raises:
+            HTTPException: 401 if the token is invalid, expired, or wrong type.
+            HTTPException: 403 if the account is suspended.
+        """
+        try:
+            payload = decode_refresh_token(data.refresh_token)
+            user_id: str = payload.get("sub")
+            if user_id is None:
+                    raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token invalid.",
+            )
+        except JWTError:
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token invalid or expired.",
+        )
+
+        user = UserRepository.get_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token invalid.",
+        )
+
+        if user.is_suspended:
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account suspended",
+        )
+
+        return {
+        "success": True,
+        "data": {
+            "access_token": create_access_token(str(user.user_id)),
+            "refresh_token": create_refresh_token(str(user.user_id)),
+            "token_type": "bearer",
+            "expires_in": 900,
+        },
+    }

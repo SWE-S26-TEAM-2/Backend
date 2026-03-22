@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session  # type: ignore
 from app.database.database import get_db  # type: ignore
 from app.schemas.auth_schema import (  # type: ignore
     LoginRequest,
+    RefreshTokenRequest,
     RegisterRequest,
     ResendVerificationRequest,
     VerifyEmailRequest,
@@ -89,3 +90,20 @@ def login_user(
         dict: Access token, refresh token, and user info.
     """
     return AuthService.login_user(db, request)
+
+@router.post("/refresh")
+def refresh_token(
+    request: RefreshTokenRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Issue a new access and refresh token using a valid refresh token.
+
+    Args:
+        request (RefreshTokenRequest): The current refresh token.
+        db (Session): Database session injected by FastAPI.
+
+    Returns:
+        dict: New access token, refresh token, token type, and expiry.
+    """
+    return AuthService.refresh_token(db, request)
