@@ -6,6 +6,10 @@ from sqlalchemy import engine_from_config, pool
 
 from app.database.database import Base
 from app.models.user import User
+from app.models.email_verification import EmailVerification
+from app.models.social_link import SocialLink
+from app.models.refresh_token import RefreshToken
+from app.models.password_reset import PasswordReset
 
 config = context.config
 

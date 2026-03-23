@@ -2,11 +2,12 @@
 Pydantic schemas for authentication request/response validation.
 
 Defines the data contracts for registration, login, email verification,
-and resend verification endpoints.
+resend verification, and password management endpoints.
 """
+import re
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field  # type: ignore
+from pydantic import BaseModel, EmailStr, Field, field_validator  # type: ignore
 
 
 class RegisterRequest(BaseModel):
@@ -92,3 +93,54 @@ class LogoutRequest(BaseModel):
     """
 
     refresh_token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    """
+    Schema for requesting a password reset link.
+
+    Args:
+        email (EmailStr): Email address of the account.
+    """
+
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """
+    Schema for resetting a password with a reset token.
+
+    Args:
+        token (str): Password reset token from the email link.
+        new_password (str): New password. Min 8 chars, 1 uppercase,
+            1 number.
+    """
+
+    token: str
+    new_password: str = Field(min_length=8)
+
+    @field_validator("new_password")
+    @classmethod
+    def password_strength(cls, value: str) -> str:
+        """
+        Validate that the password has at least one uppercase letter
+        and at least one digit.
+
+        Args:
+            value (str): The new password string.
+
+        Returns:
+            str: The validated password.
+
+        Raises:
+            ValueError: If the password is missing uppercase or digit.
+        """
+        if not re.search(r"[A-Z]", value):
+            raise ValueError(
+                "Password must contain at least one uppercase letter."
+            )
+        if not re.search(r"[0-9]", value):
+            raise ValueError(
+                "Password must contain at least one digit."
+            )
+        return value

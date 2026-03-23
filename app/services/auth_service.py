@@ -27,6 +27,7 @@ from app.repositories.token_repo import TokenRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 from app.core.config import GOOGLE_CLIENT_ID  # type: ignore
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
+from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
 
 
 
@@ -461,4 +462,105 @@ class AuthService:
         return {
             "success": True,
             "message": "Logged out successfully.",
+        }
+
+    @staticmethod
+    def forgot_password(db: Session, data) -> dict:
+        """
+        Request a password reset for the given email address.
+
+        Always returns 200 regardless of whether the email exists
+        to prevent user enumeration attacks.
+
+        Args:
+            db (Session): The database session.
+            data: The ForgotPasswordRequest schema with email.
+
+        Returns:
+            dict: Generic success message.
+
+        Raises:
+            HTTPException: 429 if rate limit exceeded (3 per hour).
+        """
+        generic_response = {
+            "success": True,
+            "message": (
+                "If an account with that email exists, "
+                "a reset link has been sent."
+            ),
+        }
+
+        user = UserRepository.get_by_email(db, data.email)
+        if not user:
+            return generic_response
+
+        active_count = PasswordResetRepository.count_recent(
+            db, user.user_id
+        )
+        if active_count >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded. Max 3 reset requests per hour.",
+            )
+
+        PasswordResetRepository.create(db, user.user_id)
+
+        return generic_response
+
+    @staticmethod
+    def reset_password(db: Session, data) -> dict:
+        """
+        Reset a user's password using a valid reset token.
+
+        The token must be unused and not expired. On success, all
+        active refresh tokens for the user are revoked.
+
+        Args:
+            db (Session): The database session.
+            data: The ResetPasswordRequest schema with token and
+                new_password.
+
+        Returns:
+            dict: Success message confirming password update.
+
+        Raises:
+            HTTPException: 400 if the token is invalid or already used.
+            HTTPException: 410 if the token has expired.
+        """
+        token_record = PasswordResetRepository.get_by_token(
+            db, data.token
+        )
+
+        if not token_record or token_record.used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token invalid or already used.",
+            )
+
+        if token_record.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_410_GONE,
+                detail="Token expired.",
+            )
+
+        user = UserRepository.get_by_id(db, token_record.user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token invalid or already used.",
+            )
+
+        new_hash = hash_password(data.new_password)
+        UserRepository.update_password(db, user, new_hash)
+        PasswordResetRepository.mark_used(db, token_record)
+        RefreshTokenRepository.revoke_all_for_user(
+            db, str(user.user_id)
+        )
+
+        return {
+            "success": True,
+            "message": (
+                "Password updated successfully. "
+                "All sessions have been terminated."
+            ),
         }
