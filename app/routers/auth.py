@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session  # type: ignore
 
 from app.database.database import get_db  # type: ignore
 from app.schemas.auth_schema import (  # type: ignore
+    ForgotPasswordRequest,
     LoginRequest,
     LogoutRequest,
     GoogleLoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
     ResendVerificationRequest,
+    ResetPasswordRequest,
     VerifyEmailRequest,
 )
 from app.core.dependencies import get_current_user  # type: ignore
@@ -146,3 +148,42 @@ def logout(
         dict: Success message confirming logout.
     """
     return AuthService.logout(db, request, current_user)
+
+
+@router.post("/forgot-password")
+def forgot_password(
+    request: ForgotPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Request a password reset link for the given email.
+
+    Always returns 200 regardless of whether the email is registered
+    to prevent user enumeration.
+
+    Args:
+        request (ForgotPasswordRequest): Email to send reset link to.
+        db (Session): Database session injected by FastAPI.
+
+    Returns:
+        dict: Generic success message.
+    """
+    return AuthService.forgot_password(db, request)
+
+
+@router.post("/reset-password")
+def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Reset a user's password using a valid reset token.
+
+    Args:
+        request (ResetPasswordRequest): Token and new password.
+        db (Session): Database session injected by FastAPI.
+
+    Returns:
+        dict: Success message confirming password update.
+    """
+    return AuthService.reset_password(db, request)
