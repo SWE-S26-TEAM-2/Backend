@@ -18,7 +18,7 @@ COPY . .
 # Expose FastAPI port
 EXPOSE 8000
 
-# Health check
+# Health 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
