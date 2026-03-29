@@ -1,12 +1,13 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine  # type: ignore
+from sqlalchemy.orm import declarative_base, sessionmaker  # type: ignore
+from app.core.config import DATABASE_URL  # type: ignore
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:Tomriddle2@localhost/soundcloud_clone"
+# Connect to the Supabase mostafa
+SQLALCHEMY_DATABASE_URL = DATABASE_URL
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-#mooooooo
 def get_db():
     db = SessionLocal()
     try:
