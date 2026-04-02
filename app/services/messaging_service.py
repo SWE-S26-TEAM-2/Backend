@@ -146,14 +146,28 @@ class MessagingService:
             )
 
         messages = MessageRepository.get_by_conversation(db, conversation_id)
+        participants = {
+            str(conversation.user1_id): UserRepository.get_by_id(
+                db, conversation.user1_id
+            ),
+            str(conversation.user2_id): UserRepository.get_by_id(
+                db, conversation.user2_id
+            ),
+        }
 
         return {
             "success": True,
             "data": [
                 {
                     "id": str(msg.message_id),
-                    "sender_id": str(msg.sender_id),
-                    "receiver_id": str(msg.receiver_id),
+                    "sender": {
+                        "id": str(msg.sender_id),
+                        "name": participants[str(msg.sender_id)].display_name,
+                    },
+                    "receiver": {
+                        "id": str(msg.receiver_id),
+                        "name": participants[str(msg.receiver_id)].display_name,
+                    },
                     "content": msg.content,
                     "track_id": (str(msg.track_id) if msg.track_id else None),
                     "playlist_id": (str(msg.playlist_id) if msg.playlist_id else None),
@@ -228,13 +242,27 @@ class MessagingService:
             track_id=data.track_id,
             playlist_id=data.playlist_id,
         )
+        participants = {
+            str(conversation.user1_id): UserRepository.get_by_id(
+                db, conversation.user1_id
+            ),
+            str(conversation.user2_id): UserRepository.get_by_id(
+                db, conversation.user2_id
+            ),
+        }
 
         return {
             "success": True,
             "data": {
                 "id": str(message.message_id),
-                "sender_id": str(message.sender_id),
-                "receiver_id": str(message.receiver_id),
+                "sender": {
+                    "id": str(message.sender_id),
+                    "name": participants[str(message.sender_id)].display_name,
+                },
+                "receiver": {
+                    "id": str(message.receiver_id),
+                    "name": participants[str(message.receiver_id)].display_name,
+                },
                 "content": message.content,
                 "track_id": (str(message.track_id) if message.track_id else None),
                 "playlist_id": (
