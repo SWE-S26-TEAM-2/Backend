@@ -76,3 +76,41 @@ class ConversationRepository:
         db.commit()
         db.refresh(conversation)
         return conversation
+
+    @staticmethod
+    def get_all_by_user(db: Session, user_id) -> list:
+        """
+        Retrieve all conversations where the user is user1 or user2.
+
+        Args:
+            db (Session): The database session.
+            user_id: UUID of the requesting user.
+
+        Returns:
+            list[Conversation]: All conversations for this user.
+        """
+        from app.models.conversation import Conversation  # avoid circular
+
+        return (
+            db.query(Conversation)
+            .filter(
+                (Conversation.user1_id == user_id) | (Conversation.user2_id == user_id)
+            )
+            .order_by(Conversation.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
+    def delete(db: Session, conversation: Conversation) -> None:
+        """
+        Delete a conversation record and cascade-delete its messages.
+
+        Cascade deletion of messages is handled at the DB level
+        via the ForeignKey ondelete='CASCADE' on the messages table.
+
+        Args:
+            db (Session): The database session.
+            conversation (Conversation): The conversation to delete.
+        """
+        db.delete(conversation)
+        db.commit()
