@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session  # type: ignore
+
 from app.models.playlist import Playlist
 from app.models.playlist_track import PlaylistTrack
 
@@ -19,23 +20,54 @@ class PlaylistRepository:
         ).first()
 
     @staticmethod
-    def delete(db: Session, playlist):
+    def get_by_user_id(db: Session, user_id):
+        return db.query(Playlist).filter(
+            Playlist.user_id == user_id
+        ).all()
+
+    @staticmethod
+    def update(db: Session, playlist: Playlist, fields: dict):
+        for key, value in fields.items():
+            setattr(playlist, key, value)
+        db.commit()
+        db.refresh(playlist)
+        return playlist
+
+    @staticmethod
+    def delete(db: Session, playlist: Playlist):
         db.delete(playlist)
         db.commit()
 
     @staticmethod
     def add_track(db: Session, playlist_id, track_id):
-        pt = PlaylistTrack(
+        playlist_track = PlaylistTrack(
             playlist_id=playlist_id,
-            track_id=track_id
+            track_id=track_id,
         )
-        db.add(pt)
+        db.add(playlist_track)
+        db.commit()
+        db.refresh(playlist_track)
+        return playlist_track
+
+    @staticmethod
+    def get_playlist_track(db: Session, playlist_id, track_id):
+        return db.query(PlaylistTrack).filter(
+            PlaylistTrack.playlist_id == playlist_id,
+            PlaylistTrack.track_id == track_id,
+        ).first()
+
+    @staticmethod
+    def remove_track(db: Session, playlist_track: PlaylistTrack):
+        db.delete(playlist_track)
         db.commit()
 
     @staticmethod
-    def remove_track(db: Session, playlist_id, track_id):
-        db.query(PlaylistTrack).filter(
-            PlaylistTrack.playlist_id == playlist_id,
-            PlaylistTrack.track_id == track_id
-        ).delete()
-        db.commit()
+    def get_playlist_tracks(db: Session, playlist_id):
+        return db.query(PlaylistTrack).filter(
+            PlaylistTrack.playlist_id == playlist_id
+        ).all()
+    @staticmethod
+    def get_playlist_tracks_by_track(db, track_id):
+         return db.query(PlaylistTrack).filter(
+        PlaylistTrack.track_id == track_id
+    ).all()

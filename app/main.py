@@ -20,6 +20,8 @@ from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
+from app.routers.track import router as track_router
+from app.models import track
 
 app = FastAPI(
     title="SoundCloud Clone API",
@@ -32,6 +34,7 @@ app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(playlist_router)
 app.include_router(search_router)
+app.include_router(track_router)
 
 
 @app.get("/")
