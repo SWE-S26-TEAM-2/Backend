@@ -4,12 +4,14 @@ FastAPI application entry point.
 Initializes the FastAPI app, registers all routers,
 and creates database tables on startup.
 """
+
 from fastapi import FastAPI  # type: ignore
 
 from app.database.database import Base, engine  # type: ignore
 from app.models import email_verification, password_reset, social_link, user  # type: ignore
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
+from app.routers.messaging import router as messaging_router
 
 # Create all tables in the database on startup
 Base.metadata.create_all(bind=engine)
@@ -22,6 +24,7 @@ app = FastAPI(
 # Register routers
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(messaging_router)
 
 
 @app.get("/")
