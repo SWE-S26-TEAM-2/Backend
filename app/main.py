@@ -7,29 +7,33 @@ and creates database tables on startup.
 from fastapi import FastAPI  # type: ignore
 
 from app.database.database import Base, engine  # type: ignore
-from app.models import email_verification, password_reset, social_link, user  # type: ignore
+from app.models import (
+    email_verification,
+    password_reset,
+    social_link,
+    user,
+    track,
+    playlist,
+    playlist_track,
+)
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
-
-# Create all tables in the database on startup
-Base.metadata.create_all(bind=engine)
+from app.routers.playlist import router as playlist_router
+from app.routers.search import router as search_router
 
 app = FastAPI(
     title="SoundCloud Clone API",
     version="1.0.0",
 )
 
-# Register routers
+Base.metadata.create_all(bind=engine)
+
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(playlist_router)
+app.include_router(search_router)
 
 
 @app.get("/")
 def root():
-    """
-    Health check endpoint.
-
-    Returns:
-        dict: Simple message confirming the API is running.
-    """
     return {"message": "API is running"}
