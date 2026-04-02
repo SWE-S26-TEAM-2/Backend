@@ -272,3 +272,192 @@ class MessagingService:
                 "created_at": message.created_at,
             },
         }
+
+    @staticmethod
+    def mark_message_as_read(
+        db: Session,
+        current_user: User,
+        conversation_id,
+        message_id,
+    ) -> dict:
+        """
+        Mark a specific message as read.
+
+        Business rules:
+        - Conversation must exist.
+        - Requesting user must be a participant.
+        - Only the receiver of the message can mark it as read.
+        - If already read, return success silently (idempotent).
+
+        Args:
+            db (Session): The database session.
+            current_user (User): The authenticated requesting user.
+            conversation_id: UUID of the parent conversation.
+            message_id: UUID of the message to mark as read.
+
+        Returns:
+            dict: Success message with updated is_read status.
+
+        Raises:
+            HTTPException 404: Conversation or message not found.
+            HTTPException 403: User is not a participant, or is
+                               not the receiver of the message.
+        """
+        # Conversation must exist
+        conversation = ConversationRepository.get_by_id(db, conversation_id)
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found.",
+            )
+
+        # Only participants can interact with this conversation
+        is_participant = current_user.user_id in [
+            conversation.user1_id,
+            conversation.user2_id,
+        ]
+        if not is_participant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a participant in this conversation.",
+            )
+
+        # Message must exist inside this conversation
+        message = MessageRepository.get_by_id(db, message_id)
+        if not message or message.conversation_id != conversation_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message not found in this conversation.",
+            )
+
+        # Only the receiver can mark a message as read
+        if message.receiver_id != current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only the message receiver can mark it as read.",
+            )
+
+        # Idempotent — already read is still a success
+        if message.is_read:
+            return {
+                "success": True,
+                "message": "Message was already marked as read.",
+                "data": {"message_id": str(message_id), "is_read": True},
+            }
+
+        updated = MessageRepository.mark_as_read(db, message)
+
+        return {
+            "success": True,
+            "message": "Message marked as read.",
+            "data": {
+                "message_id": str(updated.message_id),
+                "is_read": updated.is_read,
+            },
+        }
+
+    @staticmethod
+    def get_user_conversations(
+        db: Session,
+        current_user: User,
+    ) -> dict:
+        """
+        Get all conversations for the authenticated user,
+        with participant names and IDs.
+
+        Business rules:
+        - Returns every conversation where user is user1 or user2.
+        - For each conversation, resolves both participants'
+          display_name and user_id so the client can render names.
+        - Ordered newest first.
+
+        Args:
+            db (Session): The database session.
+            current_user (User): The authenticated requesting user.
+
+        Returns:
+            dict: List of conversations with participant details.
+        """
+        conversations = ConversationRepository.get_all_by_user(db, current_user.user_id)
+
+        result = []
+        for conv in conversations:
+            # Resolve both participant user objects for their names
+            user1 = UserRepository.get_by_id(db, conv.user1_id)
+            user2 = UserRepository.get_by_id(db, conv.user2_id)
+
+            result.append(
+                {
+                    "conversation_id": str(conv.conversation_id),
+                    "created_at": conv.created_at,
+                    "participants": [
+                        {
+                            "user_id": str(user1.user_id),
+                            "display_name": user1.display_name,
+                            "profile_picture": user1.profile_picture,
+                        },
+                        {
+                            "user_id": str(user2.user_id),
+                            "display_name": user2.display_name,
+                            "profile_picture": user2.profile_picture,
+                        },
+                    ],
+                }
+            )
+
+        return {
+            "success": True,
+            "data": result,
+        }
+
+    @staticmethod
+    def delete_conversation(
+        db: Session,
+        current_user: User,
+        conversation_id,
+    ) -> dict:
+        """
+        Delete a conversation and all its messages.
+
+        Business rules:
+        - Conversation must exist.
+        - Only a participant can delete the conversation.
+        - Deleting a conversation cascade-deletes all its messages
+          via the DB-level ondelete='CASCADE' on the messages table.
+
+        Args:
+            db (Session): The database session.
+            current_user (User): The authenticated requesting user.
+            conversation_id: UUID of the conversation to delete.
+
+        Returns:
+            dict: Success confirmation message.
+
+        Raises:
+            HTTPException 404: Conversation not found.
+            HTTPException 403: User is not a participant.
+        """
+        conversation = ConversationRepository.get_by_id(db, conversation_id)
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found.",
+            )
+
+        # Only participants can delete the conversation
+        is_participant = current_user.user_id in [
+            conversation.user1_id,
+            conversation.user2_id,
+        ]
+        if not is_participant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a participant in this conversation.",
+            )
+
+        ConversationRepository.delete(db, conversation)
+
+        return {
+            "success": True,
+            "message": "Conversation deleted successfully.",
+        }

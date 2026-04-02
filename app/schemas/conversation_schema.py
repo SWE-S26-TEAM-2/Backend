@@ -50,3 +50,14 @@ class SendMessageRequest(BaseModel):
                 "A message must have content, a track_id, or a playlist_id."
             )
         return self
+
+
+class MarkReadRequest(BaseModel):
+    """
+    Schema for marking a message as read.
+
+    No body fields needed — the message_id comes from the URL path.
+    This class is kept for potential future fields (e.g. bulk read).
+    """
+
+    pass

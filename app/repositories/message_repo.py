@@ -70,3 +70,34 @@ class MessageRepository:
         db.commit()
         db.refresh(message)
         return message
+
+    @staticmethod
+    def get_by_id(db: Session, message_id) -> Message:
+        """
+        Find a single message by its primary key UUID.
+
+        Args:
+            db (Session): The database session.
+            message_id: UUID of the message.
+
+        Returns:
+            Message or None.
+        """
+        return db.query(Message).filter(Message.message_id == message_id).first()
+
+    @staticmethod
+    def mark_as_read(db: Session, message: Message) -> Message:
+        """
+        Flip is_read to True on a message record.
+
+        Args:
+            db (Session): The database session.
+            message (Message): The message object to update.
+
+        Returns:
+            Message: The updated message record.
+        """
+        message.is_read = True
+        db.commit()
+        db.refresh(message)
+        return message
