@@ -1,13 +1,8 @@
 """
 Service layer for messaging business logic.
 
-Responsibilities:
-- create_or_get_conversation: idempotent conversation creation.
-- get_messages: participant-gated message retrieval.
-- send_message: participant-gated message creation with
-  support for text, track sharing, and playlist sharing.
-
-All participant access control and business rules live here.
+Handles conversation creation (idempotent), message retrieval,
+message sending, read receipts, conversation listing and deletion.
 """
 
 from uuid import UUID
@@ -15,6 +10,8 @@ from uuid import UUID
 from fastapi import HTTPException, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
+from app.models.conversation import Conversation  # type: ignore
+from app.models.message import Message  # type: ignore
 from app.models.user import User  # type: ignore
 from app.repositories.conversation_repo import ConversationRepository  # type: ignore
 from app.repositories.message_repo import MessageRepository  # type: ignore
@@ -35,44 +32,21 @@ class MessagingService:
     ) -> dict:
         """
         Create a new 1-to-1 conversation or return the existing one.
-
-        Business rules:
-        - participant_id must be a valid UUID.
-        - Cannot start a conversation with yourself.
-        - Target user must exist in the database.
-        - If a conversation already exists between these two users,
-          return it (idempotent — no duplicate conversations).
-        - UUIDs are sorted before storage so (A,B) == (B,A).
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            data (CreateConversationRequest): Contains participant_id.
-
-        Returns:
-            dict: conversation_id of the new or existing conversation.
-
-        Raises:
-            HTTPException 400: Invalid UUID, self-messaging, or
-                               participant not found.
         """
-        # Validate that participant_id is a proper UUID string
         try:
-            participant_uuid = UUID(data.participant_id)
+            participant_uuid = UUID(str(data.participant_id))
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid participant_id — must be a valid UUID.",
             )
 
-        # Cannot message yourself
-        if current_user.user_id == participant_uuid:
+        if str(current_user.user_id) == str(participant_uuid):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You cannot start a conversation with yourself.",
             )
 
-        # Participant must be a real user
         participant = UserRepository.get_by_id(db, participant_uuid)
         if not participant:
             raise HTTPException(
@@ -80,12 +54,10 @@ class MessagingService:
                 detail="Invalid participant — user does not exist.",
             )
 
-        # Sort IDs so (A,B) and (B,A) always map to the same DB row
         ids = sorted([str(current_user.user_id), str(participant_uuid)])
         user1 = UUID(ids[0])
         user2 = UUID(ids[1])
 
-        # Return existing conversation if one already exists
         existing = ConversationRepository.get_by_participants(db, user1, user2)
         if existing:
             return {
@@ -93,7 +65,6 @@ class MessagingService:
                 "data": {"conversation_id": str(existing.conversation_id)},
             }
 
-        # No existing conversation — create a new one
         conversation = ConversationRepository.create(db, user1, user2)
 
         return {
@@ -109,23 +80,6 @@ class MessagingService:
     ) -> dict:
         """
         Retrieve all messages in a conversation.
-
-        Business rules:
-        - Conversation must exist.
-        - Requesting user must be user1_id or user2_id.
-        - Messages returned oldest-first.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            conversation_id: UUID of the conversation.
-
-        Returns:
-            dict: List of all messages with full field set.
-
-        Raises:
-            HTTPException 404: Conversation not found.
-            HTTPException 403: User is not a participant.
         """
         conversation = ConversationRepository.get_by_id(db, conversation_id)
         if not conversation:
@@ -134,10 +88,9 @@ class MessagingService:
                 detail="Conversation not found.",
             )
 
-        # Only user1 or user2 can read the messages
-        is_participant = current_user.user_id in [
-            conversation.user1_id,
-            conversation.user2_id,
+        is_participant = str(current_user.user_id) in [
+            str(conversation.user1_id),
+            str(conversation.user2_id),
         ]
         if not is_participant:
             raise HTTPException(
@@ -146,28 +99,14 @@ class MessagingService:
             )
 
         messages = MessageRepository.get_by_conversation(db, conversation_id)
-        participants = {
-            str(conversation.user1_id): UserRepository.get_by_id(
-                db, conversation.user1_id
-            ),
-            str(conversation.user2_id): UserRepository.get_by_id(
-                db, conversation.user2_id
-            ),
-        }
 
         return {
             "success": True,
             "data": [
                 {
                     "id": str(msg.message_id),
-                    "sender": {
-                        "id": str(msg.sender_id),
-                        "name": participants[str(msg.sender_id)].display_name,
-                    },
-                    "receiver": {
-                        "id": str(msg.receiver_id),
-                        "name": participants[str(msg.receiver_id)].display_name,
-                    },
+                    "sender_id": str(msg.sender_id),
+                    "receiver_id": str(msg.receiver_id),
                     "content": msg.content,
                     "track_id": (str(msg.track_id) if msg.track_id else None),
                     "playlist_id": (str(msg.playlist_id) if msg.playlist_id else None),
@@ -187,26 +126,6 @@ class MessagingService:
     ) -> dict:
         """
         Send a message inside an existing conversation.
-
-        Business rules:
-        - Conversation must exist.
-        - Requesting user must be a participant.
-        - The other participant becomes the receiver_id automatically.
-        - At least one of content/track_id/playlist_id must be set
-          (enforced already by the schema validator).
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            conversation_id: UUID of the conversation.
-            data (SendMessageRequest): Message body.
-
-        Returns:
-            dict: The newly created message data.
-
-        Raises:
-            HTTPException 404: Conversation not found.
-            HTTPException 403: User is not a participant.
         """
         conversation = ConversationRepository.get_by_id(db, conversation_id)
         if not conversation:
@@ -215,10 +134,9 @@ class MessagingService:
                 detail="Conversation not found.",
             )
 
-        # Only participants can send messages
-        is_participant = current_user.user_id in [
-            conversation.user1_id,
-            conversation.user2_id,
+        is_participant = str(current_user.user_id) in [
+            str(conversation.user1_id),
+            str(conversation.user2_id),
         ]
         if not is_participant:
             raise HTTPException(
@@ -226,10 +144,9 @@ class MessagingService:
                 detail="You are not a participant in this conversation.",
             )
 
-        # Derive receiver_id — it's whichever participant is not the sender
         receiver_id = (
             conversation.user2_id
-            if current_user.user_id == conversation.user1_id
+            if str(current_user.user_id) == str(conversation.user1_id)
             else conversation.user1_id
         )
 
@@ -242,27 +159,13 @@ class MessagingService:
             track_id=data.track_id,
             playlist_id=data.playlist_id,
         )
-        participants = {
-            str(conversation.user1_id): UserRepository.get_by_id(
-                db, conversation.user1_id
-            ),
-            str(conversation.user2_id): UserRepository.get_by_id(
-                db, conversation.user2_id
-            ),
-        }
 
         return {
             "success": True,
             "data": {
                 "id": str(message.message_id),
-                "sender": {
-                    "id": str(message.sender_id),
-                    "name": participants[str(message.sender_id)].display_name,
-                },
-                "receiver": {
-                    "id": str(message.receiver_id),
-                    "name": participants[str(message.receiver_id)].display_name,
-                },
+                "sender_id": str(message.sender_id),
+                "receiver_id": str(message.receiver_id),
                 "content": message.content,
                 "track_id": (str(message.track_id) if message.track_id else None),
                 "playlist_id": (
@@ -283,27 +186,11 @@ class MessagingService:
         """
         Mark a specific message as read.
 
-        Business rules:
-        - Conversation must exist.
-        - Requesting user must be a participant.
-        - Only the receiver of the message can mark it as read.
-        - If already read, return success silently (idempotent).
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            conversation_id: UUID of the parent conversation.
-            message_id: UUID of the message to mark as read.
-
-        Returns:
-            dict: Success message with updated is_read status.
-
-        Raises:
-            HTTPException 404: Conversation or message not found.
-            HTTPException 403: User is not a participant, or is
-                               not the receiver of the message.
+        Casts all UUIDs to str before every comparison to avoid
+        any SQLAlchemy / PostgreSQL UUID type mismatch that causes
+        the query to silently return None even when the row exists.
         """
-        # Conversation must exist
+        # ── Step 1: Conversation must exist ───────────────
         conversation = ConversationRepository.get_by_id(db, conversation_id)
         if not conversation:
             raise HTTPException(
@@ -311,10 +198,10 @@ class MessagingService:
                 detail="Conversation not found.",
             )
 
-        # Only participants can interact with this conversation
-        is_participant = current_user.user_id in [
-            conversation.user1_id,
-            conversation.user2_id,
+        # ── Step 2: Requester must be a participant ────────
+        is_participant = str(current_user.user_id) in [
+            str(conversation.user1_id),
+            str(conversation.user2_id),
         ]
         if not is_participant:
             raise HTTPException(
@@ -322,37 +209,56 @@ class MessagingService:
                 detail="You are not a participant in this conversation.",
             )
 
-        # Message must exist inside this conversation
-        message = MessageRepository.get_by_id(db, message_id)
-        if not message or message.conversation_id != conversation_id:
+        # ── Step 3: Look up message by message_id only ────
+        # Do NOT filter by conversation_id in the same query —
+        # check conversation ownership separately via str comparison
+        # to avoid UUID type coercion bugs.
+        message = (
+            db.query(Message).filter(Message.message_id == str(message_id)).first()
+        )
+
+        if not message:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Message not found in this conversation.",
+                detail="Message not found.",
             )
 
-        # Only the receiver can mark a message as read
-        if message.receiver_id != current_user.user_id:
+        # ── Step 4: Confirm message belongs to this conversation
+        if str(message.conversation_id) != str(conversation_id):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message does not belong to this conversation.",
+            )
+
+        # ── Step 5: Only the receiver can mark it as read ─
+        if str(message.receiver_id) != str(current_user.user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only the message receiver can mark it as read.",
             )
 
-        # Idempotent — already read is still a success
+        # ── Step 6: Idempotent — already read is fine ─────
         if message.is_read:
             return {
                 "success": True,
                 "message": "Message was already marked as read.",
-                "data": {"message_id": str(message_id), "is_read": True},
+                "data": {
+                    "message_id": str(message.message_id),
+                    "is_read": True,
+                },
             }
 
-        updated = MessageRepository.mark_as_read(db, message)
+        # ── Step 7: Flip the flag ──────────────────────────
+        message.is_read = True
+        db.commit()
+        db.refresh(message)
 
         return {
             "success": True,
             "message": "Message marked as read.",
             "data": {
-                "message_id": str(updated.message_id),
-                "is_read": updated.is_read,
+                "message_id": str(message.message_id),
+                "is_read": message.is_read,
             },
         }
 
@@ -362,27 +268,12 @@ class MessagingService:
         current_user: User,
     ) -> dict:
         """
-        Get all conversations for the authenticated user,
-        with participant names and IDs.
-
-        Business rules:
-        - Returns every conversation where user is user1 or user2.
-        - For each conversation, resolves both participants'
-          display_name and user_id so the client can render names.
-        - Ordered newest first.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-
-        Returns:
-            dict: List of conversations with participant details.
+        Get all conversations for the authenticated user.
         """
         conversations = ConversationRepository.get_all_by_user(db, current_user.user_id)
 
         result = []
         for conv in conversations:
-            # Resolve both participant user objects for their names
             user1 = UserRepository.get_by_id(db, conv.user1_id)
             user2 = UserRepository.get_by_id(db, conv.user2_id)
 
@@ -418,24 +309,6 @@ class MessagingService:
     ) -> dict:
         """
         Delete a conversation and all its messages.
-
-        Business rules:
-        - Conversation must exist.
-        - Only a participant can delete the conversation.
-        - Deleting a conversation cascade-deletes all its messages
-          via the DB-level ondelete='CASCADE' on the messages table.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            conversation_id: UUID of the conversation to delete.
-
-        Returns:
-            dict: Success confirmation message.
-
-        Raises:
-            HTTPException 404: Conversation not found.
-            HTTPException 403: User is not a participant.
         """
         conversation = ConversationRepository.get_by_id(db, conversation_id)
         if not conversation:
@@ -444,10 +317,9 @@ class MessagingService:
                 detail="Conversation not found.",
             )
 
-        # Only participants can delete the conversation
-        is_participant = current_user.user_id in [
-            conversation.user1_id,
-            conversation.user2_id,
+        is_participant = str(current_user.user_id) in [
+            str(conversation.user1_id),
+            str(conversation.user2_id),
         ]
         if not is_participant:
             raise HTTPException(

@@ -4,8 +4,8 @@ Repository for Message database operations.
 All raw queries for the messages table live here.
 """
 
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy.orm import Session  # type: ignore
 
@@ -15,7 +15,7 @@ from app.models.message import Message  # type: ignore
 class MessageRepository:
 
     @staticmethod
-    def get_by_conversation(db: Session, conversation_id):
+    def get_by_conversation(db: Session, conversation_id) -> list:
         """
         Retrieve all messages in a conversation, oldest first.
 
@@ -32,6 +32,40 @@ class MessageRepository:
             .order_by(Message.created_at.asc())
             .all()
         )
+
+    @staticmethod
+    def get_by_id(db: Session, message_id) -> Message:
+        """
+        Find a single message by its primary key UUID.
+
+        Casts message_id to str to avoid UUID type coercion issues
+        between Python UUID objects and PostgreSQL uuid columns.
+
+        Args:
+            db (Session): The database session.
+            message_id: UUID of the message.
+
+        Returns:
+            Message or None.
+        """
+        return db.query(Message).filter(Message.message_id == str(message_id)).first()
+
+    @staticmethod
+    def mark_as_read(db: Session, message: Message) -> Message:
+        """
+        Flip is_read to True on a message record.
+
+        Args:
+            db (Session): The database session.
+            message (Message): The message object to update.
+
+        Returns:
+            Message: The updated message record.
+        """
+        message.is_read = True
+        db.commit()
+        db.refresh(message)
+        return message
 
     @staticmethod
     def create(
@@ -67,37 +101,6 @@ class MessageRepository:
             playlist_id=playlist_id,
         )
         db.add(message)
-        db.commit()
-        db.refresh(message)
-        return message
-
-    @staticmethod
-    def get_by_id(db: Session, message_id) -> Message:
-        """
-        Find a single message by its primary key UUID.
-
-        Args:
-            db (Session): The database session.
-            message_id: UUID of the message.
-
-        Returns:
-            Message or None.
-        """
-        return db.query(Message).filter(Message.message_id == message_id).first()
-
-    @staticmethod
-    def mark_as_read(db: Session, message: Message) -> Message:
-        """
-        Flip is_read to True on a message record.
-
-        Args:
-            db (Session): The database session.
-            message (Message): The message object to update.
-
-        Returns:
-            Message: The updated message record.
-        """
-        message.is_read = True
         db.commit()
         db.refresh(message)
         return message
