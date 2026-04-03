@@ -46,4 +46,4 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
-      - run: docker build -t backend:test .
+      - run: docker build --platform linux/amd64 -t backend:test .
