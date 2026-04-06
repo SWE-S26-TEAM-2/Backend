@@ -1,13 +1,15 @@
 name: Backend CD
 
 on:
-  push:
+  workflow_run:
+    workflows: [ "Backend CI" ]
+    types: [ completed ]
     branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: test  
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Deploy Backend to Azure VM
