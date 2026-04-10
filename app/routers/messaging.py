@@ -5,8 +5,8 @@ All endpoints require Bearer JWT authentication.
 Prefix: /conversations
 
 Endpoints:
-  POST   /conversations                                      — Create or get conversation
-  GET    /conversations                                      — Get all user conversations
+  POST   /conversations                                     — Create or get conversation
+  GET    /conversations                                     — Get all user conversations
   DELETE /conversations/{conversation_id}                   — Delete a conversation
   GET    /conversations/{conversation_id}/messages          — Get all messages
   POST   /conversations/{conversation_id}/messages          — Send a message

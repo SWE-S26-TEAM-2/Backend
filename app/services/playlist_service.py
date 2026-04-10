@@ -42,7 +42,7 @@ class PlaylistService:
                 "user_id": str(playlist.user_id),
                 "name": playlist.name,
                 "description": playlist.description,
-                "tracks": []
+                "tracks": [],
             },
         }
 
@@ -69,9 +69,7 @@ class PlaylistService:
                 detail="No fields provided for update",
             )
 
-        updated_playlist = PlaylistRepository.update(
-            db, playlist, update_data
-        )
+        updated_playlist = PlaylistRepository.update(db, playlist, update_data)
 
         return {
             "success": True,
@@ -127,9 +125,7 @@ class PlaylistService:
                 detail="Track not found",
             )
 
-        existing = PlaylistRepository.get_playlist_track(
-            db, playlist_id, data.track_id
-        )
+        existing = PlaylistRepository.get_playlist_track(db, playlist_id, data.track_id)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
