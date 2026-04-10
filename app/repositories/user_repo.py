@@ -99,3 +99,23 @@ class UserRepository:
         db.commit()
         db.refresh(user)
         return user
+
+    @staticmethod
+    def update_password(
+        db: Session, user: User, new_hash: str
+    ) -> User:
+        """
+        Update a user's password hash.
+
+        Args:
+            db (Session): The database session.
+            user (User): The user to update.
+            new_hash (str): The new bcrypt-hashed password.
+
+        Returns:
+            User: The updated user object.
+        """
+        user.password_hash = new_hash
+        db.commit()
+        db.refresh(user)
+        return user

@@ -9,11 +9,11 @@ from datetime import datetime, timedelta, timezone
 
 import bcrypt  # type: ignore
 from jose import JWTError, jwt  # type: ignore
+from app.core.config import SECRET_KEY
 
 # ──────────────────────────────────────────────
 # CONSTANTS — Change SECRET_KEY in production!
 # ──────────────────────────────────────────────
-SECRET_KEY = "super-secret-key-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 7
