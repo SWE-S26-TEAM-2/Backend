@@ -4,6 +4,7 @@ SQLAlchemy model for refresh token storage.
 Stores issued refresh tokens by jti for rotation and revocation.
 Tokens are invalidated on use (rotation) or on logout.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

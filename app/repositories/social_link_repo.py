@@ -4,6 +4,7 @@ Repository for SocialLink database operations.
 Handles retrieval, deletion, and creation of social links
 for a given user.
 """
+
 from typing import List
 
 from sqlalchemy.orm import Session  # type: ignore
@@ -17,9 +18,7 @@ class SocialLinkRepository:
     """
 
     @staticmethod
-    def get_by_user_id(
-        db: Session, user_id
-    ) -> List[SocialLink]:
+    def get_by_user_id(db: Session, user_id) -> List[SocialLink]:
         """
         Get all social links for a user.
 
@@ -30,11 +29,7 @@ class SocialLinkRepository:
         Returns:
             List[SocialLink]: All social link records for the user.
         """
-        return (
-            db.query(SocialLink)
-            .filter(SocialLink.user_id == user_id)
-            .all()
-        )
+        return db.query(SocialLink).filter(SocialLink.user_id == user_id).all()
 
     @staticmethod
     def delete_by_user_id(db: Session, user_id) -> None:
@@ -48,14 +43,10 @@ class SocialLinkRepository:
         Returns:
             None
         """
-        db.query(SocialLink).filter(
-            SocialLink.user_id == user_id
-        ).delete()
+        db.query(SocialLink).filter(SocialLink.user_id == user_id).delete()
 
     @staticmethod
-    def create_many(
-        db: Session, user_id, links: list
-    ) -> List[SocialLink]:
+    def create_many(db: Session, user_id, links: list) -> List[SocialLink]:
         """
         Create multiple social links for a user.
 
