@@ -4,6 +4,7 @@ Router for user profile and social links endpoints (Module 2).
 All endpoints that require authentication use the
 get_current_user dependency to extract the user from JWT.
 """
+
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, UploadFile, status  # type: ignore
@@ -183,6 +184,4 @@ def update_social_links(
     Returns:
         dict: Updated list of social links.
     """
-    return SocialLinkService.update_social_links(
-        db, current_user, data
-    )
+    return SocialLinkService.update_social_links(db, current_user, data)

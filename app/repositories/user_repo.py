@@ -4,6 +4,7 @@ Repository for User database operations.
 Handles all direct database queries related to the User model,
 including lookups, creation, and field updates.
 """
+
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.user import User  # type: ignore
@@ -40,9 +41,7 @@ class UserRepository:
         Returns:
             User or None: The user if found, None otherwise.
         """
-        return (
-            db.query(User).filter(User.user_id == user_id).first()
-        )
+        return db.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
     def create(db: Session, user: User) -> User:
@@ -62,9 +61,7 @@ class UserRepository:
         return user
 
     @staticmethod
-    def update_verification_status(
-        db: Session, user: User, verified: bool
-    ) -> User:
+    def update_verification_status(db: Session, user: User, verified: bool) -> User:
         """
         Update a user's email verification status.
 
@@ -101,9 +98,7 @@ class UserRepository:
         return user
 
     @staticmethod
-    def update_password(
-        db: Session, user: User, new_hash: str
-    ) -> User:
+    def update_password(db: Session, user: User, new_hash: str) -> User:
         """
         Update a user's password hash.
 

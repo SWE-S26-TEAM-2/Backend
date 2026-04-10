@@ -4,6 +4,7 @@ Pydantic schemas for authentication request/response validation.
 Defines the data contracts for registration, login, email verification,
 resend verification, and password management endpoints.
 """
+
 import re
 from typing import Optional
 
@@ -61,6 +62,7 @@ class ResendVerificationRequest(BaseModel):
 
     email: EmailStr
 
+
 class RefreshTokenRequest(BaseModel):
     """
     Schema for refresh token request.
@@ -75,12 +77,12 @@ class RefreshTokenRequest(BaseModel):
 class GoogleLoginRequest(BaseModel):
     """
     Schema for Google OAuth2 social login request.
- 
+
     Args:
         google_token (str): The Google ID token returned by the
             client-side Google Sign-In SDK.
     """
- 
+
     google_token: str
 
 
@@ -136,11 +138,7 @@ class ResetPasswordRequest(BaseModel):
             ValueError: If the password is missing uppercase or digit.
         """
         if not re.search(r"[A-Z]", value):
-            raise ValueError(
-                "Password must contain at least one uppercase letter."
-            )
+            raise ValueError("Password must contain at least one uppercase letter.")
         if not re.search(r"[0-9]", value):
-            raise ValueError(
-                "Password must contain at least one digit."
-            )
+            raise ValueError("Password must contain at least one digit.")
         return value

@@ -4,6 +4,7 @@ Core security module for JWT token management and password hashing.
 Handles access/refresh token creation, verification, and bcrypt
 password hashing for the entire application.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -62,9 +63,7 @@ def create_access_token(user_id: str) -> str:
     Returns:
         str: An encoded JWT access token string.
     """
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-    )
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "exp": expire,
@@ -83,9 +82,7 @@ def create_refresh_token(user_id: str) -> str:
     Returns:
         str: An encoded JWT refresh token string.
     """
-    expire = datetime.now(timezone.utc) + timedelta(
-        days=REFRESH_TOKEN_EXPIRE_DAYS
-    )
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {
         "sub": user_id,
         "exp": expire,
@@ -112,7 +109,6 @@ def decode_access_token(token: str) -> dict:
     if payload.get("type") != "access":
         raise JWTError("Token is not an access token")
     return payload
-
 
 
 def decode_refresh_token(token: str) -> dict:

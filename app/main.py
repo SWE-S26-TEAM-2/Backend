@@ -8,10 +8,16 @@ and creates database tables on startup.
 from fastapi import FastAPI  # type: ignore
 
 from app.database.database import Base, engine  # type: ignore
-from app.models import email_verification, password_reset, social_link, user  # type: ignore
+from app.models import (  # noqa: F401
+    email_verification,
+    password_reset,
+    social_link,
+    user,
+)
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.messaging import router as messaging_router
+from app.routers.follower import router as follower_router
 
 # Create all tables in the database on startup
 Base.metadata.create_all(bind=engine)
@@ -25,6 +31,7 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(messaging_router)
+app.include_router(follower_router)
 
 
 @app.get("/")
