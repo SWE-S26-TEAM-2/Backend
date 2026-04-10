@@ -3,6 +3,7 @@ Repository for refresh token database operations.
 
 Handles creation, lookup, and revocation of refresh tokens.
 """
+
 import uuid
 from datetime import datetime, timezone
 
@@ -51,11 +52,7 @@ class RefreshTokenRepository:
         Returns:
             RefreshToken or None: The record if found.
         """
-        return (
-            db.query(RefreshToken)
-            .filter(RefreshToken.jti == uuid.UUID(jti))
-            .first()
-        )
+        return db.query(RefreshToken).filter(RefreshToken.jti == uuid.UUID(jti)).first()
 
     @staticmethod
     def revoke(db: Session, token_record: RefreshToken) -> None:

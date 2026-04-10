@@ -3,6 +3,7 @@ Repository for password reset token database operations.
 
 Handles creation, lookup, and status updates for password reset tokens.
 """
+
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session  # type: ignore
@@ -49,11 +50,7 @@ class PasswordResetRepository:
         Returns:
             PasswordReset or None: The token record if found.
         """
-        return (
-            db.query(PasswordReset)
-            .filter(PasswordReset.token == token)
-            .first()
-        )
+        return db.query(PasswordReset).filter(PasswordReset.token == token).first()
 
     @staticmethod
     def mark_used(db: Session, token_record: PasswordReset) -> None:

@@ -4,6 +4,7 @@ Service layer for user profile business logic.
 Handles profile retrieval, updates, privacy toggling,
 and avatar/cover photo uploads.
 """
+
 import os
 import shutil
 
@@ -14,10 +15,13 @@ from app.models.user import User  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
-AVATAR_MAX_SIZE = 5 * 1024 * 1024       # 5 MB
-COVER_MAX_SIZE = 10 * 1024 * 1024       # 10 MB
+AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
+COVER_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_PROFILE_FIELDS = [
-    "display_name", "bio", "location", "account_type",
+    "display_name",
+    "bio",
+    "location",
+    "account_type",
 ]
 
 
@@ -114,9 +118,7 @@ class UserService:
         }
 
     @staticmethod
-    def update_profile(
-        db: Session, current_user: User, data
-    ) -> dict:
+    def update_profile(db: Session, current_user: User, data) -> dict:
         """
         Update allowed profile fields for the authenticated user.
 
@@ -129,10 +131,7 @@ class UserService:
             dict: Updated profile data.
         """
         update_data = data.model_dump(exclude_unset=True)
-        filtered = {
-            k: v for k, v in update_data.items()
-            if k in ALLOWED_PROFILE_FIELDS
-        }
+        filtered = {k: v for k, v in update_data.items() if k in ALLOWED_PROFILE_FIELDS}
 
         UserRepository.update_fields(db, current_user, filtered)
 
@@ -150,9 +149,7 @@ class UserService:
         }
 
     @staticmethod
-    def update_privacy(
-        db: Session, current_user: User, data
-    ) -> dict:
+    def update_privacy(db: Session, current_user: User, data) -> dict:
         """
         Toggle profile visibility between public and private.
 
@@ -164,9 +161,7 @@ class UserService:
         Returns:
             dict: Updated privacy status.
         """
-        UserRepository.update_fields(
-            db, current_user, {"is_private": data.is_private}
-        )
+        UserRepository.update_fields(db, current_user, {"is_private": data.is_private})
 
         return {
             "success": True,
@@ -177,9 +172,7 @@ class UserService:
         }
 
     @staticmethod
-    def upload_avatar(
-        db: Session, current_user: User, file: UploadFile
-    ) -> dict:
+    def upload_avatar(db: Session, current_user: User, file: UploadFile) -> dict:
         """
         Upload a profile picture (avatar) for the authenticated user.
 
@@ -194,17 +187,11 @@ class UserService:
         Raises:
             HTTPException: 400 if file type or size is invalid.
         """
-        UserService._validate_image(
-            file, AVATAR_MAX_SIZE, "5 MB"
-        )
+        UserService._validate_image(file, AVATAR_MAX_SIZE, "5 MB")
 
-        path = UserService._save_file(
-            file, current_user.user_id, "Avatar"
-        )
+        path = UserService._save_file(file, current_user.user_id, "Avatar")
 
-        UserRepository.update_fields(
-            db, current_user, {"profile_picture": path}
-        )
+        UserRepository.update_fields(db, current_user, {"profile_picture": path})
 
         return {
             "success": True,
@@ -215,9 +202,7 @@ class UserService:
         }
 
     @staticmethod
-    def upload_cover(
-        db: Session, current_user: User, file: UploadFile
-    ) -> dict:
+    def upload_cover(db: Session, current_user: User, file: UploadFile) -> dict:
         """
         Upload a cover photo for the authenticated user.
 
@@ -232,17 +217,11 @@ class UserService:
         Raises:
             HTTPException: 400 if file type or size is invalid.
         """
-        UserService._validate_image(
-            file, COVER_MAX_SIZE, "10 MB"
-        )
+        UserService._validate_image(file, COVER_MAX_SIZE, "10 MB")
 
-        path = UserService._save_file(
-            file, current_user.user_id, "Cover"
-        )
+        path = UserService._save_file(file, current_user.user_id, "Cover")
 
-        UserRepository.update_fields(
-            db, current_user, {"cover_photo": path}
-        )
+        UserRepository.update_fields(db, current_user, {"cover_photo": path})
 
         return {
             "success": True,
@@ -255,9 +234,7 @@ class UserService:
     # ── Private helper methods ──────────────────────────
 
     @staticmethod
-    def _validate_image(
-        file: UploadFile, max_size: int, label: str
-    ) -> None:
+    def _validate_image(file: UploadFile, max_size: int, label: str) -> None:
         """
         Validate image file type and size.
 
@@ -286,9 +263,7 @@ class UserService:
             )
 
     @staticmethod
-    def _save_file(
-        file: UploadFile, user_id, subfolder: str
-    ) -> str:
+    def _save_file(file: UploadFile, user_id, subfolder: str) -> str:
         """
         Save an uploaded file to the Uploads directory.
 
@@ -300,9 +275,7 @@ class UserService:
         Returns:
             str: Relative file path for storage in the database.
         """
-        base_dir = os.path.dirname(
-            os.path.dirname(os.path.abspath(__file__))
-        )
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         upload_folder = os.path.join(base_dir, "Uploads", subfolder)
         os.makedirs(upload_folder, exist_ok=True)
 

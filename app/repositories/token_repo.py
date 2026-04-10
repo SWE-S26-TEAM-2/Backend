@@ -3,6 +3,7 @@ Repository for email verification token database operations.
 
 Handles creation, lookup, and status updates for verification tokens.
 """
+
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session  # type: ignore
@@ -50,9 +51,7 @@ class TokenRepository:
             EmailVerification or None: The token record if found.
         """
         return (
-            db.query(EmailVerification)
-            .filter(EmailVerification.token == token)
-            .first()
+            db.query(EmailVerification).filter(EmailVerification.token == token).first()
         )
 
     @staticmethod
