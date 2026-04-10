@@ -4,6 +4,7 @@ SQLAlchemy model for password reset tokens.
 Stores one-time-use tokens sent to users when they request a password
 reset. Tokens expire after 1 hour and can only be used once.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

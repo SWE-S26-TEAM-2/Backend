@@ -4,6 +4,7 @@ FastAPI dependencies for authentication and database session injection.
 Provides the get_current_user dependency that extracts and validates
 the JWT token from the Authorization header in protected endpoints.
 """
+
 from fastapi import Depends, HTTPException, status  # type: ignore
 from fastapi.security import OAuth2PasswordBearer  # type: ignore
 from jose import JWTError  # type: ignore
