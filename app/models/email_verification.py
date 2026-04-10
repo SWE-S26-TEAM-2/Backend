@@ -4,6 +4,7 @@ SQLAlchemy model for email verification tokens.
 Stores one-time-use tokens sent to users after registration.
 Tokens expire after 24 hours and can only be used once.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 

@@ -4,6 +4,7 @@ Pydantic schemas for user profile request/response validation.
 Defines the data contracts for profile retrieval, updates,
 and privacy toggle endpoints.
 """
+
 from typing import Optional
 
 from pydantic import BaseModel, Field  # type: ignore
