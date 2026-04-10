@@ -3,10 +3,10 @@ Pydantic schemas for social link request/response validation.
 
 Defines the data contracts for social link retrieval and updates.
 """
+
 from typing import List
 
 from pydantic import BaseModel, field_validator  # type: ignore
-
 
 ALLOWED_PLATFORMS = [
     "instagram",
@@ -45,9 +45,7 @@ class SocialLinkItem(BaseModel):
             ValueError: If the platform is not in the allowed list.
         """
         if value not in ALLOWED_PLATFORMS:
-            raise ValueError(
-                f"Invalid platform. Accepted: {ALLOWED_PLATFORMS}"
-            )
+            raise ValueError(f"Invalid platform. Accepted: {ALLOWED_PLATFORMS}")
         return value
 
     @field_validator("url")
@@ -84,7 +82,8 @@ class UpdateSocialLinksRequest(BaseModel):
     @field_validator("social_links")
     @classmethod
     def validate_max_links(
-        cls, value: List[SocialLinkItem],
+        cls,
+        value: List[SocialLinkItem],
     ) -> List[SocialLinkItem]:
         """
         Validate that no more than 5 social links are provided.

@@ -38,7 +38,7 @@ jobs:
 
       - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - run: alembic upgrade head        # ← add this
+      - run: alembic upgrade head        
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
@@ -46,4 +46,4 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
-      - run: docker build -t backend:test .
+      - run: docker build --platform linux/amd64 -t backend:test .

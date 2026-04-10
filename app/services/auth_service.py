@@ -5,6 +5,7 @@ Handles registration, login, email verification, and resend
 verification logic. Delegates database operations to repositories
 and token operations to the security module.
 """
+
 import secrets
 from datetime import datetime, timezone
 
@@ -28,8 +29,6 @@ from app.repositories.user_repo import UserRepository  # type: ignore
 from app.core.config import GOOGLE_CLIENT_ID  # type: ignore
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
 from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
-
-
 
 
 class AuthService:
@@ -121,8 +120,7 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_410_GONE,
                 detail=(
-                    "Token expired. "
-                    "Use /auth/resend-verification to get a new one."
+                    "Token expired. " "Use /auth/resend-verification to get a new one."
                 ),
             )
 
@@ -174,9 +172,7 @@ class AuthService:
                 detail="Account already verified",
             )
 
-        active_count = TokenRepository.count_recent_for_email(
-            db, user.user_id
-        )
+        active_count = TokenRepository.count_recent_for_email(db, user.user_id)
         if active_count >= 3:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -187,9 +183,7 @@ class AuthService:
 
         return {
             "success": True,
-            "message": (
-                "Verification email resent. Please check your inbox."
-            ),
+            "message": ("Verification email resent. Please check your inbox."),
         }
 
     @staticmethod
@@ -211,9 +205,7 @@ class AuthService:
         """
         user = UserRepository.get_by_email(db, data.email)
 
-        if not user or not verify_password(
-            data.password, user.password_hash
-        ):
+        if not user or not verify_password(data.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
@@ -251,25 +243,25 @@ class AuthService:
                 },
             },
         }
-    
+
     @staticmethod
     def google_login(db: Session, data) -> dict:
         """
         Authenticate or auto-register a user via Google OAuth2 ID token.
- 
+
         If no account exists for the Google email, one is created
         automatically with is_verified=True and a random unusable
         password hash. If an account already exists, the user is
         logged in directly.
- 
+
         Args:
             db (Session): The database session.
             data: The GoogleLoginRequest schema containing google_token.
- 
+
         Returns:
             dict: Access token, refresh token, token metadata, is_new_user
                   flag, and basic user info.
- 
+
         Raises:
             HTTPException: 400 if the google_token field is missing or empty.
             HTTPException: 401 if the Google token is invalid or expired.
@@ -281,7 +273,7 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Missing or empty google_token.",
             )
- 
+
         # Verify the ID token against Google's public keys.
         try:
             id_info = id_token.verify_oauth2_token(
@@ -300,20 +292,20 @@ class AuthService:
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Google OAuth service unavailable.",
             )
- 
+
         google_email: str = id_info.get("email")
         google_name: str = id_info.get("name", google_email.split("@")[0])
         google_picture: str = id_info.get("picture")
- 
+
         existing_user = UserRepository.get_by_email(db, google_email)
         is_new_user = existing_user is None
- 
+
         if is_new_user:
             # Auto-register the user.  Generate a random unusable password
             # so the NOT NULL column is satisfied, but the user can never
             # log in with it via the standard /auth/login route.
             unusable_hash = hash_password(secrets.token_urlsafe(32))
- 
+
             new_user = User(
                 email=google_email,
                 password_hash=unusable_hash,
@@ -326,18 +318,18 @@ class AuthService:
             user = new_user
         else:
             user = existing_user
- 
+
         if user.is_suspended:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Account suspended.",
             )
- 
+
         access_token = create_access_token(str(user.user_id))
         refresh_token = create_refresh_token(str(user.user_id))
         refresh_payload = decode_refresh_token(refresh_token)
         RefreshTokenRepository.create(db, refresh_payload["jti"], str(user.user_id))
- 
+
         return {
             "success": True,
             "data": {
@@ -354,7 +346,6 @@ class AuthService:
                 },
             },
         }
-    
 
     @staticmethod
     def refresh_access_token(db: Session, data) -> dict:
@@ -450,7 +441,7 @@ class AuthService:
         """
         try:
             payload = decode_refresh_token(data.refresh_token)
-            jti: str = payload.get("jti")
+            payload.get("jti")
         except JWTError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -485,8 +476,7 @@ class AuthService:
         generic_response = {
             "success": True,
             "message": (
-                "If an account with that email exists, "
-                "a reset link has been sent."
+                "If an account with that email exists, " "a reset link has been sent."
             ),
         }
 
@@ -494,9 +484,7 @@ class AuthService:
         if not user:
             return generic_response
 
-        active_count = PasswordResetRepository.count_recent(
-            db, user.user_id
-        )
+        active_count = PasswordResetRepository.count_recent(db, user.user_id)
         if active_count >= 3:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -527,9 +515,7 @@ class AuthService:
             HTTPException: 400 if the token is invalid or already used.
             HTTPException: 410 if the token has expired.
         """
-        token_record = PasswordResetRepository.get_by_token(
-            db, data.token
-        )
+        token_record = PasswordResetRepository.get_by_token(db, data.token)
 
         if not token_record or token_record.used:
             raise HTTPException(
@@ -553,14 +539,11 @@ class AuthService:
         new_hash = hash_password(data.new_password)
         UserRepository.update_password(db, user, new_hash)
         PasswordResetRepository.mark_used(db, token_record)
-        RefreshTokenRepository.revoke_all_for_user(
-            db, str(user.user_id)
-        )
+        RefreshTokenRepository.revoke_all_for_user(db, str(user.user_id))
 
         return {
             "success": True,
             "message": (
-                "Password updated successfully. "
-                "All sessions have been terminated."
+                "Password updated successfully. " "All sessions have been terminated."
             ),
         }
