@@ -16,6 +16,7 @@ from app.models import (  # noqa: F401
 )
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
+from app.routers.messaging import router as messaging_router
 from app.routers.follower import router as follower_router
 
 # Create all tables in the database on startup
@@ -29,6 +30,7 @@ app = FastAPI(
 # Register routers
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(messaging_router)
 app.include_router(follower_router)
 
 
