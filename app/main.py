@@ -13,25 +13,32 @@ from app.models import (  # noqa: F401
     password_reset,
     social_link,
     user,
+    track,
+    playlist,
+    playlist_track,
 )
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.messaging import router as messaging_router
 from app.routers.follower import router as follower_router
-
-# Create all tables in the database on startup
-Base.metadata.create_all(bind=engine)
+from app.routers.playlist import router as playlist_router
+from app.routers.search import router as search_router
+from app.routers.track import router as track_router
 
 app = FastAPI(
     title="SoundCloud Clone API",
     version="1.0.0",
 )
 
-# Register routers
+Base.metadata.create_all(bind=engine)
+
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(messaging_router)
 app.include_router(follower_router)
+app.include_router(playlist_router)
+app.include_router(search_router)
+app.include_router(track_router)
 
 
 @app.get("/")
