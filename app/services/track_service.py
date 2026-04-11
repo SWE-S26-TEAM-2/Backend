@@ -1,31 +1,67 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
-from uuid import UUID  # type: ignore
+
+import os
+from uuid import UUID, uuid4  # type: ignore
 
 from app.models.track import Track
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+
+
 class TrackService:
 
     @staticmethod
-    def create_track(db, user, data):
+    def create_track(
+        db: Session,
+        user,
+        title: str,
+        description: str,
+        file: UploadFile,
+    ):
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No file uploaded",
+            )
+
+        if not file.content_type or not file.content_type.startswith("audio/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only audio files are allowed",
+            )
+
+        file_extension = os.path.splitext(file.filename)[1] or ".mp3"
+        unique_filename = f"{uuid4()}{file_extension}"
+
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+        with open(file_path, "wb") as buffer:
+            buffer.write(file.file.read())
+
+        file_url = f"http://127.0.0.1:8000/api/uploads/{unique_filename}"
+
         track = Track(
             user_id=user.user_id,
-            title=data.title,
-            description=data.description,
-            file_url=data.file_url,
+            title=title,
+            description=description,
+            file_url=file_url,
         )
 
         TrackRepository.create(db, track)
 
         return {
             "success": True,
-            "message": "Track created successfully.",
+            "message": "Track uploaded successfully.",
             "data": {
                 "track_id": str(track.track_id),
                 "title": track.title,
+                "file_url": track.file_url,
             },
         }
 

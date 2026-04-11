@@ -1,3 +1,4 @@
+from io import BytesIO
 from uuid import uuid4
 import pytest
 from fastapi import HTTPException
@@ -44,33 +45,43 @@ class FakeTrack:
         self.visibility = visibility
 
 
-class FakeTrackCreate:
-    def __init__(self, title, description, file_url):
-        self.title = title
-        self.description = description
-        self.file_url = file_url
-
-
 class FakeTrackUpdate:
-    def __init__(self, title=None, description=None, file_url=None, visibility=None):
+    def __init__(
+        self,
+        title=None,
+        description=None,
+        file_url=None,
+        visibility=None,
+    ):
         self.title = title
         self.description = description
         self.file_url = file_url
         self.visibility = visibility
 
 
-def test_create_track(monkeypatch):
+class FakeUploadFile:
+    def __init__(
+        self,
+        filename="test.mp3",
+        content_type="audio/mpeg",
+        content=b"fake mp3 content",
+    ):
+        self.filename = filename
+        self.content_type = content_type
+        self.file = BytesIO(content)
+
+
+def test_create_track(monkeypatch, tmp_path):
     db = FakeDB()
     user = FakeUser(uuid4())
-    data = FakeTrackCreate(
-        title="My Song",
-        description="Test song",
-        file_url="https://example.com/test.mp3",
-    )
+    upload = FakeUploadFile()
 
     created_tracks = []
 
     from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(tmp_path))
 
     def fake_create(db_arg, track):
         created_tracks.append(track)
@@ -79,13 +90,48 @@ def test_create_track(monkeypatch):
 
     monkeypatch.setattr(TrackRepository, "create", fake_create)
 
-    result = TrackService.create_track(db, user, data)
+    result = TrackService.create_track(
+        db,
+        user,
+        "My Song",
+        "Test song",
+        upload,
+    )
 
     assert result["success"] is True
-    assert result["message"] == "Track created successfully."
+    assert result["message"] == "Track uploaded successfully."
     assert result["data"]["title"] == "My Song"
+    assert "file_url" in result["data"]
     assert len(created_tracks) == 1
     assert created_tracks[0].user_id == user.user_id
+
+
+def test_create_track_rejects_missing_filename():
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    upload = FakeUploadFile(filename="")
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(db, user, "Song", "Desc", upload)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "No file uploaded"
+
+
+def test_create_track_rejects_non_audio_file():
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    upload = FakeUploadFile(
+        filename="test.txt",
+        content_type="text/plain",
+        content=b"not audio",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(db, user, "Song", "Desc", upload)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Only audio files are allowed"
 
 
 def test_get_track_by_id_found(monkeypatch):
