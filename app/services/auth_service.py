@@ -78,7 +78,9 @@ class AuthService:
 
         # Generate and send email verification token
         token_record = TokenRepository.create(db, new_user.user_id)
-        send_verification_email(new_user.email, new_user.display_name, token_record.token)
+        send_verification_email(
+            new_user.email, new_user.display_name, token_record.token
+        )
 
         return {
             "success": True,
