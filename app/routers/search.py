@@ -12,4 +12,4 @@ def global_search(
     keyword: str = Query(...),
     db: Session = Depends(get_db),
 ):
-    return SearchService.search_tracks(db, keyword)
+    return SearchService.global_search(db, keyword)
