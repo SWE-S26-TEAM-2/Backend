@@ -26,7 +26,10 @@ from app.core.security import (  # type: ignore
 from app.models.user import User  # type: ignore
 from app.repositories.token_repo import TokenRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
-from app.core.config import GOOGLE_CLIENT_ID_ANDROID, GOOGLE_CLIENT_ID_WEB  # type: ignore
+from app.core.config import (
+    GOOGLE_CLIENT_ID_ANDROID,
+    GOOGLE_CLIENT_ID_WEB,
+)  # type: ignore
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
 from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
 
