@@ -4,12 +4,12 @@ Shared pytest fixtures for unit tests.
 Provides mock database sessions, mock user objects, and
 other reusable test helpers so individual test files stay clean.
 """
+
 import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
 import pytest
-
 
 # ── Fake User helper ───────────────────────────────────
 

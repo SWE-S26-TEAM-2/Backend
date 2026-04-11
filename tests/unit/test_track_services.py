@@ -27,7 +27,15 @@ class FakeUser:
 
 
 class FakeTrack:
-    def __init__(self, track_id, user_id, title="Old Title", description="Old Desc", file_url="old.mp3", visibility=None):
+    def __init__(
+        self,
+        track_id,
+        user_id,
+        title="Old Title",
+        description="Old Desc",
+        file_url="old.mp3",
+        visibility=None,
+    ):
         self.track_id = track_id
         self.user_id = user_id
         self.title = title
@@ -86,6 +94,7 @@ def test_get_track_by_id_found(monkeypatch):
     track = FakeTrack(track_id=track_id, user_id=uuid4())
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
 
     result = TrackService.get_track_by_id(db, track_id)
@@ -98,6 +107,7 @@ def test_get_track_by_id_not_found(monkeypatch):
     track_id = uuid4()
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: None)
 
     result = TrackService.get_track_by_id(db, track_id)
@@ -112,6 +122,7 @@ def test_update_track_success(monkeypatch):
     track = FakeTrack(track_id=track_id, user_id=owner_id)
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
 
     update_data = FakeTrackUpdate(
@@ -137,6 +148,7 @@ def test_update_track_not_found(monkeypatch):
     track_id = uuid4()
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: None)
 
     update_data = FakeTrackUpdate(title="Anything")
@@ -154,6 +166,7 @@ def test_update_track_forbidden(monkeypatch):
     track = FakeTrack(track_id=track_id, user_id=owner_id)
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
 
     update_data = FakeTrackUpdate(title="Hack")
@@ -195,6 +208,7 @@ def test_delete_track_not_found(monkeypatch):
     track_id = uuid4()
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: None)
 
     with pytest.raises(HTTPException) as exc:
@@ -213,6 +227,7 @@ def test_delete_track_forbidden(monkeypatch):
     track = FakeTrack(track_id=track_id, user_id=owner_id)
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
 
     with pytest.raises(HTTPException) as exc:

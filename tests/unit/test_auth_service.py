@@ -4,6 +4,7 @@ Unit tests for app.services.auth_service.AuthService.
 Every repository / security call is mocked so we test
 only the business logic — no database required.
 """
+
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
@@ -13,7 +14,6 @@ from fastapi import HTTPException
 
 from app.services.auth_service import AuthService
 from tests.unit.conftest import make_fake_user
-
 
 # ── Helpers ────────────────────────────────────────────
 
@@ -228,8 +228,14 @@ class TestLoginUser:
     @patch("app.services.auth_service.verify_password", return_value=True)
     @patch("app.services.auth_service.UserRepository")
     def test_success(
-        self, mock_user_repo, mock_verify, mock_at, mock_rt,
-        mock_decode, mock_rt_repo, mock_db,
+        self,
+        mock_user_repo,
+        mock_verify,
+        mock_at,
+        mock_rt,
+        mock_decode,
+        mock_rt_repo,
+        mock_db,
     ):
         """Valid credentials for a verified user should return tokens."""
         mock_user_repo.get_by_email.return_value = make_fake_user()
@@ -293,8 +299,13 @@ class TestRefreshAccessToken:
     @patch("app.services.auth_service.UserRepository")
     @patch("app.services.auth_service.decode_refresh_token")
     def test_success(
-        self, mock_decode, mock_user_repo, mock_at, mock_rt,
-        mock_rt_repo, mock_db,
+        self,
+        mock_decode,
+        mock_user_repo,
+        mock_at,
+        mock_rt,
+        mock_rt_repo,
+        mock_db,
     ):
         """A valid, non-revoked refresh token should return new tokens."""
         uid = str(uuid.uuid4())
@@ -313,6 +324,7 @@ class TestRefreshAccessToken:
     def test_invalid_token_raises_401(self, mock_decode, mock_db):
         """If decode raises JWTError, the service should raise 401."""
         from jose import JWTError
+
         mock_decode.side_effect = JWTError("bad")
 
         with pytest.raises(HTTPException) as exc:
@@ -356,6 +368,7 @@ class TestLogout:
     def test_invalid_refresh_token_raises_400(self, mock_decode, mock_db):
         """If the refresh token is invalid, logout should raise 400."""
         from jose import JWTError
+
         mock_decode.side_effect = JWTError("bad")
 
         with pytest.raises(HTTPException) as exc:
@@ -415,8 +428,12 @@ class TestResetPassword:
     @patch("app.services.auth_service.UserRepository")
     @patch("app.services.auth_service.hash_password", return_value="newhash")
     def test_success(
-        self, mock_hash, mock_user_repo, mock_pr_repo,
-        mock_rt_repo, mock_db,
+        self,
+        mock_hash,
+        mock_user_repo,
+        mock_pr_repo,
+        mock_rt_repo,
+        mock_db,
     ):
         """Valid, unused, non-expired token should reset the password."""
         token_rec = MagicMock()

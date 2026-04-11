@@ -68,6 +68,4 @@ def remove_track_from_playlist(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    return PlaylistService.remove_track_from_playlist(
-        db, user, playlist_id, track_id
-    )
+    return PlaylistService.remove_track_from_playlist(db, user, playlist_id, track_id)
