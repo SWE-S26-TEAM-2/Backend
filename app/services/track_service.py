@@ -5,7 +5,6 @@ from uuid import UUID  # type: ignore
 from app.models.track import Track
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
-from app.routers import track
 
 
 class TrackService:
