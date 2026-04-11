@@ -16,6 +16,11 @@ from app.models import (  # noqa: F401
     track,
     playlist,
     playlist_track,
+    follow,
+    block,
+    refresh_token,
+    conversation,
+    message,
 )
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
@@ -28,6 +33,7 @@ from app.routers.track import router as track_router
 app = FastAPI(
     title="SoundCloud Clone API",
     version="1.0.0",
+    root_path="/api",
 )
 
 Base.metadata.create_all(bind=engine)
