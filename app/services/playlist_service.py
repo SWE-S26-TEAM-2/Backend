@@ -12,7 +12,7 @@ class PlaylistService:
         playlist = Playlist(
             user_id=user.user_id,
             name=data.name,
-            description=data.description,
+            is_public=data.is_public,
         )
         PlaylistRepository.create(db, playlist)
 
@@ -22,7 +22,7 @@ class PlaylistService:
             "data": {
                 "playlist_id": str(playlist.playlist_id),
                 "name": playlist.name,
-                "description": playlist.description,
+                "is_public": playlist.is_public,
             },
         }
 
@@ -42,6 +42,7 @@ class PlaylistService:
                 "user_id": str(playlist.user_id),
                 "name": playlist.name,
                 "description": playlist.description,
+                "is_public": playlist.is_public,
                 "tracks": []
             },
         }
@@ -80,6 +81,7 @@ class PlaylistService:
                 "playlist_id": str(updated_playlist.playlist_id),
                 "name": updated_playlist.name,
                 "description": updated_playlist.description,
+                "is_public": updated_playlist.is_public,
             },
         }
 

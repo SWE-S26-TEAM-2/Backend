@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey  # type: ignore
+from sqlalchemy import Boolean, Column, String, ForeignKey  # type: ignore
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
 from app.database.database import Base  # type: ignore

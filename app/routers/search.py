@@ -7,8 +7,8 @@ from app.services.search_service import SearchService
 router = APIRouter(prefix="/search", tags=["Search"])
 
 
-@router.get("/tracks")
-def search_tracks(
+@router.get("/")
+def global_search(
     keyword: str = Query(...),
     db: Session = Depends(get_db),
 ):

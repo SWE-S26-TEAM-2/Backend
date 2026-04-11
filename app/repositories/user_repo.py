@@ -44,6 +44,15 @@ class UserRepository:
         return db.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
+    def search_by_display_name(db: Session, keyword: str):
+        """
+        Find users by display name using partial case-insensitive matching.
+        """
+        return db.query(User).filter(
+            User.display_name.ilike(f"%{keyword}%")
+        ).all()
+
+    @staticmethod
     def create(db: Session, user: User) -> User:
         """
         Insert a new user into the database.

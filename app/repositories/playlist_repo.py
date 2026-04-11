@@ -26,6 +26,12 @@ class PlaylistRepository:
         ).all()
 
     @staticmethod
+    def search_by_name(db: Session, keyword: str):
+        return db.query(Playlist).filter(
+            Playlist.name.ilike(f"%{keyword}%")
+        ).all()
+
+    @staticmethod
     def update(db: Session, playlist: Playlist, fields: dict):
         for key, value in fields.items():
             setattr(playlist, key, value)
@@ -69,6 +75,6 @@ class PlaylistRepository:
 
     @staticmethod
     def get_playlist_tracks_by_track(db, track_id):
-        return db.query(PlaylistTrack).filter(
-            PlaylistTrack.track_id == track_id
-        ).all()
+         return db.query(PlaylistTrack).filter(
+        PlaylistTrack.track_id == track_id
+    ).all()
