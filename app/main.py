@@ -19,8 +19,6 @@ from app.models import (  # noqa: F401
     follow,
     block,
     refresh_token,
-    conversation,
-    message,
 )
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore

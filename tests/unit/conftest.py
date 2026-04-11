@@ -11,9 +11,13 @@ from unittest.mock import MagicMock
 import pytest
 
 
+# ── Fake User helper ───────────────────────────────────
+
+
 def make_fake_user(**overrides):
     """
     Build a MagicMock that looks like a User ORM object.
+
     Any keyword argument overrides the default value.
     """
     defaults = {
@@ -42,6 +46,9 @@ def make_fake_user(**overrides):
     for key, value in defaults.items():
         setattr(user, key, value)
     return user
+
+
+# ── Fixtures ───────────────────────────────────────────
 
 
 @pytest.fixture
