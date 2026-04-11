@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status
-from requests import Session  # type: ignore
+from sqlalchemy.orm import Session
+from uuid import UUID  # type: ignore
 
 from app.models.track import Track
-from app.repositories import track_repo
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 from app.routers import track
@@ -61,26 +61,40 @@ class TrackService:
             "message": "Track deleted successfully",
         }
     
-    @staticmethod
-    def get_track_by_id(db: Session, track_id: str):
-        return track_repo.get_track_by_id(db, track_id)
-    
 
     @staticmethod
-    def update_track(db: Session, track_id: str, track_data, user_id: str):
-        track = track_repo.get_track_by_id(db, track_id)
+    def get_track_by_id(db: Session, track_id: UUID):
+        track = TrackRepository.get_by_id(db, track_id)
 
-        if not track or track.uploader_id != user_id:
+        if not track:
             return None
 
-        if track_data.title:
+        return track
+    
+    @staticmethod
+    def update_track(db: Session, track_id: UUID, track_data, user_id: UUID):
+        track = TrackRepository.get_by_id(db, track_id)
+
+        if not track:
+            return None
+
+        if str(track.user_id) != str(user_id):
+            return "forbidden"
+
+        if track_data.title is not None:
             track.title = track_data.title
-        if track_data.description:
+
+        if track_data.description is not None:
             track.description = track_data.description
-        if track_data.visibility:
+
+        if track_data.file_url is not None:
+            track.file_url = track_data.file_url
+
+        if track_data.visibility is not None:
             track.visibility = track_data.visibility
 
         db.commit()
         db.refresh(track)
 
         return track
+    

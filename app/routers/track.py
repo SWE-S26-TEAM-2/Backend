@@ -31,22 +31,25 @@ def delete_track(
     return TrackService.delete_track(db, user, track_id)
 
 @router.get("/{track_id}")
-def get_track(track_id: str, db: Session = Depends(get_db)):
-    track = track_service.get_track_by_id(db, track_id)
+def get_track(track_id: UUID, db: Session = Depends(get_db)):
+    track = TrackService.get_track_by_id(db, track_id)
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
     return {"success": True, "data": track}
 
 @router.put("/{track_id}")
 def update_track(
-    track_id: str,
+    track_id: UUID,
     track_data: TrackUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    updated = track_service.update_track(db, track_id, track_data, current_user.id)
+    
+    result = TrackService.update_track(db, track_id, track_data, current_user.user_id)
 
-    if not updated:
-        raise HTTPException(status_code=403, detail="Not authorized or track not found")
+    if result is None:
+        raise HTTPException(status_code=404, detail="Track not found")
+    if result == "forbidden":
+        raise HTTPException(status_code=403, detail="Not Authorized to update this track")
 
-    return {"success": True, "data": updated}
+    return {"success": True, "data": result}

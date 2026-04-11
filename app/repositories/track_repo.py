@@ -1,3 +1,4 @@
+from sqlalchemy import UUID
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.track import Track
@@ -24,6 +25,4 @@ class TrackRepository:
             Track.title.ilike(f"%{keyword}%")
         ).all()
     
-    @staticmethod
-    def get_track_by_id(db: Session, track_id: str):
-        return db.query(Track).filter(Track.id == track_id).first()
+    
