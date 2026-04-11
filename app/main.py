@@ -4,9 +4,9 @@ FastAPI application entry point.
 Initializes the FastAPI app, registers all routers,
 and creates database tables on startup.
 """
-
+import os
 from fastapi import FastAPI  # type: ignore
-
+from fastapi.staticfiles import StaticFiles  # type: ignore
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
     email_verification,
@@ -28,11 +28,19 @@ from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
 from app.routers.track import router as track_router
 
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+
+
 app = FastAPI(
     title="SoundCloud Clone API",
     version="1.0.0",
     root_path="/api",
 )
+
+
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 @app.on_event("startup")
