@@ -1,4 +1,3 @@
-from sqlalchemy import UUID
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.track import Track
@@ -24,5 +23,3 @@ class TrackRepository:
         return db.query(Track).filter(
             Track.title.ilike(f"%{keyword}%")
         ).all()
-    
-    

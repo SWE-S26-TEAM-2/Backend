@@ -5,18 +5,18 @@ All endpoints require Bearer JWT authentication.
 Prefix: /conversations
 
 Endpoints:
-  POST   /conversations                                      — Create or get conversation
-  GET    /conversations                                      — Get all user conversations
-  DELETE /conversations/{conversation_id}                   — Delete a conversation
-  GET    /conversations/{conversation_id}/messages          — Get all messages
-  POST   /conversations/{conversation_id}/messages          — Send a message
+  POST   /conversations — Create or get conversation
+  GET    /conversations — Get all user conversations
+  DELETE /conversations/{conversation_id} — Delete a conversation
+  GET    /conversations/{conversation_id}/messages — Get all messages
+  POST   /conversations/{conversation_id}/messages — Send a message
   PATCH  /conversations/{conversation_id}/messages/{message_id}/read — Mark as read
 """
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status  # type: ignore
-from sqlalchemy.orm import Session  # type: ignore
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user  # type: ignore
 from app.database.database import get_db  # type: ignore

@@ -59,7 +59,6 @@ class TrackService:
             "success": True,
             "message": "Track deleted successfully",
         }
-    
 
     @staticmethod
     def get_track_by_id(db: Session, track_id: UUID):
@@ -69,7 +68,7 @@ class TrackService:
             return None
 
         return track
-    
+
     @staticmethod
     def update_track(db: Session, track_id: UUID, track_data, user_id: UUID):
         track = TrackRepository.get_by_id(db, track_id)
@@ -96,4 +95,3 @@ class TrackService:
         db.refresh(track)
 
         return track
-    

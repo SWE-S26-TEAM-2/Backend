@@ -66,8 +66,9 @@ class PlaylistRepository:
         return db.query(PlaylistTrack).filter(
             PlaylistTrack.playlist_id == playlist_id
         ).all()
+
     @staticmethod
     def get_playlist_tracks_by_track(db, track_id):
-         return db.query(PlaylistTrack).filter(
-        PlaylistTrack.track_id == track_id
-    ).all()
+        return db.query(PlaylistTrack).filter(
+            PlaylistTrack.track_id == track_id
+        ).all()
