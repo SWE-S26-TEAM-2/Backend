@@ -49,5 +49,6 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
           SECRET_KEY: ci-test-secret-key
           GOOGLE_CLIENT_ID: ci-test-google-client-id
+          PYTHONPATH: .
 
       - run: docker build --platform linux/amd64 -t backend:test .
