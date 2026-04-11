@@ -36,14 +36,19 @@ jobs:
           pip install -r requirements.txt
           pip install pytest flake8
 
-      - run: flake8 app/
+      - run: flake8 app/ --count --show-source --statistics
 
-      - run: alembic upgrade head        
+      - run: alembic upgrade head
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          SECRET_KEY: ci-test-secret-key
+          GOOGLE_CLIENT_ID: ci-test-google-client-id
 
       - run: pytest || [ $? -eq 5 ]
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          SECRET_KEY: ci-test-secret-key
+          GOOGLE_CLIENT_ID: ci-test-google-client-id
+          PYTHONPATH: .
 
       - run: docker build --platform linux/amd64 -t backend:test .
