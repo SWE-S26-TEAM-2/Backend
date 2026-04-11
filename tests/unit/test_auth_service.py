@@ -231,6 +231,7 @@ class TestForgotPassword:
                                             mock_reset_repo, mock_db,
                                             verified_user):
         mock_user_repo.get_by_email.return_value = verified_user
+        mock_reset_repo.count_recent.return_value = 0
 
         data = MagicMock()
         data.email = "test@example.com"
