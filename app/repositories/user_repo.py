@@ -98,6 +98,16 @@ class UserRepository:
         return user
 
     @staticmethod
+    def search_by_name(db: Session, keyword: str, limit: int = 20):
+        """Search users by display_name (case-insensitive)."""
+        return (
+            db.query(User)
+            .filter(User.display_name.ilike(f"%{keyword}%"))
+            .limit(limit)
+            .all()
+        )
+
+    @staticmethod
     def update_password(db: Session, user: User, new_hash: str) -> User:
         """
         Update a user's password hash.

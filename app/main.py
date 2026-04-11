@@ -7,6 +7,8 @@ and creates database tables on startup.
 import os
 from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
     email_verification,
@@ -37,6 +39,14 @@ app = FastAPI(
     title="SoundCloud Clone API",
     version="1.0.0",
     root_path="/api",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

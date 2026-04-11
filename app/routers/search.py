@@ -7,6 +7,14 @@ from app.services.search_service import SearchService
 router = APIRouter(prefix="/search", tags=["Search"])
 
 
+@router.get("/users")
+def search_users(
+    keyword: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    return SearchService.search_users(db, keyword)
+
+
 @router.get("/tracks")
 def search_tracks(
     keyword: str = Query(...),

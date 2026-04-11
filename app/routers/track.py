@@ -43,16 +43,17 @@ def get_track(track_id: UUID, db: Session = Depends(get_db)):
     track = TrackService.get_track_by_id(db, track_id)
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
-    return {"success": True,
-            "data": {
-                "track_id": str(track.track_id),
-                "title": track.title,
-                "description": track.description,
-                "file_url": track.file_url,
-                "user_id": str(track.user_id),
-                "visibility": track.visibility,
-            },
-            }
+    return {
+        "success": True,
+        "data": {
+            "track_id": str(track.track_id),
+            "title": track.title,
+            "description": track.description,
+            "file_url": track.file_url,
+            "user_id": str(track.user_id),
+            "visibility": track.visibility,
+        },
+    }
 
 
 @router.put("/{track_id}")
@@ -68,8 +69,7 @@ def update_track(
         raise HTTPException(status_code=404, detail="Track not found")
     if result == "forbidden":
         raise HTTPException(
-            status_code=403,
-            detail="Not Authorized to update this track"
+            status_code=403, detail="Not Authorized to update this track"
         )
 
     return {"success": True, "data": result}

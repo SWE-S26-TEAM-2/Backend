@@ -8,7 +8,7 @@ from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.track_service import TrackService
 from tests.unit.test_track_services import FakeTrack
-
+from fastapi import HTTPException
 
 client = TestClient(app)
 
@@ -285,5 +285,21 @@ def test_delete_track_forbidden(monkeypatch):
 
     assert response.status_code == 403
     assert response.json()["detail"] == "You can only delete your own tracks"
+
+    app.dependency_overrides.clear()
+
+
+def test_create_track_validation_error():
+    user_id = str(uuid4())
+
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)
+    app.dependency_overrides[get_db] = override_get_db
+
+    response = client.post(
+        "/tracks/",
+        json={"description": "Missing title and file_url"},
+    )
+
+    assert response.status_code == 422
 
     app.dependency_overrides.clear()
