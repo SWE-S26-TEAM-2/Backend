@@ -34,7 +34,12 @@ app = FastAPI(
     root_path="/api",
 )
 
-Base.metadata.create_all(bind=engine)
+
+@app.on_event("startup")
+def startup():
+    """Create database tables on startup."""
+    Base.metadata.create_all(bind=engine)
+
 
 app.include_router(auth_router)
 app.include_router(user_router)
