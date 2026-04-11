@@ -32,6 +32,10 @@ from app.core.config import (
 )  # type: ignore
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
 from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
+from app.core.email import (  # type: ignore
+    send_verification_email,
+    send_password_reset_email,
+)
 
 
 class AuthService:
@@ -72,8 +76,11 @@ class AuthService:
 
         UserRepository.create(db, new_user)
 
-        # Generate an email verification token
-        TokenRepository.create(db, new_user.user_id)
+        # Generate and send email verification token
+        token_record = TokenRepository.create(db, new_user.user_id)
+        send_verification_email(
+            new_user.email, new_user.display_name, token_record.token
+        )
 
         return {
             "success": True,
@@ -182,7 +189,8 @@ class AuthService:
                 detail="Rate limit exceeded. Try again later.",
             )
 
-        TokenRepository.create(db, user.user_id)
+        token_record = TokenRepository.create(db, user.user_id)
+        send_verification_email(user.email, user.display_name, token_record.token)
 
         return {
             "success": True,
@@ -504,7 +512,8 @@ class AuthService:
                 detail="Rate limit exceeded. Max 3 reset requests per hour.",
             )
 
-        PasswordResetRepository.create(db, user.user_id)
+        reset_record = PasswordResetRepository.create(db, user.user_id)
+        send_password_reset_email(user.email, user.display_name, reset_record.token)
 
         return generic_response
 
