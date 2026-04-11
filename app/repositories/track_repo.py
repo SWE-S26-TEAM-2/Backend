@@ -23,3 +23,7 @@ class TrackRepository:
         return db.query(Track).filter(
             Track.title.ilike(f"%{keyword}%")
         ).all()
+    
+    @staticmethod
+    def get_track_by_id(db: Session, track_id: str):
+        return db.query(Track).filter(Track.id == track_id).first()

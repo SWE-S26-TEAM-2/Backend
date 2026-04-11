@@ -1,8 +1,11 @@
-from fastapi import HTTPException, status  # type: ignore
+from fastapi import HTTPException, status
+from requests import Session  # type: ignore
 
 from app.models.track import Track
+from app.repositories import track_repo
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
+from app.routers import track
 
 
 class TrackService:
@@ -57,3 +60,27 @@ class TrackService:
             "success": True,
             "message": "Track deleted successfully",
         }
+    
+    @staticmethod
+    def get_track_by_id(db: Session, track_id: str):
+        return track_repo.get_track_by_id(db, track_id)
+    
+
+    @staticmethod
+    def update_track(db: Session, track_id: str, track_data, user_id: str):
+        track = track_repo.get_track_by_id(db, track_id)
+
+        if not track or track.uploader_id != user_id:
+            return None
+
+        if track_data.title:
+            track.title = track_data.title
+        if track_data.description:
+            track.description = track_data.description
+        if track_data.visibility:
+            track.visibility = track_data.visibility
+
+        db.commit()
+        db.refresh(track)
+
+        return track
