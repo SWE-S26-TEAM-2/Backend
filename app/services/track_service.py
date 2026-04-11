@@ -1,6 +1,4 @@
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from uuid import UUID  # type: ignore
 
 from app.models.track import Track
 from app.repositories.track_repo import TrackRepository

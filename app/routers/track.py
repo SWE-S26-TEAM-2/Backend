@@ -1,11 +1,10 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException  # type: ignore
+from fastapi import APIRouter, Depends  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import get_current_user
 from app.database.database import get_db
-from app.models.user import User
-from app.schemas.track_schema import CreateTrackRequest, TrackUpdate
+from app.schemas.track_schema import CreateTrackRequest
 from app.services.track_service import TrackService
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
