@@ -9,4 +9,5 @@ load_dotenv(_env_path)
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 SECRET_KEY = os.environ["SECRET_KEY"]
-GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
+GOOGLE_CLIENT_ID_ANDROID = os.environ["GOOGLE_CLIENT_ID_ANDROID"]
+GOOGLE_CLIENT_ID_WEB = os.environ["GOOGLE_CLIENT_ID_WEB"]

@@ -8,3 +8,8 @@ python-multipart
 pydantic[email]
 google-auth
 requests
+
+# Testing
+pytest
+pytest-mock
+httpx

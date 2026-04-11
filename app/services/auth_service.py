@@ -26,7 +26,10 @@ from app.core.security import (  # type: ignore
 from app.models.user import User  # type: ignore
 from app.repositories.token_repo import TokenRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
-from app.core.config import GOOGLE_CLIENT_ID  # type: ignore
+from app.core.config import (
+    GOOGLE_CLIENT_ID_ANDROID,
+    GOOGLE_CLIENT_ID_WEB,
+)  # type: ignore
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
 from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
 
@@ -275,18 +278,28 @@ class AuthService:
             )
 
         # Verify the ID token against Google's public keys.
+        # Try Android client ID first, then Web client ID.
+        id_info = None
         try:
             id_info = id_token.verify_oauth2_token(
                 data.google_token,
                 google_requests.Request(),
-                GOOGLE_CLIENT_ID,
+                GOOGLE_CLIENT_ID_ANDROID,
             )
         except ValueError:
-            # verify_oauth2_token raises ValueError for invalid/expired tokens.
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Google token invalid or expired.",
-            )
+            # Try Web client ID if Android fails
+            try:
+                id_info = id_token.verify_oauth2_token(
+                    data.google_token,
+                    google_requests.Request(),
+                    GOOGLE_CLIENT_ID_WEB,
+                )
+            except ValueError:
+                # verify_oauth2_token raises ValueError for invalid/expired tokens.
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Google token invalid or expired.",
+                )
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

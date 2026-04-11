@@ -15,8 +15,8 @@ Endpoints:
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status  # type: ignore
-from sqlalchemy.orm import Session  # type: ignore
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user  # type: ignore
 from app.database.database import get_db  # type: ignore
