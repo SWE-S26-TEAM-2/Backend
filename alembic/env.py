@@ -5,11 +5,11 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.database.database import Base
-from app.models.user import User
-from app.models.email_verification import EmailVerification
-from app.models.social_link import SocialLink
-from app.models.refresh_token import RefreshToken
-from app.models.password_reset import PasswordReset
+from app.models.user import User  # noqa: F401
+from app.models.email_verification import EmailVerification  # noqa: F401
+from app.models.social_link import SocialLink  # noqa: F401
+from app.models.refresh_token import RefreshToken  # noqa: F401
+from app.models.password_reset import PasswordReset  # noqa: F401
 
 config = context.config
 
@@ -43,9 +43,7 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
         with context.begin_transaction():
             context.run_migrations()
 
