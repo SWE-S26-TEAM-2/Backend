@@ -46,9 +46,7 @@ class TrackService:
             )
 
         # optional: remove from playlists
-        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(
-            db, track_id
-        )
+        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(db, track_id)
         for pt in playlist_tracks:
             db.delete(pt)
 

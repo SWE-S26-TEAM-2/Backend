@@ -8,7 +8,6 @@ from app.database.database import get_db
 from app.services.track_service import TrackService
 from tests.unit.test_track_services import FakeTrack
 
-
 client = TestClient(app)
 
 
@@ -43,8 +42,7 @@ def test_get_track_success(monkeypatch):
         description="Demo description",
         file_url="https://example.com/demo.mp3",
         visibility="public",
-        )
-    
+    )
 
     monkeypatch.setattr(
         TrackService,
@@ -159,6 +157,7 @@ def test_update_track_forbidden(monkeypatch):
 
     app.dependency_overrides.pop(get_current_user, None)
 
+
 def test_create_track_success(monkeypatch):
     user_id = str(uuid4())
     track_id = str(uuid4())
@@ -269,6 +268,7 @@ def test_delete_track_forbidden(monkeypatch):
 
     app.dependency_overrides.clear()
 
+
 def test_create_track_validation_error():
     user_id = str(uuid4())
 
@@ -277,9 +277,7 @@ def test_create_track_validation_error():
 
     response = client.post(
         "/tracks/",
-        json={
-            "description": "Missing title and file_url"
-        },
+        json={"description": "Missing title and file_url"},
     )
 
     assert response.status_code == 422
