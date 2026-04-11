@@ -8,6 +8,7 @@ python-multipart
 pydantic[email]
 google-auth
 requests
+sendgrid
 
 # Testing
 pytest
