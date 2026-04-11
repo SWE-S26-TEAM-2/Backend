@@ -13,8 +13,8 @@ from uuid import UUID
 from fastapi import HTTPException, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
-from app.models.conversation import Conversation  # type: ignore
-from app.models.message import Message  # type: ignore
+from app.models.conversation import Conversation  # type: ignore  # noqa: F401
+from app.models.message import Message  # type: ignore  # noqa: F401
 from app.models.user import User  # type: ignore
 from app.repositories.conversation_repo import ConversationRepository  # type: ignore
 from app.repositories.message_repo import MessageRepository  # type: ignore

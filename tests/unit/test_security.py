@@ -6,7 +6,7 @@ creation/decoding for both access and refresh tokens.
 """
 
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch  # noqa: F401
 
 import pytest
 from jose import JWTError

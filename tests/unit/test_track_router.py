@@ -7,6 +7,7 @@ from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.track_service import TrackService
 from tests.unit.test_track_services import FakeTrack
+from fastapi import HTTPException
 
 client = TestClient(app)
 
@@ -221,9 +222,6 @@ def test_delete_track_success(monkeypatch):
     assert body["message"] == "Track deleted successfully"
 
     app.dependency_overrides.clear()
-
-
-from fastapi import HTTPException
 
 
 def test_delete_track_not_found(monkeypatch):
