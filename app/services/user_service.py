@@ -290,5 +290,5 @@ class UserService:
         with open(absolute_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Return a URL path the frontend can use directly
-        return f"/uploads/{subfolder}/{file_name}"
+        # Return a full URL path accessible via nginx proxy at /api
+        return f"/api/uploads/{subfolder}/{file_name}"
