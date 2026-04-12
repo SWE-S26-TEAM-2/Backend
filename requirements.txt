@@ -10,7 +10,3 @@ google-auth
 requests
 sendgrid
 
-# Testing
-pytest
-pytest-mock
-httpx
