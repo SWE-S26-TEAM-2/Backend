@@ -14,12 +14,8 @@ class TrackRepository:
 
     @staticmethod
     def get_by_id(db: Session, track_id):
-        return db.query(Track).filter(
-            Track.track_id == track_id
-        ).first()
+        return db.query(Track).filter(Track.track_id == track_id).first()
 
     @staticmethod
     def search_by_title(db: Session, keyword: str):
-        return db.query(Track).filter(
-            Track.title.ilike(f"%{keyword}%")
-        ).all()
+        return db.query(Track).filter(Track.title.ilike(f"%{keyword}%")).all()

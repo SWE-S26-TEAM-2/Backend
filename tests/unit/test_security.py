@@ -4,8 +4,9 @@ Unit tests for app.core.security module.
 Tests password hashing/verification and JWT token
 creation/decoding for both access and refresh tokens.
 """
+
 import uuid
-from unittest.mock import patch
+from unittest.mock import patch  # noqa: F401
 
 import pytest
 from jose import JWTError
@@ -18,7 +19,6 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-
 
 # ── Password hashing ──────────────────────────────────
 
