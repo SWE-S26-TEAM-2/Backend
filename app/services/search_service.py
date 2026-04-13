@@ -36,7 +36,15 @@ class SearchService:
                         "track_id": str(track.track_id),
                         "title": track.title,
                         "description": track.description,
+                        "genre": track.genre,
+                        "tags": track.tags or [],
+                        "release_date": (
+                            track.release_date.isoformat()
+                            if track.release_date else None
+                        ),
                         "file_url": track.file_url,
+                        "visibility": track.visibility,
+                        "processing_status": track.processing_status,
                     }
                     for track in tracks
                 ]

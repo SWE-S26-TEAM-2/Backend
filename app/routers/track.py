@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 from fastapi import (
     APIRouter,
@@ -22,11 +23,25 @@ router = APIRouter(prefix="/tracks", tags=["Tracks"])
 def create_track(
     title: str = Form(...),
     description: str = Form(...),
+    genre: str | None = Form(None),
+    tags: str | None = Form(None),
+    release_date: date | None = Form(None),
+    visibility: str = Form("public"),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    return TrackService.create_track(db, user, title, description, file)
+    return TrackService.create_track(
+        db,
+        user,
+        title,
+        description,
+        file,
+        genre,
+        tags,
+        release_date,
+        visibility,
+    )
 
 
 @router.delete("/{track_id}")
@@ -39,21 +54,12 @@ def delete_track(
 
 
 @router.get("/{track_id}")
-def get_track(track_id: UUID, db: Session = Depends(get_db)):
-    track = TrackService.get_track_by_id(db, track_id)
-    if not track:
-        raise HTTPException(status_code=404, detail="Track not found")
-    return {
-        "success": True,
-        "data": {
-            "track_id": str(track.track_id),
-            "title": track.title,
-            "description": track.description,
-            "file_url": track.file_url,
-            "user_id": str(track.user_id),
-            "visibility": track.visibility,
-        },
-    }
+def get_track(
+    track_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    return TrackService.get_track_details(db, track_id, current_user)
 
 
 @router.put("/{track_id}")
@@ -79,16 +85,18 @@ def update_track(
 def get_track_waveform(
     track_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_waveform(db, track_id)
+    return TrackService.get_waveform(db, track_id, current_user)
 
 
 @router.get("/{track_id}/stream")
 def get_track_stream(
     track_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_stream(db, track_id)
+    return TrackService.get_stream(db, track_id, current_user)
 
 
 @router.post("/{track_id}/plays")
@@ -106,5 +114,6 @@ def record_track_play(
 def get_track_playback(
     track_id: UUID,
     db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_playback(db, track_id)
+    return TrackService.get_playback(db, track_id, current_user)

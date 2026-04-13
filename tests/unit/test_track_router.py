@@ -47,8 +47,18 @@ def test_get_track_success(monkeypatch):
 
     monkeypatch.setattr(
         TrackService,
-        "get_track_by_id",
-        lambda db, tid: fake_track,
+        "get_track_details",
+        lambda db, tid, user=None: {
+            "success": True,
+            "data": {
+                "track_id": str(fake_track.track_id),
+                "title": fake_track.title,
+                "description": fake_track.description,
+                "file_url": fake_track.file_url,
+                "user_id": str(fake_track.user_id),
+                "visibility": fake_track.visibility,
+            },
+        },
     )
 
     response = client.get(f"/tracks/{track_id}")
@@ -64,8 +74,10 @@ def test_get_track_not_found(monkeypatch):
 
     monkeypatch.setattr(
         TrackService,
-        "get_track_by_id",
-        lambda db, tid: None,
+        "get_track_details",
+        lambda db, tid, user=None: (_ for _ in ()).throw(
+            HTTPException(status_code=404, detail="Track not found")
+        ),
     )
 
     response = client.get(f"/tracks/{track_id}")
@@ -166,10 +178,18 @@ def test_create_track_success(monkeypatch):
     app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)
     app.dependency_overrides[get_db] = override_get_db
 
-    monkeypatch.setattr(
-        TrackService,
-        "create_track",
-        lambda db, user, title, description, file: {
+    def fake_create_track(
+        db,
+        user,
+        title,
+        description,
+        file,
+        genre=None,
+        tags=None,
+        release_date=None,
+        visibility="public",
+    ):
+        return {
             "success": True,
             "message": "Track uploaded successfully.",
             "data": {
@@ -177,7 +197,12 @@ def test_create_track_success(monkeypatch):
                 "title": title,
                 "file_url": "http://127.0.0.1:8000/uploads/test.mp3",
             },
-        },
+        }
+
+    monkeypatch.setattr(
+        TrackService,
+        "create_track",
+        fake_create_track,
     )
 
     response = client.post(
@@ -294,7 +319,7 @@ def test_get_track_waveform_success(monkeypatch):
     monkeypatch.setattr(
         TrackService,
         "get_waveform",
-        lambda db, tid: {
+        lambda db, tid, user=None: {
             "success": True,
             "data": {
                 "track_id": str(track_id),
@@ -319,7 +344,7 @@ def test_get_track_stream_success(monkeypatch):
     monkeypatch.setattr(
         TrackService,
         "get_stream",
-        lambda db, tid: {
+        lambda db, tid, user=None: {
             "success": True,
             "data": {
                 "track_id": str(track_id),
@@ -428,7 +453,7 @@ def test_get_track_playback_success(monkeypatch):
     monkeypatch.setattr(
         TrackService,
         "get_playback",
-        lambda db, tid: {
+        lambda db, tid, user=None: {
             "success": True,
             "data": {
                 "track_id": str(track_id),

@@ -41,7 +41,11 @@ class FakeTrack:
         title="Old Title",
         description="Old Desc",
         file_url="old.mp3",
+        genre=None,
+        tags=None,
+        release_date=None,
         visibility=None,
+        processing_status="finished",
         play_count=0,
         duration_seconds=None,
         waveform_peaks=None,
@@ -52,7 +56,11 @@ class FakeTrack:
         self.title = title
         self.description = description
         self.file_url = file_url
+        self.genre = genre
+        self.tags = tags
+        self.release_date = release_date
         self.visibility = visibility
+        self.processing_status = processing_status
         self.play_count = play_count
         self.duration_seconds = duration_seconds
         self.waveform_peaks = waveform_peaks
@@ -65,12 +73,32 @@ class FakeTrackUpdate:
         title=None,
         description=None,
         file_url=None,
+        genre=None,
+        tags=None,
+        release_date=None,
         visibility=None,
     ):
         self.title = title
         self.description = description
         self.file_url = file_url
+        self.genre = genre
+        self.tags = tags
+        self.release_date = release_date
         self.visibility = visibility
+
+    def model_dump(self, exclude_unset=False):
+        data = {
+            "title": self.title,
+            "description": self.description,
+            "file_url": self.file_url,
+            "genre": self.genre,
+            "tags": self.tags,
+            "release_date": self.release_date,
+            "visibility": self.visibility,
+        }
+        if exclude_unset:
+            return {key: value for key, value in data.items() if value is not None}
+        return data
 
 
 class FakeUploadFile:
@@ -116,6 +144,9 @@ def test_create_track(monkeypatch):
         "My Song",
         "Test song",
         upload,
+        genre="Rock",
+        tags="demo, test",
+        visibility="private",
     )
 
     assert result["success"] is True
@@ -125,6 +156,29 @@ def test_create_track(monkeypatch):
     assert len(created_tracks) == 1
     assert created_tracks[0].user_id == user.user_id
     assert created_tracks[0].file_hash is not None
+    assert created_tracks[0].genre == "Rock"
+    assert created_tracks[0].tags == ["demo", "test"]
+    assert created_tracks[0].visibility == "private"
+    assert created_tracks[0].processing_status == "finished"
+
+
+def test_create_track_rejects_invalid_visibility():
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    upload = FakeUploadFile()
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(
+            db,
+            user,
+            "Song",
+            "Desc",
+            upload,
+            visibility="friends",
+        )
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Visibility must be 'public' or 'private'"
 
 
 def test_create_track_rejects_missing_filename():
@@ -232,6 +286,8 @@ def test_update_track_success(monkeypatch):
     update_data = FakeTrackUpdate(
         title="New Title",
         description="New Description",
+        genre="Pop",
+        tags=["new", "single"],
         file_url="new.mp3",
         visibility="public",
     )
@@ -241,8 +297,12 @@ def test_update_track_success(monkeypatch):
     assert result == track
     assert track.title == "New Title"
     assert track.description == "New Description"
+    assert track.genre == "Pop"
+    assert track.tags == ["new", "single"]
     assert track.file_url == "new.mp3"
     assert track.visibility == "public"
+    assert track.waveform_peaks is None
+    assert track.duration_seconds is None
     assert db.committed is True
     assert db.refreshed == track
 
@@ -339,6 +399,26 @@ def test_delete_track_forbidden(monkeypatch):
 
     assert exc.value.status_code == 403
     assert exc.value.detail == "You can only delete your own tracks"
+
+
+def test_get_track_details_rejects_private_for_non_owner(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        visibility="private",
+    )
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.get_track_details(db, track_id, None)
+
+    assert exc.value.status_code == 403
+    assert exc.value.detail == "Track is private"
 
 
 def test_get_stream_success(monkeypatch):

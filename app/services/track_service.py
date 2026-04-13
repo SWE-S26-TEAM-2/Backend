@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import hashlib
 import os
 import mimetypes
+from datetime import date
 from uuid import UUID, uuid4  # type: ignore
 from pydub import AudioSegment  # type: ignore
 
@@ -17,6 +18,7 @@ from app.repositories.playlist_repo import PlaylistRepository
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 TRACK_MAX_SIZE = 100 * 1024 * 1024  # 100 MB
+ALLOWED_VISIBILITIES = {"public", "private"}
 
 
 class TrackService:
@@ -47,7 +49,58 @@ class TrackService:
         return track
 
     @staticmethod
-    def _get_waveform_data(db: Session, track):
+    def _ensure_track_access(track, user=None):
+        if track.visibility == "private" and (
+            user is None or str(track.user_id) != str(user.user_id)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Track is private",
+            )
+
+    @staticmethod
+    def _validate_visibility(visibility: str):
+        if visibility not in ALLOWED_VISIBILITIES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Visibility must be 'public' or 'private'",
+            )
+
+    @staticmethod
+    def _parse_tags(tags: str | None) -> list[str] | None:
+        if tags is None:
+            return None
+
+        parsed_tags = [
+            tag.strip()
+            for tag in tags.split(",")
+            if tag.strip()
+        ]
+        return parsed_tags or None
+
+    @staticmethod
+    def _serialize_track(track):
+        return {
+            "track_id": str(track.track_id),
+            "title": track.title,
+            "description": track.description,
+            "genre": track.genre,
+            "tags": track.tags or [],
+            "release_date": (
+                track.release_date.isoformat() if track.release_date else None
+            ),
+            "file_url": track.file_url,
+            "user_id": str(track.user_id),
+            "visibility": track.visibility,
+            "processing_status": track.processing_status,
+            "play_count": int(track.play_count or 0),
+            "duration_seconds": track.duration_seconds,
+        }
+
+    @staticmethod
+    def _get_waveform_data(db: Session, track, user=None):
+        TrackService._ensure_track_access(track, user)
+
         if track.waveform_peaks:
             return {
                 "track_id": str(track.track_id),
@@ -106,6 +159,10 @@ class TrackService:
         title: str,
         description: str,
         file: UploadFile,
+        genre: str | None = None,
+        tags: str | None = None,
+        release_date: date | None = None,
+        visibility: str = "public",
     ):
         if not file.filename:
             raise HTTPException(
@@ -118,6 +175,8 @@ class TrackService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only audio files are allowed",
             )
+
+        TrackService._validate_visibility(visibility)
 
         file.file.seek(0, os.SEEK_END)
         file_size = file.file.tell()
@@ -157,8 +216,13 @@ class TrackService:
             user_id=user.user_id,
             title=title,
             description=description,
+            genre=genre,
+            tags=TrackService._parse_tags(tags),
+            release_date=release_date,
             file_url=file_url,
             file_hash=file_hash,
+            visibility=visibility,
+            processing_status="finished",
         )
 
         TrackRepository.create(db, track)
@@ -169,9 +233,22 @@ class TrackService:
             "data": {
                 "track_id": str(track.track_id),
                 "title": track.title,
+                "genre": track.genre,
+                "tags": track.tags or [],
+                "release_date": (
+                    track.release_date.isoformat() if track.release_date else None
+                ),
                 "file_url": track.file_url,
+                "visibility": track.visibility,
+                "processing_status": track.processing_status,
             },
         }
+
+    @staticmethod
+    def get_track_details(db: Session, track_id: UUID, user=None):
+        track = TrackService._get_track_or_404(db, track_id)
+        TrackService._ensure_track_access(track, user)
+        return {"success": True, "data": TrackService._serialize_track(track)}
 
     @staticmethod
     def delete_track(db, user, track_id):
@@ -221,14 +298,29 @@ class TrackService:
         if str(track.user_id) != str(user_id):
             return "forbidden"
 
+        update_data = track_data.model_dump(exclude_unset=True)
+        if "visibility" in update_data:
+            TrackService._validate_visibility(update_data["visibility"])
+
         if track_data.title is not None:
             track.title = track_data.title
 
         if track_data.description is not None:
             track.description = track_data.description
 
+        if track_data.genre is not None:
+            track.genre = track_data.genre
+
+        if track_data.tags is not None:
+            track.tags = track_data.tags
+
+        if track_data.release_date is not None:
+            track.release_date = track_data.release_date
+
         if track_data.file_url is not None:
             track.file_url = track_data.file_url
+            track.waveform_peaks = None
+            track.duration_seconds = None
 
         if track_data.visibility is not None:
             track.visibility = track_data.visibility
@@ -239,13 +331,17 @@ class TrackService:
         return track
 
     @staticmethod
-    def get_waveform(db: Session, track_id: UUID):
+    def get_waveform(db: Session, track_id: UUID, user=None):
         track = TrackService._get_track_or_404(db, track_id)
-        return {"success": True, "data": TrackService._get_waveform_data(db, track)}
+        return {
+            "success": True,
+            "data": TrackService._get_waveform_data(db, track, user),
+        }
 
     @staticmethod
-    def get_stream(db: Session, track_id: UUID):
+    def get_stream(db: Session, track_id: UUID, user=None):
         track = TrackService._get_track_or_404(db, track_id)
+        TrackService._ensure_track_access(track, user)
 
         return {
             "success": True,
@@ -255,6 +351,7 @@ class TrackService:
                 "expires_in": None,
                 "content_type": TrackService._get_content_type(track),
                 "play_count": int(track.play_count or 0),
+                "processing_status": track.processing_status,
             },
         }
 
@@ -266,6 +363,7 @@ class TrackService:
         duration_listened_seconds: int | None = None,
     ):
         track = TrackService._get_track_or_404(db, track_id)
+        TrackService._ensure_track_access(track, user)
         track.play_count = int(track.play_count or 0) + 1
 
         if user is not None:
@@ -325,9 +423,10 @@ class TrackService:
         }
 
     @staticmethod
-    def get_playback(db: Session, track_id: UUID):
+    def get_playback(db: Session, track_id: UUID, user=None):
         track = TrackService._get_track_or_404(db, track_id)
-        waveform = TrackService._get_waveform_data(db, track)
+        TrackService._ensure_track_access(track, user)
+        waveform = TrackService._get_waveform_data(db, track, user)
 
         return {
             "success": True,
@@ -339,6 +438,13 @@ class TrackService:
                 "expires_in": None,
                 "content_type": TrackService._get_content_type(track),
                 "play_count": int(track.play_count or 0),
+                "processing_status": track.processing_status,
+                "genre": track.genre,
+                "tags": track.tags or [],
+                "release_date": (
+                    track.release_date.isoformat()
+                    if track.release_date else None
+                ),
                 "duration_seconds": waveform["duration_seconds"],
                 "waveform": {
                     "sample_count": waveform["sample_count"],

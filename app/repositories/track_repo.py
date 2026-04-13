@@ -25,4 +25,7 @@ class TrackRepository:
 
     @staticmethod
     def search_by_title(db: Session, keyword: str):
-        return db.query(Track).filter(Track.title.ilike(f"%{keyword}%")).all()
+        return db.query(Track).filter(
+            Track.title.ilike(f"%{keyword}%"),
+            Track.visibility == "public",
+        ).all()
