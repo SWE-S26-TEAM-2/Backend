@@ -7,3 +7,7 @@ class TrackUpdate(BaseModel):
     description: Optional[str] = None
     file_url: Optional[str] = None
     visibility: Optional[str] = None
+
+
+class RecordPlayRequest(BaseModel):
+    duration_listened_seconds: Optional[int] = None

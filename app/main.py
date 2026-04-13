@@ -20,6 +20,7 @@ from app.models import (  # noqa: F401
     playlist_track,
     follow,
     block,
+    listening_history,
     refresh_token,
 )
 from app.routers.auth import router as auth_router  # type: ignore

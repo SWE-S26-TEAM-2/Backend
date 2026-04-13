@@ -1,5 +1,7 @@
 from io import BytesIO
 from uuid import uuid4
+from datetime import datetime, timezone
+import os
 import pytest
 from fastapi import HTTPException
 
@@ -8,9 +10,13 @@ from app.services.track_service import TrackService
 
 class FakeDB:
     def __init__(self):
+        self.added = []
         self.deleted = []
         self.committed = False
         self.refreshed = None
+
+    def add(self, obj):
+        self.added.append(obj)
 
     def delete(self, obj):
         self.deleted.append(obj)
@@ -36,6 +42,10 @@ class FakeTrack:
         description="Old Desc",
         file_url="old.mp3",
         visibility=None,
+        play_count=0,
+        duration_seconds=None,
+        waveform_peaks=None,
+        file_hash=None,
     ):
         self.track_id = track_id
         self.user_id = user_id
@@ -43,6 +53,10 @@ class FakeTrack:
         self.description = description
         self.file_url = file_url
         self.visibility = visibility
+        self.play_count = play_count
+        self.duration_seconds = duration_seconds
+        self.waveform_peaks = waveform_peaks
+        self.file_hash = file_hash
 
 
 class FakeTrackUpdate:
@@ -71,7 +85,7 @@ class FakeUploadFile:
         self.file = BytesIO(content)
 
 
-def test_create_track(monkeypatch, tmp_path):
+def test_create_track(monkeypatch):
     db = FakeDB()
     user = FakeUser(uuid4())
     upload = FakeUploadFile()
@@ -81,13 +95,19 @@ def test_create_track(monkeypatch, tmp_path):
     from app.repositories.track_repo import TrackRepository
     from app.services import track_service
 
-    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(tmp_path))
+    upload_dir = os.path.join("app", "uploads", "test-unit")
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", upload_dir)
 
     def fake_create(db_arg, track):
         created_tracks.append(track)
         if getattr(track, "track_id", None) is None:
             track.track_id = uuid4()
 
+    monkeypatch.setattr(
+        TrackRepository,
+        "get_by_user_id_and_file_hash",
+        lambda db_arg, uid, file_hash: None,
+    )
     monkeypatch.setattr(TrackRepository, "create", fake_create)
 
     result = TrackService.create_track(
@@ -104,6 +124,7 @@ def test_create_track(monkeypatch, tmp_path):
     assert "file_url" in result["data"]
     assert len(created_tracks) == 1
     assert created_tracks[0].user_id == user.user_id
+    assert created_tracks[0].file_hash is not None
 
 
 def test_create_track_rejects_missing_filename():
@@ -132,6 +153,43 @@ def test_create_track_rejects_non_audio_file():
 
     assert exc.value.status_code == 400
     assert exc.value.detail == "Only audio files are allowed"
+
+
+def test_create_track_rejects_large_file(monkeypatch):
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    upload = FakeUploadFile(content=b"x" * 11)
+
+    from app.services import track_service
+
+    monkeypatch.setattr(track_service, "TRACK_MAX_SIZE", 10)
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(db, user, "Song", "Desc", upload)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "File size must not exceed 100 MB"
+
+
+def test_create_track_rejects_duplicate_file(monkeypatch):
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    upload = FakeUploadFile(content=b"same audio bytes")
+    existing_track = FakeTrack(track_id=uuid4(), user_id=user.user_id)
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(
+        TrackRepository,
+        "get_by_user_id_and_file_hash",
+        lambda db_arg, uid, file_hash: existing_track,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(db, user, "Song", "Desc", upload)
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "You already uploaded this track"
 
 
 def test_get_track_by_id_found(monkeypatch):
@@ -281,3 +339,152 @@ def test_delete_track_forbidden(monkeypatch):
 
     assert exc.value.status_code == 403
     assert exc.value.detail == "You can only delete your own tracks"
+
+
+def test_get_stream_success(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        file_url="http://127.0.0.1:8000/api/uploads/song.mp3",
+        play_count=7,
+    )
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    result = TrackService.get_stream(db, track_id)
+
+    assert result["success"] is True
+    assert result["data"]["stream_url"] == track.file_url
+    assert result["data"]["play_count"] == 7
+    assert result["data"]["expires_in"] is None
+
+
+def test_record_play_increments_count(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(track_id=track_id, user_id=uuid4(), play_count=2)
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    result = TrackService.record_play(db, track_id)
+
+    assert result["success"] is True
+    assert result["data"]["play_count"] == 3
+    assert track.play_count == 3
+    assert db.committed is True
+    assert db.refreshed == track
+
+
+def test_record_play_creates_history_for_authenticated_user(monkeypatch):
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    track_id = uuid4()
+    track = FakeTrack(track_id=track_id, user_id=uuid4(), play_count=2)
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    result = TrackService.record_play(db, track_id, user, 30)
+
+    assert result["success"] is True
+    assert result["data"]["play_count"] == 3
+    assert len(db.added) == 1
+    assert db.added[0].user_id == user.user_id
+    assert db.added[0].track_id == track_id
+    assert db.added[0].duration_listened_seconds == 30
+
+
+def test_get_waveform_returns_cached_peaks(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        duration_seconds=12,
+        waveform_peaks=[0.1, 0.5, 0.2],
+    )
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    result = TrackService.get_waveform(db, track_id)
+
+    assert result["success"] is True
+    assert result["data"]["duration_seconds"] == 12
+    assert result["data"]["sample_count"] == 3
+    assert result["data"]["peaks"] == [0.1, 0.5, 0.2]
+
+
+def test_get_playback_success_with_cached_waveform(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        title="Player Song",
+        description="Ready for playback",
+        file_url="http://127.0.0.1:8000/api/uploads/player.mp3",
+        play_count=4,
+        duration_seconds=33,
+        waveform_peaks=[0.2, 0.8],
+    )
+
+    from app.repositories.track_repo import TrackRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    result = TrackService.get_playback(db, track_id)
+
+    assert result["success"] is True
+    assert result["data"]["title"] == "Player Song"
+    assert result["data"]["stream_url"] == track.file_url
+    assert result["data"]["play_count"] == 4
+    assert result["data"]["duration_seconds"] == 33
+    assert result["data"]["waveform"]["peaks"] == [0.2, 0.8]
+
+
+def test_get_listening_history_success(monkeypatch):
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    history_id = uuid4()
+    track_id = uuid4()
+
+    class FakeHistory:
+        def __init__(self):
+            self.history_id = history_id
+            self.played_at = datetime(2026, 4, 13, tzinfo=timezone.utc)
+            self.duration_listened_seconds = 25
+
+    track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        title="History Song",
+        description="From history",
+        file_url="http://127.0.0.1:8000/api/uploads/history.mp3",
+        play_count=9,
+        duration_seconds=120,
+    )
+
+    from app.repositories.listening_history_repo import ListeningHistoryRepository
+
+    monkeypatch.setattr(
+        ListeningHistoryRepository,
+        "get_by_user_id",
+        lambda db_arg, uid, limit: [(FakeHistory(), track)],
+    )
+
+    result = TrackService.get_listening_history(db, user, 10)
+
+    assert result["success"] is True
+    item = result["data"]["items"][0]
+    assert item["history_id"] == str(history_id)
+    assert item["duration_listened_seconds"] == 25
+    assert item["track"]["title"] == "History Song"

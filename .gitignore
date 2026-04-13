@@ -15,3 +15,8 @@ venv.bak/
 # IDEs
 .vscode/
 .idea/
+
+# Runtime artifacts
+tmp/
+app/uploads/*
+!app/uploads/.gitkeep

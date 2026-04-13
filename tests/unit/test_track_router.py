@@ -8,7 +8,6 @@ from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.track_service import TrackService
 from tests.unit.test_track_services import FakeTrack
-from fastapi import HTTPException
 
 client = TestClient(app)
 
@@ -289,7 +288,171 @@ def test_delete_track_forbidden(monkeypatch):
     app.dependency_overrides.clear()
 
 
-def test_create_track_validation_error():
+def test_get_track_waveform_success(monkeypatch):
+    track_id = uuid4()
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_waveform",
+        lambda db, tid: {
+            "success": True,
+            "data": {
+                "track_id": str(track_id),
+                "duration_seconds": 10,
+                "sample_count": 2,
+                "peaks": [0.1, 0.3],
+            },
+        },
+    )
+
+    response = client.get(f"/tracks/{track_id}/waveform")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["sample_count"] == 2
+
+
+def test_get_track_stream_success(monkeypatch):
+    track_id = uuid4()
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_stream",
+        lambda db, tid: {
+            "success": True,
+            "data": {
+                "track_id": str(track_id),
+                "stream_url": "http://127.0.0.1:8000/api/uploads/test.mp3",
+                "expires_in": None,
+                "content_type": "audio/mpeg",
+                "play_count": 5,
+            },
+        },
+    )
+
+    response = client.get(f"/tracks/{track_id}/stream")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["play_count"] == 5
+
+
+def test_record_track_play_success(monkeypatch):
+    track_id = uuid4()
+
+    monkeypatch.setattr(
+        TrackService,
+        "record_play",
+        lambda db, tid, user=None, duration_listened_seconds=None: {
+            "success": True,
+            "message": "Play recorded successfully.",
+            "data": {
+                "track_id": str(track_id),
+                "play_count": 6,
+            },
+        },
+    )
+
+    response = client.post(f"/tracks/{track_id}/plays")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["play_count"] == 6
+
+
+def test_get_recently_played_success(monkeypatch):
+    user_id = uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_listening_history",
+        lambda db, user, limit: {
+            "success": True,
+            "data": {
+                "items": [
+                    {
+                        "history_id": str(uuid4()),
+                        "played_at": "2026-04-13T00:00:00+00:00",
+                        "duration_listened_seconds": 20,
+                        "track": {
+                            "track_id": str(uuid4()),
+                            "title": "Recent Song",
+                            "file_url": "test.mp3",
+                            "duration_seconds": 100,
+                            "play_count": 3,
+                        },
+                    }
+                ]
+            },
+        },
+    )
+
+    response = client.get("/users/me/recently-played?limit=10")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["items"][0]["track"]["title"] == "Recent Song"
+
+    app.dependency_overrides.clear()
+
+
+def test_get_listening_history_success(monkeypatch):
+    user_id = uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_listening_history",
+        lambda db, user, limit: {
+            "success": True,
+            "data": {"items": []},
+        },
+    )
+
+    response = client.get("/users/me/listening-history")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["items"] == []
+
+    app.dependency_overrides.clear()
+
+
+def test_get_track_playback_success(monkeypatch):
+    track_id = uuid4()
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_playback",
+        lambda db, tid: {
+            "success": True,
+            "data": {
+                "track_id": str(track_id),
+                "title": "Player Song",
+                "stream_url": "http://127.0.0.1:8000/api/uploads/test.mp3",
+                "play_count": 1,
+                "duration_seconds": 10,
+                "waveform": {
+                    "sample_count": 2,
+                    "peaks": [0.2, 0.4],
+                },
+            },
+        },
+    )
+
+    response = client.get(f"/tracks/{track_id}/playback")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["waveform"]["peaks"] == [0.2, 0.4]
+
+
+def test_create_track_json_validation_error():
     user_id = str(uuid4())
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)

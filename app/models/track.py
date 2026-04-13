@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, ForeignKey  # type: ignore
+from sqlalchemy import JSON, Column, Integer, String, ForeignKey  # type: ignore
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
 from app.database.database import Base  # type: ignore
@@ -13,3 +13,8 @@ class Track(Base):
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
     file_url = Column(String, nullable=True)
+    file_hash = Column(String, nullable=True)
+    visibility = Column(String, server_default="public")
+    play_count = Column(Integer, server_default="0")
+    duration_seconds = Column(Integer, nullable=True)
+    waveform_peaks = Column(JSON, nullable=True)

@@ -9,10 +9,10 @@ from fastapi import (
 )  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.database.database import get_db
 from app.models.user import User
-from app.schemas.track_schema import TrackUpdate
+from app.schemas.track_schema import RecordPlayRequest, TrackUpdate
 from app.services.track_service import TrackService
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
@@ -73,3 +73,38 @@ def update_track(
         )
 
     return {"success": True, "data": result}
+
+
+@router.get("/{track_id}/waveform")
+def get_track_waveform(
+    track_id: UUID,
+    db: Session = Depends(get_db),
+):
+    return TrackService.get_waveform(db, track_id)
+
+
+@router.get("/{track_id}/stream")
+def get_track_stream(
+    track_id: UUID,
+    db: Session = Depends(get_db),
+):
+    return TrackService.get_stream(db, track_id)
+
+
+@router.post("/{track_id}/plays")
+def record_track_play(
+    track_id: UUID,
+    data: RecordPlayRequest | None = None,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    duration = data.duration_listened_seconds if data else None
+    return TrackService.record_play(db, track_id, current_user, duration)
+
+
+@router.get("/{track_id}/playback")
+def get_track_playback(
+    track_id: UUID,
+    db: Session = Depends(get_db),
+):
+    return TrackService.get_playback(db, track_id)

@@ -14,3 +14,8 @@ sendgrid
 pytest
 pytest-mock
 httpx
+
+
+# Waveform generation
+pydub
+audioop-lts
