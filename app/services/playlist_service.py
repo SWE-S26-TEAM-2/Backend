@@ -27,6 +27,23 @@ class PlaylistService:
         }
 
     @staticmethod
+    def get_liked_playlists(db, user):
+        playlists = PlaylistRepository.get_liked_playlists(db, user.user_id)
+
+        return {
+            "success": True,
+            "data": [
+                {
+                    "playlist_id": str(playlist.playlist_id),
+                    "user_id": str(playlist.user_id),
+                    "name": playlist.name,
+                    "description": playlist.description,
+                }
+                for playlist in playlists
+            ],
+        }
+
+    @staticmethod
     def get_playlist(db, playlist_id):
         playlist = PlaylistRepository.get_by_id(db, playlist_id)
         if not playlist:
@@ -101,6 +118,58 @@ class PlaylistService:
         return {
             "success": True,
             "message": "Playlist deleted successfully.",
+        }
+
+    @staticmethod
+    def like_playlist(db, user, playlist_id):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Playlist not found",
+            )
+
+        existing = PlaylistRepository.get_playlist_like(db, user.user_id, playlist_id)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You already liked this playlist",
+            )
+
+        playlist_like = PlaylistRepository.create_playlist_like(
+            db, user.user_id, playlist_id
+        )
+
+        return {
+            "success": True,
+            "message": "Playlist liked successfully.",
+            "data": {
+                "playlist_like_id": str(playlist_like.playlist_like_id),
+                "playlist_id": str(playlist_id),
+            },
+        }
+
+    @staticmethod
+    def unlike_playlist(db, user, playlist_id):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Playlist not found",
+            )
+
+        existing = PlaylistRepository.get_playlist_like(db, user.user_id, playlist_id)
+        if not existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You have not liked this playlist",
+            )
+
+        PlaylistRepository.delete_playlist_like(db, existing)
+
+        return {
+            "success": True,
+            "message": "Playlist unliked successfully.",
         }
 
     @staticmethod

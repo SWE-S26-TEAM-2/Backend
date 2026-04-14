@@ -5,14 +5,15 @@ Tests all endpoints and scenarios including:
 - Search users (results found, no results, case-insensitive)
 - Search tracks (results found, no results, case-insensitive)
 """
+
 import uuid
-import pytest
 
 from app.services.search_service import SearchService
 
 
 class FakeDB:
     """Mock database session."""
+
     def __init__(self):
         self.deleted = []
         self.committed = False
@@ -34,8 +35,16 @@ class FakeDB:
 
 class FakeUser:
     """Mock user object."""
-    def __init__(self, user_id=None, display_name="Test User", account_type="listener",
-                 profile_picture=None, follower_count=0, is_verified=False):
+
+    def __init__(
+        self,
+        user_id=None,
+        display_name="Test User",
+        account_type="listener",
+        profile_picture=None,
+        follower_count=0,
+        is_verified=False,
+    ):
         self.user_id = user_id or uuid.uuid4()
         self.display_name = display_name
         self.account_type = account_type
@@ -46,8 +55,14 @@ class FakeUser:
 
 class FakeTrack:
     """Mock track object."""
-    def __init__(self, track_id=None, title="Test Track", description="Track description",
-                 file_url="https://example.com/track.mp3"):
+
+    def __init__(
+        self,
+        track_id=None,
+        title="Test Track",
+        description="Track description",
+        file_url="https://example.com/track.mp3",
+    ):
         self.track_id = track_id or uuid.uuid4()
         self.title = title
         self.description = description
@@ -57,6 +72,7 @@ class FakeTrack:
 # ────────────────────────────────────────────────────────
 # SEARCH USERS TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_search_users_success_with_results(monkeypatch):
     """Test searching users returns results matching keyword."""
@@ -68,7 +84,7 @@ def test_search_users_success_with_results(monkeypatch):
         display_name="John Doe",
         account_type="artist",
         follower_count=100,
-        is_verified=True
+        is_verified=True,
     )
 
     user2 = FakeUser(
@@ -76,27 +92,26 @@ def test_search_users_success_with_results(monkeypatch):
         display_name="John Smith",
         account_type="listener",
         follower_count=50,
-        is_verified=False
+        is_verified=False,
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(
-        UserRepository,
-        "search_by_name",
-        lambda db_arg, kw: [user1, user2]
+        UserRepository, "search_by_name", lambda db_arg, kw: [user1, user2]
     )
 
     result = SearchService.search_users(db, keyword)
 
     assert result["success"] is True
     assert len(result["data"]["users"]) == 2
-    
+
     # Verify first user data
     assert result["data"]["users"][0]["display_name"] == "John Doe"
     assert result["data"]["users"][0]["account_type"] == "artist"
     assert result["data"]["users"][0]["follower_count"] == 100
     assert result["data"]["users"][0]["is_verified"] is True
-    
+
     # Verify second user data
     assert result["data"]["users"][1]["display_name"] == "John Smith"
     assert result["data"]["users"][1]["account_type"] == "listener"
@@ -110,6 +125,7 @@ def test_search_users_no_results(monkeypatch):
     keyword = "nonexistent"
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "search_by_name", lambda db_arg, kw: [])
 
     result = SearchService.search_users(db, keyword)
@@ -130,10 +146,11 @@ def test_search_users_single_result(monkeypatch):
         account_type="artist",
         profile_picture="https://example.com/alice.jpg",
         follower_count=500,
-        is_verified=True
+        is_verified=True,
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "search_by_name", lambda db_arg, kw: [user])
 
     result = SearchService.search_users(db, keyword)
@@ -142,7 +159,9 @@ def test_search_users_single_result(monkeypatch):
     assert len(result["data"]["users"]) == 1
     assert result["data"]["users"][0]["user_id"] == str(user.user_id)
     assert result["data"]["users"][0]["display_name"] == "Alice Johnson"
-    assert result["data"]["users"][0]["profile_picture"] == "https://example.com/alice.jpg"
+    assert (
+        result["data"]["users"][0]["profile_picture"] == "https://example.com/alice.jpg"
+    )
 
 
 def test_search_users_case_insensitive(monkeypatch):
@@ -163,6 +182,7 @@ def test_search_users_case_insensitive(monkeypatch):
         return [user]
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "search_by_name", fake_search)
 
     result = SearchService.search_users(db, keyword_lowercase)
@@ -180,18 +200,24 @@ def test_search_users_multiple_results(monkeypatch):
 
     users = [
         FakeUser(display_name="Test User 1", account_type="artist", follower_count=10),
-        FakeUser(display_name="Test User 2", account_type="listener", follower_count=20),
+        FakeUser(
+            display_name="Test User 2", account_type="listener", follower_count=20
+        ),
         FakeUser(display_name="Test User 3", account_type="artist", follower_count=30),
     ]
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "search_by_name", lambda db_arg, kw: users)
 
     result = SearchService.search_users(db, keyword)
 
     assert result["success"] is True
     assert len(result["data"]["users"]) == 3
-    assert all(user.get("display_name").startswith("Test User") for user in result["data"]["users"])
+    assert all(
+        user.get("display_name").startswith("Test User")
+        for user in result["data"]["users"]
+    )
 
 
 def test_search_users_with_verified_badge(monkeypatch):
@@ -200,22 +226,19 @@ def test_search_users_with_verified_badge(monkeypatch):
     keyword = "verified"
 
     verified_user = FakeUser(
-        display_name="Verified Artist",
-        account_type="artist",
-        is_verified=True
+        display_name="Verified Artist", account_type="artist", is_verified=True
     )
 
     unverified_user = FakeUser(
-        display_name="Unverified Artist",
-        account_type="artist",
-        is_verified=False
+        display_name="Unverified Artist", account_type="artist", is_verified=False
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(
         UserRepository,
         "search_by_name",
-        lambda db_arg, kw: [verified_user, unverified_user]
+        lambda db_arg, kw: [verified_user, unverified_user],
     )
 
     result = SearchService.search_users(db, keyword)
@@ -229,6 +252,7 @@ def test_search_users_with_verified_badge(monkeypatch):
 # SEARCH TRACKS TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_search_tracks_success_with_results(monkeypatch):
     """Test searching tracks returns results matching keyword."""
     db = FakeDB()
@@ -238,33 +262,34 @@ def test_search_tracks_success_with_results(monkeypatch):
         track_id=uuid.uuid4(),
         title="Love Song",
         description="A beautiful love song",
-        file_url="https://example.com/love_song.mp3"
+        file_url="https://example.com/love_song.mp3",
     )
 
     track2 = FakeTrack(
         track_id=uuid.uuid4(),
         title="Love Me",
         description="Popular love track",
-        file_url="https://example.com/love_me.mp3"
+        file_url="https://example.com/love_me.mp3",
     )
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(
-        TrackRepository,
-        "search_by_title",
-        lambda db_arg, kw: [track1, track2]
+        TrackRepository, "search_by_title", lambda db_arg, kw: [track1, track2]
     )
 
     result = SearchService.search_tracks(db, keyword)
 
     assert result["success"] is True
     assert len(result["data"]["tracks"]) == 2
-    
+
     # Verify first track data
     assert result["data"]["tracks"][0]["title"] == "Love Song"
     assert result["data"]["tracks"][0]["description"] == "A beautiful love song"
-    assert result["data"]["tracks"][0]["file_url"] == "https://example.com/love_song.mp3"
-    
+    assert (
+        result["data"]["tracks"][0]["file_url"] == "https://example.com/love_song.mp3"
+    )
+
     # Verify second track data
     assert result["data"]["tracks"][1]["title"] == "Love Me"
     assert result["data"]["tracks"][1]["description"] == "Popular love track"
@@ -276,6 +301,7 @@ def test_search_tracks_no_results(monkeypatch):
     keyword = "nonexistenttrack"
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: [])
 
     result = SearchService.search_tracks(db, keyword)
@@ -294,10 +320,11 @@ def test_search_tracks_single_result(monkeypatch):
         track_id=uuid.uuid4(),
         title="Bohemian Rhapsody",
         description="Classic track from Queen",
-        file_url="https://example.com/bohemian_rhapsody.mp3"
+        file_url="https://example.com/bohemian_rhapsody.mp3",
     )
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: [track])
 
     result = SearchService.search_tracks(db, keyword)
@@ -317,7 +344,7 @@ def test_search_tracks_case_insensitive(monkeypatch):
         track_id=uuid.uuid4(),
         title="Rock Anthem",
         description="Epic rock song",
-        file_url="https://example.com/rock.mp3"
+        file_url="https://example.com/rock.mp3",
     )
 
     search_calls = []
@@ -327,6 +354,7 @@ def test_search_tracks_case_insensitive(monkeypatch):
         return [track]
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", fake_search)
 
     result = SearchService.search_tracks(db, keyword_lowercase)
@@ -349,6 +377,7 @@ def test_search_tracks_multiple_results(monkeypatch):
     ]
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: tracks)
 
     result = SearchService.search_tracks(db, keyword)
@@ -369,6 +398,7 @@ def test_search_tracks_partial_match(monkeypatch):
     ]
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: tracks)
 
     result = SearchService.search_tracks(db, keyword)
@@ -388,10 +418,11 @@ def test_search_tracks_special_characters_in_title(monkeypatch):
         track_id=uuid.uuid4(),
         title="Rock & Roll Revival",
         description="Mix of rock and roll",
-        file_url="https://example.com/rock_roll.mp3"
+        file_url="https://example.com/rock_roll.mp3",
     )
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: [track])
 
     result = SearchService.search_tracks(db, keyword)
@@ -410,10 +441,11 @@ def test_search_tracks_by_artist_name_in_description(monkeypatch):
         track_id=uuid.uuid4(),
         title="Yesterday",
         description="Classic track by The Beatles",
-        file_url="https://example.com/yesterday.mp3"
+        file_url="https://example.com/yesterday.mp3",
     )
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: [track])
 
     result = SearchService.search_tracks(db, keyword)
@@ -425,6 +457,7 @@ def test_search_tracks_by_artist_name_in_description(monkeypatch):
 # ────────────────────────────────────────────────────────
 # CROSS-FUNCTIONAL TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_search_users_and_tracks_independently(monkeypatch):
     """Test that user and track searches work independently."""
@@ -468,7 +501,10 @@ def test_search_with_empty_keyword_returns_all(monkeypatch):
     ]
 
     from app.repositories.user_repo import UserRepository
-    monkeypatch.setattr(UserRepository, "search_by_name", lambda db_arg, kw: users if kw else users)
+
+    monkeypatch.setattr(
+        UserRepository, "search_by_name", lambda db_arg, kw: users if kw else users
+    )
 
     result = SearchService.search_users(db, keyword)
 
@@ -487,10 +523,11 @@ def test_search_response_structure_for_users(monkeypatch):
         account_type="artist",
         profile_picture="https://example.com/pic.jpg",
         follower_count=1000,
-        is_verified=True
+        is_verified=True,
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "search_by_name", lambda db_arg, kw: [user])
 
     result = SearchService.search_users(db, keyword)
@@ -499,7 +536,7 @@ def test_search_response_structure_for_users(monkeypatch):
     assert "success" in result
     assert "data" in result
     assert "users" in result["data"]
-    
+
     # Verify user object structure
     user_obj = result["data"]["users"][0]
     assert "user_id" in user_obj
@@ -519,10 +556,11 @@ def test_search_response_structure_for_tracks(monkeypatch):
         track_id=uuid.uuid4(),
         title="Test Track",
         description="A test track",
-        file_url="https://example.com/track.mp3"
+        file_url="https://example.com/track.mp3",
     )
 
     from app.repositories.track_repo import TrackRepository
+
     monkeypatch.setattr(TrackRepository, "search_by_title", lambda db_arg, kw: [track])
 
     result = SearchService.search_tracks(db, keyword)
@@ -531,7 +569,7 @@ def test_search_response_structure_for_tracks(monkeypatch):
     assert "success" in result
     assert "data" in result
     assert "tracks" in result["data"]
-    
+
     # Verify track object structure
     track_obj = result["data"]["tracks"][0]
     assert "track_id" in track_obj

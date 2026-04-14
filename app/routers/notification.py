@@ -29,6 +29,4 @@ def mark_notification_as_read(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return NotificationService.mark_as_read(
-        db, current_user, notification_id
-    )
+    return NotificationService.mark_as_read(db, current_user, notification_id)

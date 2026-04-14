@@ -8,7 +8,6 @@ from app.models.track import Track
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 

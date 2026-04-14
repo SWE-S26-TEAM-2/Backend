@@ -9,6 +9,7 @@ Tests all API endpoints with TestClient, including:
 - POST /playlists/{playlist_id}/tracks - Add track to playlist
 - DELETE /playlists/{playlist_id}/tracks/{track_id} - Remove track from playlist
 """
+
 import uuid
 from fastapi.testclient import TestClient
 
@@ -17,18 +18,19 @@ from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.playlist_service import PlaylistService
 
-
 client = TestClient(app)
 
 
 class FakeUser:
     """Mock user for dependency override."""
+
     def __init__(self, user_id=None):
         self.user_id = user_id or uuid.uuid4()
 
 
 class DummyDB:
     """Mock database for dependency override."""
+
     pass
 
 
@@ -50,6 +52,7 @@ def teardown_module(module):
 # ────────────────────────────────────────────────────────
 # CREATE PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_create_playlist_endpoint_success(monkeypatch):
     """Test POST /playlists/ returns 200 with success response."""
@@ -76,7 +79,7 @@ def test_create_playlist_endpoint_success(monkeypatch):
         json={
             "name": "My Playlist",
             "description": "My favorite songs",
-        }
+        },
     )
 
     assert response.status_code == 200
@@ -97,7 +100,7 @@ def test_create_playlist_endpoint_without_auth(monkeypatch):
         json={
             "name": "My Playlist",
             "description": "My favorite songs",
-        }
+        },
     )
 
     # Should fail due to missing authentication
@@ -116,7 +119,7 @@ def test_create_playlist_endpoint_missing_name(monkeypatch):
         "/playlists/",
         json={
             "description": "My favorite songs",
-        }
+        },
     )
 
     # Should fail due to validation error
@@ -148,7 +151,7 @@ def test_create_playlist_endpoint_with_None_description(monkeypatch):
         json={
             "name": "Simple Playlist",
             "description": None,
-        }
+        },
     )
 
     assert response.status_code == 200
@@ -160,6 +163,7 @@ def test_create_playlist_endpoint_with_None_description(monkeypatch):
 # ────────────────────────────────────────────────────────
 # GET PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_playlist_endpoint_success(monkeypatch):
     """Test GET /playlists/{playlist_id} returns 200 with playlist data."""
@@ -174,7 +178,7 @@ def test_get_playlist_endpoint_success(monkeypatch):
                 "user_id": str(user_id),
                 "name": "My Playlist",
                 "description": "My description",
-                "tracks": []
+                "tracks": [],
             },
         }
 
@@ -211,7 +215,7 @@ def test_get_playlist_endpoint_not_found(monkeypatch):
 
 def test_get_playlist_endpoint_invalid_id_format(monkeypatch):
     """Test GET /playlists/{invalid_id} with invalid UUID format."""
-    response = client.get(f"/playlists/invalid-uuid")
+    response = client.get("/playlists/invalid-uuid")
 
     # Should fail validation
     assert response.status_code >= 400
@@ -220,6 +224,7 @@ def test_get_playlist_endpoint_invalid_id_format(monkeypatch):
 # ────────────────────────────────────────────────────────
 # UPDATE PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_update_playlist_endpoint_success(monkeypatch):
     """Test PATCH /playlists/{playlist_id} returns 200 with updated data."""
@@ -246,7 +251,7 @@ def test_update_playlist_endpoint_success(monkeypatch):
         json={
             "name": "Updated Name",
             "description": "Updated Description",
-        }
+        },
     )
 
     assert response.status_code == 200
@@ -272,10 +277,7 @@ def test_update_playlist_endpoint_unauthorized(monkeypatch):
 
     monkeypatch.setattr(PlaylistService, "update_playlist", fake_update_playlist)
 
-    response = client.patch(
-        f"/playlists/{playlist_id}",
-        json={"name": "Hacked Name"}
-    )
+    response = client.patch(f"/playlists/{playlist_id}", json={"name": "Hacked Name"})
 
     assert response.status_code == 403
     assert response.json()["detail"] == "You can only update your own playlists"
@@ -298,10 +300,7 @@ def test_update_playlist_endpoint_not_found(monkeypatch):
 
     monkeypatch.setattr(PlaylistService, "update_playlist", fake_update_playlist)
 
-    response = client.patch(
-        f"/playlists/{playlist_id}",
-        json={"name": "New Name"}
-    )
+    response = client.patch(f"/playlists/{playlist_id}", json={"name": "New Name"})
 
     assert response.status_code == 404
 
@@ -327,8 +326,7 @@ def test_update_playlist_endpoint_only_name(monkeypatch):
     monkeypatch.setattr(PlaylistService, "update_playlist", fake_update_playlist)
 
     response = client.patch(
-        f"/playlists/{playlist_id}",
-        json={"name": "Only Name Updated"}
+        f"/playlists/{playlist_id}", json={"name": "Only Name Updated"}
     )
 
     assert response.status_code == 200
@@ -337,6 +335,7 @@ def test_update_playlist_endpoint_only_name(monkeypatch):
 # ────────────────────────────────────────────────────────
 # DELETE PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_delete_playlist_endpoint_success(monkeypatch):
     """Test DELETE /playlists/{playlist_id} returns 200 success."""
@@ -409,6 +408,7 @@ def test_delete_playlist_endpoint_not_found(monkeypatch):
 # ADD TRACK TO PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_add_track_to_playlist_endpoint_success(monkeypatch):
     """Test POST /playlists/{playlist_id}/tracks returns 200."""
     user_id = uuid.uuid4()
@@ -426,8 +426,7 @@ def test_add_track_to_playlist_endpoint_success(monkeypatch):
     monkeypatch.setattr(PlaylistService, "add_track_to_playlist", fake_add_track)
 
     response = client.post(
-        f"/playlists/{playlist_id}/tracks",
-        json={"track_id": str(track_id)}
+        f"/playlists/{playlist_id}/tracks", json={"track_id": str(track_id)}
     )
 
     assert response.status_code == 200
@@ -437,7 +436,8 @@ def test_add_track_to_playlist_endpoint_success(monkeypatch):
 
 
 def test_add_track_playlist_not_found(monkeypatch):
-    """Test POST /playlists/{playlist_id}/tracks returns 404 if playlist doesn't exist."""
+    """Test POST /playlists/{playlist_id}/tracks returns 404 if
+    playlist doesn't exist."""
     user_id = uuid.uuid4()
     playlist_id = uuid.uuid4()
     track_id = uuid.uuid4()
@@ -455,8 +455,7 @@ def test_add_track_playlist_not_found(monkeypatch):
     monkeypatch.setattr(PlaylistService, "add_track_to_playlist", fake_add_track)
 
     response = client.post(
-        f"/playlists/{playlist_id}/tracks",
-        json={"track_id": str(track_id)}
+        f"/playlists/{playlist_id}/tracks", json={"track_id": str(track_id)}
     )
 
     assert response.status_code == 404
@@ -481,8 +480,7 @@ def test_add_track_unauthorized(monkeypatch):
     monkeypatch.setattr(PlaylistService, "add_track_to_playlist", fake_add_track)
 
     response = client.post(
-        f"/playlists/{playlist_id}/tracks",
-        json={"track_id": str(track_id)}
+        f"/playlists/{playlist_id}/tracks", json={"track_id": str(track_id)}
     )
 
     assert response.status_code == 403
@@ -507,8 +505,7 @@ def test_add_track_not_found(monkeypatch):
     monkeypatch.setattr(PlaylistService, "add_track_to_playlist", fake_add_track)
 
     response = client.post(
-        f"/playlists/{playlist_id}/tracks",
-        json={"track_id": str(track_id)}
+        f"/playlists/{playlist_id}/tracks", json={"track_id": str(track_id)}
     )
 
     assert response.status_code == 404
@@ -533,8 +530,7 @@ def test_add_track_duplicate(monkeypatch):
     monkeypatch.setattr(PlaylistService, "add_track_to_playlist", fake_add_track)
 
     response = client.post(
-        f"/playlists/{playlist_id}/tracks",
-        json={"track_id": str(track_id)}
+        f"/playlists/{playlist_id}/tracks", json={"track_id": str(track_id)}
     )
 
     assert response.status_code == 409
@@ -544,6 +540,7 @@ def test_add_track_duplicate(monkeypatch):
 # ────────────────────────────────────────────────────────
 # REMOVE TRACK FROM PLAYLIST ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_remove_track_from_playlist_endpoint_success(monkeypatch):
     """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 200."""
@@ -559,7 +556,9 @@ def test_remove_track_from_playlist_endpoint_success(monkeypatch):
             "message": "Track removed from playlist successfully.",
         }
 
-    monkeypatch.setattr(PlaylistService, "remove_track_from_playlist", fake_remove_track)
+    monkeypatch.setattr(
+        PlaylistService, "remove_track_from_playlist", fake_remove_track
+    )
 
     response = client.delete(f"/playlists/{playlist_id}/tracks/{track_id}")
 
@@ -570,7 +569,8 @@ def test_remove_track_from_playlist_endpoint_success(monkeypatch):
 
 
 def test_remove_track_playlist_not_found(monkeypatch):
-    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 404 if playlist doesn't exist."""
+    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 404 if
+    playlist doesn't exist."""
     user_id = uuid.uuid4()
     playlist_id = uuid.uuid4()
     track_id = uuid.uuid4()
@@ -585,7 +585,9 @@ def test_remove_track_playlist_not_found(monkeypatch):
             detail="Playlist not found",
         )
 
-    monkeypatch.setattr(PlaylistService, "remove_track_from_playlist", fake_remove_track)
+    monkeypatch.setattr(
+        PlaylistService, "remove_track_from_playlist", fake_remove_track
+    )
 
     response = client.delete(f"/playlists/{playlist_id}/tracks/{track_id}")
 
@@ -593,7 +595,8 @@ def test_remove_track_playlist_not_found(monkeypatch):
 
 
 def test_remove_track_unauthorized(monkeypatch):
-    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 403 for non-owner."""
+    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 403 for
+    non-owner."""
     user_id = uuid.uuid4()
     playlist_id = uuid.uuid4()
     track_id = uuid.uuid4()
@@ -608,7 +611,9 @@ def test_remove_track_unauthorized(monkeypatch):
             detail="You can only edit your own playlists",
         )
 
-    monkeypatch.setattr(PlaylistService, "remove_track_from_playlist", fake_remove_track)
+    monkeypatch.setattr(
+        PlaylistService, "remove_track_from_playlist", fake_remove_track
+    )
 
     response = client.delete(f"/playlists/{playlist_id}/tracks/{track_id}")
 
@@ -616,7 +621,8 @@ def test_remove_track_unauthorized(monkeypatch):
 
 
 def test_remove_track_not_in_playlist(monkeypatch):
-    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 404 if track not in playlist."""
+    """Test DELETE /playlists/{playlist_id}/tracks/{track_id} returns 404 if
+    track not in playlist."""
     user_id = uuid.uuid4()
     playlist_id = uuid.uuid4()
     track_id = uuid.uuid4()
@@ -631,7 +637,9 @@ def test_remove_track_not_in_playlist(monkeypatch):
             detail="Track not found in playlist",
         )
 
-    monkeypatch.setattr(PlaylistService, "remove_track_from_playlist", fake_remove_track)
+    monkeypatch.setattr(
+        PlaylistService, "remove_track_from_playlist", fake_remove_track
+    )
 
     response = client.delete(f"/playlists/{playlist_id}/tracks/{track_id}")
 

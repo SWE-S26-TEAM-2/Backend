@@ -16,7 +16,7 @@ from app.core.config import SECRET_KEY
 # CONSTANTS — Change SECRET_KEY in production!
 # ──────────────────────────────────────────────
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 1500
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 

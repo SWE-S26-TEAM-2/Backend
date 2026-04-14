@@ -24,6 +24,14 @@ def create_playlist(
     return PlaylistService.create_playlist(db, user, data)
 
 
+@router.get("/liked")
+def get_liked_playlists(
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return PlaylistService.get_liked_playlists(db, user)
+
+
 @router.get("/{playlist_id}")
 def get_playlist(
     playlist_id: UUID,
@@ -49,6 +57,24 @@ def delete_playlist(
     user=Depends(get_current_user),
 ):
     return PlaylistService.delete_playlist(db, user, playlist_id)
+
+
+@router.post("/{playlist_id}/like")
+def like_playlist(
+    playlist_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return PlaylistService.like_playlist(db, user, playlist_id)
+
+
+@router.delete("/{playlist_id}/like")
+def unlike_playlist(
+    playlist_id: UUID,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return PlaylistService.unlike_playlist(db, user, playlist_id)
 
 
 @router.post("/{playlist_id}/tracks")

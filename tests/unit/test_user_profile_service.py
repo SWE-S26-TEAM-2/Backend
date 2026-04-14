@@ -11,6 +11,7 @@ Tests all endpoints and scenarios including:
 - Get social links (user's social profiles)
 - Update social links (replace all links)
 """
+
 import uuid
 import io
 import pytest
@@ -22,6 +23,7 @@ from app.services.social_link_service import SocialLinkService
 
 class FakeDB:
     """Mock database session."""
+
     def __init__(self):
         self.deleted = []
         self.committed = False
@@ -43,11 +45,27 @@ class FakeDB:
 
 class FakeUser:
     """Mock user object."""
-    def __init__(self, user_id=None, email="test@example.com", display_name="Test User",
-                 account_type="listener", is_verified=True, is_suspended=False,
-                 bio=None, location=None, is_premium=False, is_private=False,
-                 profile_picture=None, cover_photo=None, follower_count=0,
-                 following_count=0, track_count=0, created_at=None, updated_at=None):
+
+    def __init__(
+        self,
+        user_id=None,
+        email="test@example.com",
+        display_name="Test User",
+        account_type="listener",
+        is_verified=True,
+        is_suspended=False,
+        bio=None,
+        location=None,
+        is_premium=False,
+        is_private=False,
+        profile_picture=None,
+        cover_photo=None,
+        follower_count=0,
+        following_count=0,
+        track_count=0,
+        created_at=None,
+        updated_at=None,
+    ):
         self.user_id = user_id or uuid.uuid4()
         self.email = email
         self.display_name = display_name
@@ -69,6 +87,7 @@ class FakeUser:
 
 class FakeSocialLink:
     """Mock social link object."""
+
     def __init__(self, platform="twitter", url="https://twitter.com/user"):
         self.platform = platform
         self.url = url
@@ -76,6 +95,7 @@ class FakeSocialLink:
 
 class UpdateProfileRequest:
     """Mock update profile request."""
+
     def __init__(self, display_name=None, bio=None, location=None, account_type=None):
         self.display_name = display_name
         self.bio = bio
@@ -98,18 +118,21 @@ class UpdateProfileRequest:
 
 class UpdatePrivacyRequest:
     """Mock update privacy request."""
+
     def __init__(self, is_private):
         self.is_private = is_private
 
 
 class UpdateSocialLinksRequest:
     """Mock update social links request."""
+
     def __init__(self, social_links=None):
         self.social_links = social_links or []
 
 
 class FakeUploadFile:
     """Mock FastAPI UploadFile."""
+
     def __init__(self, filename="test.jpg", content_type="image/jpeg", size=1000):
         self.filename = filename
         self.content_type = content_type
@@ -120,6 +143,7 @@ class FakeUploadFile:
 # ────────────────────────────────────────────────────────
 # GET MY PROFILE TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_my_profile_success():
     """Test getting full profile of authenticated user."""
@@ -138,7 +162,7 @@ def test_get_my_profile_success():
         cover_photo="https://example.com/cover.jpg",
         follower_count=100,
         following_count=50,
-        track_count=10
+        track_count=10,
     )
 
     result = UserService.get_my_profile(current_user)
@@ -162,7 +186,7 @@ def test_get_my_profile_with_minimal_data():
         bio=None,
         location=None,
         profile_picture=None,
-        cover_photo=None
+        cover_photo=None,
     )
 
     result = UserService.get_my_profile(current_user)
@@ -176,6 +200,7 @@ def test_get_my_profile_with_minimal_data():
 # ────────────────────────────────────────────────────────
 # GET USER PROFILE BY ID TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_user_profile_public_success(monkeypatch):
     """Test getting public profile of another user."""
@@ -192,10 +217,11 @@ def test_get_user_profile_public_success(monkeypatch):
         cover_photo="https://example.com/cover.jpg",
         follower_count=200,
         following_count=100,
-        track_count=20
+        track_count=20,
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: user)
 
     result = UserService.get_profile_by_id(db, user_id)
@@ -217,10 +243,11 @@ def test_get_user_profile_private_limited_data(monkeypatch):
         bio="Secret bio",
         is_private=True,
         profile_picture="https://example.com/pic.jpg",
-        follower_count=50
+        follower_count=50,
     )
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: user)
 
     result = UserService.get_profile_by_id(db, user_id)
@@ -242,6 +269,7 @@ def test_get_user_profile_not_found(monkeypatch):
     user_id = uuid.uuid4()
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -255,6 +283,7 @@ def test_get_user_profile_not_found(monkeypatch):
 # UPDATE PROFILE TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_profile_all_fields(monkeypatch):
     """Test updating all allowed profile fields."""
     db = FakeDB()
@@ -262,14 +291,14 @@ def test_update_profile_all_fields(monkeypatch):
         display_name="Old Name",
         bio="Old bio",
         location="Old City",
-        account_type="listener"
+        account_type="listener",
     )
 
     data = UpdateProfileRequest(
         display_name="New Name",
         bio="New bio",
         location="New City",
-        account_type="artist"
+        account_type="artist",
     )
 
     from app.repositories.user_repo import UserRepository
@@ -284,7 +313,9 @@ def test_update_profile_all_fields(monkeypatch):
 
     assert result["success"] is True
     assert result["message"] == "Profile updated successfully."
-    assert result["data"]["display_name"] == "New Name"  # Updated by fake_update function
+    assert (
+        result["data"]["display_name"] == "New Name"
+    )  # Updated by fake_update function
 
 
 def test_update_profile_partial_fields(monkeypatch):
@@ -294,12 +325,13 @@ def test_update_profile_partial_fields(monkeypatch):
         display_name="Current Name",
         bio="Current bio",
         location="Current City",
-        account_type="listener"
+        account_type="listener",
     )
 
     data = UpdateProfileRequest(display_name="Updated Name")
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.update_profile(db, user, data)
@@ -315,6 +347,7 @@ def test_update_profile_only_bio(monkeypatch):
     data = UpdateProfileRequest(bio="New bio")
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.update_profile(db, user, data)
@@ -326,12 +359,12 @@ def test_update_profile_blocked_fields(monkeypatch):
     """Test that blocked fields are filtered out."""
     db = FakeDB()
     user = FakeUser()
-    
+
     # Try to update fields that should not be allowed
     data = UpdateProfileRequest(display_name="New Name")
 
     from app.repositories.user_repo import UserRepository
-    
+
     called_with_fields = []
 
     def fake_update(db_arg, u, fields):
@@ -348,6 +381,7 @@ def test_update_profile_blocked_fields(monkeypatch):
 # UPDATE PRIVACY TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_privacy_to_private(monkeypatch):
     """Test making profile private."""
     db = FakeDB()
@@ -355,6 +389,7 @@ def test_update_privacy_to_private(monkeypatch):
     data = UpdatePrivacyRequest(is_private=True)
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.update_privacy(db, user, data)
@@ -370,6 +405,7 @@ def test_update_privacy_to_public(monkeypatch):
     data = UpdatePrivacyRequest(is_private=False)
 
     from app.repositories.user_repo import UserRepository
+
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.update_privacy(db, user, data)
@@ -382,11 +418,14 @@ def test_update_privacy_to_public(monkeypatch):
 # UPLOAD AVATAR TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_upload_avatar_success(monkeypatch):
     """Test successfully uploading avatar."""
     db = FakeDB()
     user = FakeUser()
-    file = FakeUploadFile(filename="avatar.jpg", content_type="image/jpeg", size=2000000)
+    file = FakeUploadFile(
+        filename="avatar.jpg", content_type="image/jpeg", size=2000000
+    )
 
     from app.repositories.user_repo import UserRepository
 
@@ -418,7 +457,7 @@ def test_upload_avatar_invalid_type(monkeypatch):
     def fake_validate(f, max_size, label):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only JPEG, PNG, and WEBP files are allowed"
+            detail="Only JPEG, PNG, and WEBP files are allowed",
         )
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
@@ -441,7 +480,7 @@ def test_upload_avatar_file_too_large(monkeypatch):
     def fake_validate(f, max_size, label):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File size must not exceed {label}"
+            detail=f"File size must not exceed {label}",
         )
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
@@ -455,6 +494,7 @@ def test_upload_avatar_file_too_large(monkeypatch):
 # ────────────────────────────────────────────────────────
 # UPLOAD COVER PHOTO TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_upload_cover_success(monkeypatch):
     """Test successfully uploading cover photo."""
@@ -492,7 +532,7 @@ def test_upload_cover_invalid_type(monkeypatch):
     def fake_validate(f, max_size, label):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only JPEG, PNG, and WEBP files are allowed"
+            detail="Only JPEG, PNG, and WEBP files are allowed",
         )
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
@@ -515,7 +555,7 @@ def test_upload_cover_file_too_large(monkeypatch):
     def fake_validate(f, max_size, label):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File size must not exceed {label}"
+            detail=f"File size must not exceed {label}",
         )
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
@@ -530,11 +570,12 @@ def test_upload_cover_file_too_large(monkeypatch):
 # GET SOCIAL LINKS TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_get_social_links_success(monkeypatch):
     """Test getting all social links for user."""
     db = FakeDB()
     user = FakeUser()
-    
+
     links = [
         FakeSocialLink(platform="twitter", url="https://twitter.com/user"),
         FakeSocialLink(platform="instagram", url="https://instagram.com/user"),
@@ -542,7 +583,10 @@ def test_get_social_links_success(monkeypatch):
     ]
 
     from app.repositories.social_link_repo import SocialLinkRepository
-    monkeypatch.setattr(SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: links)
+
+    monkeypatch.setattr(
+        SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: links
+    )
 
     result = SocialLinkService.get_social_links(db, user)
 
@@ -558,6 +602,7 @@ def test_get_social_links_empty(monkeypatch):
     user = FakeUser()
 
     from app.repositories.social_link_repo import SocialLinkRepository
+
     monkeypatch.setattr(SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: [])
 
     result = SocialLinkService.get_social_links(db, user)
@@ -570,11 +615,14 @@ def test_get_social_links_single(monkeypatch):
     """Test getting single social link."""
     db = FakeDB()
     user = FakeUser()
-    
+
     links = [FakeSocialLink(platform="spotify", url="https://spotify.com/artist/user")]
 
     from app.repositories.social_link_repo import SocialLinkRepository
-    monkeypatch.setattr(SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: links)
+
+    monkeypatch.setattr(
+        SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: links
+    )
 
     result = SocialLinkService.get_social_links(db, user)
 
@@ -587,16 +635,17 @@ def test_get_social_links_single(monkeypatch):
 # UPDATE SOCIAL LINKS TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_social_links_replace_all(monkeypatch):
     """Test replacing all social links."""
     db = FakeDB()
     user = FakeUser()
-    
+
     new_links = [
         FakeSocialLink(platform="twitter", url="https://twitter.com/newuser"),
         FakeSocialLink(platform="youtube", url="https://youtube.com/newuser"),
     ]
-    
+
     data = UpdateSocialLinksRequest(social_links=new_links)
 
     from app.repositories.social_link_repo import SocialLinkRepository
@@ -652,15 +701,21 @@ def test_update_social_links_single_link(monkeypatch):
     """Test updating with single social link."""
     db = FakeDB()
     user = FakeUser()
-    
+
     new_links = [FakeSocialLink(platform="spotify", url="https://spotify.com/artist")]
     data = UpdateSocialLinksRequest(social_links=new_links)
 
     from app.repositories.social_link_repo import SocialLinkRepository
 
-    monkeypatch.setattr(SocialLinkRepository, "delete_by_user_id", lambda db_arg, uid: None)
-    monkeypatch.setattr(SocialLinkRepository, "create_many", lambda db_arg, uid, links: None)
-    monkeypatch.setattr(SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: new_links)
+    monkeypatch.setattr(
+        SocialLinkRepository, "delete_by_user_id", lambda db_arg, uid: None
+    )
+    monkeypatch.setattr(
+        SocialLinkRepository, "create_many", lambda db_arg, uid, links: None
+    )
+    monkeypatch.setattr(
+        SocialLinkRepository, "get_by_user_id", lambda db_arg, uid: new_links
+    )
 
     result = SocialLinkService.update_social_links(db, user, data)
 

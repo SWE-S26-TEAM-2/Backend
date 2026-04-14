@@ -7,11 +7,7 @@ class CommentRepository:
 
     @staticmethod
     def get_by_id(db: Session, comment_id):
-        return (
-            db.query(Comment)
-            .filter(Comment.comment_id == comment_id)
-            .first()
-        )
+        return db.query(Comment).filter(Comment.comment_id == comment_id).first()
 
     @staticmethod
     def get_by_track(db: Session, track_id, limit: int = 50, offset: int = 0):

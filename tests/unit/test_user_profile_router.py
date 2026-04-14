@@ -11,6 +11,7 @@ Tests all API endpoints with TestClient, including:
 - GET /users/me/social-links - Get social links
 - PUT /users/me/social-links - Update social links
 """
+
 import uuid
 import io
 from fastapi.testclient import TestClient
@@ -21,14 +22,21 @@ from app.database.database import get_db
 from app.services.user_service import UserService
 from app.services.social_link_service import SocialLinkService
 
-
 client = TestClient(app)
 
 
 class FakeUser:
     """Mock user for dependency override."""
-    def __init__(self, user_id=None, email="test@example.com", display_name="Test User",
-                 is_private=False, profile_picture=None, cover_photo=None):
+
+    def __init__(
+        self,
+        user_id=None,
+        email="test@example.com",
+        display_name="Test User",
+        is_private=False,
+        profile_picture=None,
+        cover_photo=None,
+    ):
         self.user_id = user_id or uuid.uuid4()
         self.email = email
         self.display_name = display_name
@@ -50,6 +58,7 @@ class FakeUser:
 
 class DummyDB:
     """Mock database for dependency override."""
+
     pass
 
 
@@ -71,6 +80,7 @@ def teardown_module(module):
 # ────────────────────────────────────────────────────────
 # GET MY PROFILE ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_my_profile_endpoint_success(monkeypatch):
     """Test GET /users/me returns 200 with full profile."""
@@ -115,6 +125,7 @@ def test_get_my_profile_endpoint_without_auth(monkeypatch):
 # ────────────────────────────────────────────────────────
 # GET USER PROFILE BY ID ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_user_profile_endpoint_success(monkeypatch):
     """Test GET /users/{user_id} returns 200 with public profile."""
@@ -196,6 +207,7 @@ def test_get_user_profile_endpoint_invalid_id(monkeypatch):
 # UPDATE PROFILE ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_profile_endpoint_success(monkeypatch):
     """Test PATCH /users/me returns 200 with updated profile."""
     user_id = uuid.uuid4()
@@ -216,8 +228,7 @@ def test_update_profile_endpoint_success(monkeypatch):
     monkeypatch.setattr(UserService, "update_profile", fake_update)
 
     response = client.patch(
-        "/users/me",
-        json={"display_name": "Updated Name", "bio": "Updated bio"}
+        "/users/me", json={"display_name": "Updated Name", "bio": "Updated bio"}
     )
 
     assert response.status_code == 200
@@ -261,6 +272,7 @@ def test_update_profile_endpoint_without_auth(monkeypatch):
 # UPDATE PRIVACY ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_privacy_endpoint_success(monkeypatch):
     """Test PATCH /users/me/privacy returns 200."""
     user_id = uuid.uuid4()
@@ -288,7 +300,9 @@ def test_update_privacy_endpoint_toggle(monkeypatch):
     """Test toggling privacy between public and private."""
     user_id = uuid.uuid4()
 
-    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id, is_private=True)
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(
+        user_id=user_id, is_private=True
+    )
 
     def fake_update_privacy(db, user, data):
         return {
@@ -309,6 +323,7 @@ def test_update_privacy_endpoint_toggle(monkeypatch):
 # UPLOAD AVATAR ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_upload_avatar_endpoint_success(monkeypatch):
     """Test PUT /users/me/avatar returns 200."""
     user_id = uuid.uuid4()
@@ -328,7 +343,7 @@ def test_upload_avatar_endpoint_success(monkeypatch):
     file_content = b"fake image content"
     response = client.put(
         "/users/me/avatar",
-        files={"file": ("avatar.jpg", io.BytesIO(file_content), "image/jpeg")}
+        files={"file": ("avatar.jpg", io.BytesIO(file_content), "image/jpeg")},
     )
 
     assert response.status_code == 200
@@ -356,7 +371,7 @@ def test_upload_avatar_endpoint_invalid_type(monkeypatch):
     file_content = b"fake pdf content"
     response = client.put(
         "/users/me/avatar",
-        files={"file": ("document.pdf", io.BytesIO(file_content), "application/pdf")}
+        files={"file": ("document.pdf", io.BytesIO(file_content), "application/pdf")},
     )
 
     assert response.status_code == 400
@@ -368,8 +383,7 @@ def test_upload_avatar_endpoint_without_auth(monkeypatch):
 
     file_content = b"fake image"
     response = client.put(
-        "/users/me/avatar",
-        files={"file": ("avatar.jpg", io.BytesIO(file_content))}
+        "/users/me/avatar", files={"file": ("avatar.jpg", io.BytesIO(file_content))}
     )
 
     assert response.status_code in [401, 403]
@@ -380,6 +394,7 @@ def test_upload_avatar_endpoint_without_auth(monkeypatch):
 # ────────────────────────────────────────────────────────
 # UPLOAD COVER ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_upload_cover_endpoint_success(monkeypatch):
     """Test PUT /users/me/cover returns 200."""
@@ -399,7 +414,7 @@ def test_upload_cover_endpoint_success(monkeypatch):
     file_content = b"fake image content"
     response = client.put(
         "/users/me/cover",
-        files={"file": ("cover.jpg", io.BytesIO(file_content), "image/jpeg")}
+        files={"file": ("cover.jpg", io.BytesIO(file_content), "image/jpeg")},
     )
 
     assert response.status_code == 200
@@ -411,6 +426,7 @@ def test_upload_cover_endpoint_success(monkeypatch):
 # ────────────────────────────────────────────────────────
 # GET SOCIAL LINKS ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_get_social_links_endpoint_success(monkeypatch):
     """Test GET /users/me/social-links returns 200."""
@@ -472,6 +488,7 @@ def test_get_social_links_endpoint_without_auth(monkeypatch):
 # UPDATE SOCIAL LINKS ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_social_links_endpoint_success(monkeypatch):
     """Test PUT /users/me/social-links returns 200."""
     user_id = uuid.uuid4()
@@ -515,7 +532,11 @@ def test_update_social_links_endpoint_clear(monkeypatch):
     app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id)
 
     def fake_update_links(db, user, data):
-        return {"success": True, "message": "Social links updated successfully.", "data": {"social_links": []}}
+        return {
+            "success": True,
+            "message": "Social links updated successfully.",
+            "data": {"social_links": []},
+        }
 
     monkeypatch.setattr(SocialLinkService, "update_social_links", fake_update_links)
 
@@ -531,7 +552,9 @@ def test_update_social_links_endpoint_without_auth(monkeypatch):
 
     response = client.put(
         "/users/me/social-links",
-        json={"social_links": [{"platform": "twitter", "url": "https://twitter.com/user"}]}
+        json={
+            "social_links": [{"platform": "twitter", "url": "https://twitter.com/user"}]
+        },
     )
 
     assert response.status_code in [401, 403]

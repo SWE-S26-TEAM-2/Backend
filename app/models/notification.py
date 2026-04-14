@@ -11,9 +11,7 @@ class Notification(Base):
     __tablename__ = "notifications"
     __allow_unmapped__ = True
 
-    notification_id = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    notification_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.user_id", ondelete="CASCADE"),
