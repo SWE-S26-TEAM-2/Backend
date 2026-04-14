@@ -5,18 +5,19 @@ Tests all API endpoints with TestClient, including:
 - GET /search/users?keyword=... - Search users
 - GET /search/tracks?keyword=... - Search tracks
 """
+
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database.database import get_db
 from app.services.search_service import SearchService
 
-
 client = TestClient(app)
 
 
 class DummyDB:
     """Mock database for dependency override."""
+
     pass
 
 
@@ -39,8 +40,10 @@ def teardown_module(module):
 # SEARCH USERS ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_search_users_endpoint_success(monkeypatch):
     """Test GET /search/users?keyword=test returns 200 with results."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
@@ -61,7 +64,7 @@ def test_search_users_endpoint_success(monkeypatch):
                         "profile_picture": None,
                         "follower_count": 50,
                         "is_verified": False,
-                    }
+                    },
                 ]
             },
         }
@@ -80,12 +83,11 @@ def test_search_users_endpoint_success(monkeypatch):
 
 def test_search_users_endpoint_no_results(monkeypatch):
     """Test GET /search/users?keyword=xyzabc returns empty results."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
-            "data": {
-                "users": []
-            },
+            "data": {"users": []},
         }
 
     monkeypatch.setattr(SearchService, "search_users", fake_search_users)
@@ -108,6 +110,7 @@ def test_search_users_endpoint_missing_keyword(monkeypatch):
 
 def test_search_users_endpoint_single_result(monkeypatch):
     """Test GET /search/users?keyword=alice returns single result."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
@@ -137,6 +140,7 @@ def test_search_users_endpoint_single_result(monkeypatch):
 
 def test_search_users_endpoint_special_characters_in_keyword(monkeypatch):
     """Test GET /search/users with special characters in keyword."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
@@ -196,6 +200,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
 
 def test_search_users_endpoint_whitespace_keyword(monkeypatch):
     """Test GET /search/users with whitespace in keyword."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
@@ -226,8 +231,10 @@ def test_search_users_endpoint_whitespace_keyword(monkeypatch):
 # SEARCH TRACKS ENDPOINT TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_search_tracks_endpoint_success(monkeypatch):
     """Test GET /search/tracks?keyword=rock returns 200 with results."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -244,7 +251,7 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "title": "Rock & Roll",
                         "description": "Classic rock",
                         "file_url": "https://example.com/rock_roll.mp3",
-                    }
+                    },
                 ]
             },
         }
@@ -262,12 +269,11 @@ def test_search_tracks_endpoint_success(monkeypatch):
 
 def test_search_tracks_endpoint_no_results(monkeypatch):
     """Test GET /search/tracks?keyword=nonexistent returns empty results."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
-            "data": {
-                "tracks": []
-            },
+            "data": {"tracks": []},
         }
 
     monkeypatch.setattr(SearchService, "search_tracks", fake_search_tracks)
@@ -290,6 +296,7 @@ def test_search_tracks_endpoint_missing_keyword(monkeypatch):
 
 def test_search_tracks_endpoint_single_result(monkeypatch):
     """Test GET /search/tracks?keyword=bohemian returns single result."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -317,6 +324,7 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
 
 def test_search_tracks_endpoint_partial_match(monkeypatch):
     """Test GET /search/tracks?keyword=beat finds partial matches."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -333,7 +341,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
                         "file_url": "https://example.com/off_beat.mp3",
-                    }
+                    },
                 ]
             },
         }
@@ -349,6 +357,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
 
 def test_search_tracks_endpoint_special_characters(monkeypatch):
     """Test GET /search/tracks with special characters in title."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -376,6 +385,7 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
 
 def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
     """Test GET /search/tracks with whitespace in keyword."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -402,6 +412,7 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
 
 def test_search_tracks_endpoint_case_insensitive(monkeypatch):
     """Test GET /search/tracks is case-insensitive."""
+
     def fake_search_tracks(db, keyword):
         return {
             "success": True,
@@ -427,6 +438,7 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
 
 def test_search_tracks_endpoint_many_results(monkeypatch):
     """Test GET /search/tracks returns many results."""
+
     def fake_search_tracks(db, keyword):
         tracks = [
             {
@@ -439,9 +451,7 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
         ]
         return {
             "success": True,
-            "data": {
-                "tracks": tracks
-            },
+            "data": {"tracks": tracks},
         }
 
     monkeypatch.setattr(SearchService, "search_tracks", fake_search_tracks)
@@ -457,8 +467,10 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
 # CROSS-FUNCTIONAL TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_search_users_and_tracks_separately(monkeypatch):
     """Test that user and track searches can be called separately."""
+
     def fake_search_users(db, keyword):
         return {
             "success": True,
