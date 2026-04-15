@@ -80,7 +80,7 @@ class MessageRepository:
     def get_unread_count_for_user(db: Session, user_id) -> int:
         return (
             db.query(Message)
-            .filter(Message.receiver_id == user_id, Message.is_read == False)
+            .filter(Message.receiver_id == user_id, Message.is_read.is_(False))
             .count()
         )
 
@@ -91,7 +91,7 @@ class MessageRepository:
             .filter(
                 Message.conversation_id == conversation_id,
                 Message.receiver_id == user_id,
-                Message.is_read == False,
+                Message.is_read.is_(False),
             )
             .all()
         )

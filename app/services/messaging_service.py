@@ -386,7 +386,9 @@ class MessagingService:
         for conv in conversations:
             user1 = UserRepository.get_by_id(db, conv.user1_id)
             user2 = UserRepository.get_by_id(db, conv.user2_id)
-            last_msg = MessageRepository.get_last_by_conversation(db, conv.conversation_id)
+            last_msg = MessageRepository.get_last_by_conversation(
+                db, conv.conversation_id
+            )
 
             result.append(
                 {

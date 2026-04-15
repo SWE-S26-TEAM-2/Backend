@@ -56,7 +56,7 @@ class NotificationRepository:
     def get_unread_count(db: Session, user_id) -> int:
         return (
             db.query(Notification)
-            .filter(Notification.user_id == user_id, Notification.is_read == False)
+            .filter(Notification.user_id == user_id, Notification.is_read.is_(False))
             .count()
         )
 
@@ -64,7 +64,7 @@ class NotificationRepository:
     def mark_all_as_read(db: Session, user_id) -> int:
         updated = (
             db.query(Notification)
-            .filter(Notification.user_id == user_id, Notification.is_read == False)
+            .filter(Notification.user_id == user_id, Notification.is_read.is_(False))
             .all()
         )
         for n in updated:

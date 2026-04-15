@@ -236,11 +236,17 @@ class EngagementService:
                 target_id=track_id,
             )
 
-        # Notify parent comment author when this is a reply (skip if replying to yourself
+        # Notify parent comment author on a reply (skip if replying to yourself
         # or if they are the track owner who was already notified above)
         if data.parent_comment_id:
             parent = CommentRepository.get_by_id(db, data.parent_comment_id)
-            if parent and str(parent.user_id) != str(current_user.user_id) and str(parent.user_id) != str(track.user_id):
+            is_self = (
+                str(parent.user_id) == str(current_user.user_id) if parent else True
+            )
+            is_owner = (
+                str(parent.user_id) == str(track.user_id) if parent else True
+            )
+            if parent and not is_self and not is_owner:
                 NotificationRepository.create(
                     db,
                     user_id=parent.user_id,
