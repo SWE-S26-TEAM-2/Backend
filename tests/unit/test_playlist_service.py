@@ -9,6 +9,7 @@ Tests all endpoints and scenarios including:
 - Add track to playlist (multiple scenarios)
 - Remove track from playlist (multiple scenarios)
 """
+
 import uuid
 import pytest
 from fastapi import HTTPException
@@ -18,6 +19,7 @@ from app.services.playlist_service import PlaylistService
 
 class FakeDB:
     """Mock database session."""
+
     def __init__(self):
         self.deleted = []
         self.committed = False
@@ -39,13 +41,21 @@ class FakeDB:
 
 class FakeUser:
     """Mock user object."""
+
     def __init__(self, user_id=None):
         self.user_id = user_id or uuid.uuid4()
 
 
 class FakePlaylist:
     """Mock playlist object."""
-    def __init__(self, playlist_id=None, user_id=None, name="Test Playlist", description="Test Description"):
+
+    def __init__(
+        self,
+        playlist_id=None,
+        user_id=None,
+        name="Test Playlist",
+        description="Test Description",
+    ):
         self.playlist_id = playlist_id or uuid.uuid4()
         self.user_id = user_id or uuid.uuid4()
         self.name = name
@@ -54,6 +64,7 @@ class FakePlaylist:
 
 class FakeTrack:
     """Mock track object."""
+
     def __init__(self, track_id=None, user_id=None):
         self.track_id = track_id or uuid.uuid4()
         self.user_id = user_id or uuid.uuid4()
@@ -64,6 +75,7 @@ class FakeTrack:
 
 class FakePlaylistTrack:
     """Mock playlist track object."""
+
     def __init__(self, playlist_id=None, track_id=None):
         self.playlist_id = playlist_id or uuid.uuid4()
         self.track_id = track_id or uuid.uuid4()
@@ -71,6 +83,7 @@ class FakePlaylistTrack:
 
 class CreatePlaylistRequest:
     """Mock create playlist request."""
+
     def __init__(self, name, description=None):
         self.name = name
         self.description = description
@@ -78,6 +91,7 @@ class CreatePlaylistRequest:
 
 class UpdatePlaylistRequest:
     """Mock update playlist request."""
+
     def __init__(self, name=None, description=None):
         self.name = name
         self.description = description
@@ -94,6 +108,7 @@ class UpdatePlaylistRequest:
 
 class PlaylistTrackRequest:
     """Mock playlist track request."""
+
     def __init__(self, track_id):
         self.track_id = track_id
 
@@ -102,13 +117,13 @@ class PlaylistTrackRequest:
 # CREATE PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_create_playlist_success(monkeypatch):
     """Test successful playlist creation with name and description."""
     db = FakeDB()
     user = FakeUser()
     data = CreatePlaylistRequest(
-        name="My Awesome Playlist",
-        description="A collection of my favorite songs"
+        name="My Awesome Playlist", description="A collection of my favorite songs"
     )
 
     created_playlists = []
@@ -157,6 +172,7 @@ def test_create_playlist_without_description(monkeypatch):
 # GET PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_get_playlist_success(monkeypatch):
     """Test successful retrieval of an existing playlist."""
     db = FakeDB()
@@ -166,10 +182,11 @@ def test_get_playlist_success(monkeypatch):
         playlist_id=playlist_id,
         user_id=user_id,
         name="My Playlist",
-        description="My description"
+        description="My description",
     )
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     result = PlaylistService.get_playlist(db, playlist_id)
@@ -187,6 +204,7 @@ def test_get_playlist_not_found(monkeypatch):
     playlist_id = uuid.uuid4()
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -200,6 +218,7 @@ def test_get_playlist_not_found(monkeypatch):
 # UPDATE PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
 
+
 def test_update_playlist_success(monkeypatch):
     """Test successful playlist update by the owner."""
     db = FakeDB()
@@ -211,14 +230,7 @@ def test_update_playlist_success(monkeypatch):
         playlist_id=playlist_id,
         user_id=user_id,
         name="Old Name",
-        description="Old Description"
-    )
-
-    updated_playlist = FakePlaylist(
-        playlist_id=playlist_id,
-        user_id=user_id,
-        name="New Name",
-        description="New Description"
+        description="Old Description",
     )
 
     data = UpdatePlaylistRequest(name="New Name", description="New Description")
@@ -252,6 +264,7 @@ def test_update_playlist_not_found(monkeypatch):
     data = UpdatePlaylistRequest(name="New Name")
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -270,14 +283,13 @@ def test_update_playlist_unauthorized(monkeypatch):
     user = FakeUser(user_id=other_user_id)
 
     playlist = FakePlaylist(
-        playlist_id=playlist_id,
-        user_id=owner_id,
-        name="Owner's Playlist"
+        playlist_id=playlist_id, user_id=owner_id, name="Owner's Playlist"
     )
 
     data = UpdatePlaylistRequest(name="Hacked Name")
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -302,6 +314,7 @@ def test_update_playlist_no_fields_provided(monkeypatch):
     data = UpdatePlaylistRequest(name=None, description=None)
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -322,7 +335,7 @@ def test_update_playlist_only_name(monkeypatch):
         playlist_id=playlist_id,
         user_id=user_id,
         name="Old Name",
-        description="Old Description"
+        description="Old Description",
     )
 
     data = UpdatePlaylistRequest(name="New Name")
@@ -349,6 +362,7 @@ def test_update_playlist_only_name(monkeypatch):
 # ────────────────────────────────────────────────────────
 # DELETE PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_delete_playlist_success(monkeypatch):
     """Test successful deletion of playlist by owner."""
@@ -386,6 +400,7 @@ def test_delete_playlist_not_found(monkeypatch):
     user = FakeUser()
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -409,6 +424,7 @@ def test_delete_playlist_unauthorized(monkeypatch):
     )
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -421,6 +437,7 @@ def test_delete_playlist_unauthorized(monkeypatch):
 # ────────────────────────────────────────────────────────
 # ADD TRACK TO PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_add_track_to_playlist_success(monkeypatch):
     """Test successfully adding a track to playlist."""
@@ -457,7 +474,9 @@ def test_add_track_to_playlist_success(monkeypatch):
 
     monkeypatch.setattr(PlaylistRepository, "get_by_id", fake_get_playlist)
     monkeypatch.setattr(TrackRepository, "get_by_id", fake_get_track)
-    monkeypatch.setattr(PlaylistRepository, "get_playlist_track", fake_get_playlist_track)
+    monkeypatch.setattr(
+        PlaylistRepository, "get_playlist_track", fake_get_playlist_track
+    )
     monkeypatch.setattr(PlaylistRepository, "add_track", fake_add_track)
 
     result = PlaylistService.add_track_to_playlist(db, user, playlist_id, data)
@@ -476,6 +495,7 @@ def test_add_track_playlist_not_found(monkeypatch):
     data = PlaylistTrackRequest(track_id=str(track_id))
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -502,6 +522,7 @@ def test_add_track_unauthorized(monkeypatch):
     data = PlaylistTrackRequest(track_id=str(track_id))
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -515,7 +536,6 @@ def test_add_track_track_not_found(monkeypatch):
     """Test adding non-existent track to playlist raises 404."""
     db = FakeDB()
     playlist_id = uuid.uuid4()
-    track_id = uuid.uuid4()
     nonexistent_track_id = uuid.uuid4()
     user_id = uuid.uuid4()
     user = FakeUser(user_id=user_id)
@@ -561,7 +581,9 @@ def test_add_track_duplicate_track(monkeypatch):
     )
 
     track = FakeTrack(track_id=track_id)
-    existing_playlist_track = FakePlaylistTrack(playlist_id=playlist_id, track_id=track_id)
+    existing_playlist_track = FakePlaylistTrack(
+        playlist_id=playlist_id, track_id=track_id
+    )
     data = PlaylistTrackRequest(track_id=str(track_id))
 
     from app.repositories.playlist_repo import PlaylistRepository
@@ -578,11 +600,17 @@ def test_add_track_duplicate_track(monkeypatch):
     def fake_get_playlist_track(db_arg, pid, tid):
         # Handle both string and UUID comparisons
         tid_str = str(tid)
-        return existing_playlist_track if (pid == playlist_id and tid_str == str(track_id)) else None
+        return (
+            existing_playlist_track
+            if (pid == playlist_id and tid_str == str(track_id))
+            else None
+        )
 
     monkeypatch.setattr(PlaylistRepository, "get_by_id", fake_get_playlist)
     monkeypatch.setattr(TrackRepository, "get_by_id", fake_get_track)
-    monkeypatch.setattr(PlaylistRepository, "get_playlist_track", fake_get_playlist_track)
+    monkeypatch.setattr(
+        PlaylistRepository, "get_playlist_track", fake_get_playlist_track
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         PlaylistService.add_track_to_playlist(db, user, playlist_id, data)
@@ -594,6 +622,7 @@ def test_add_track_duplicate_track(monkeypatch):
 # ────────────────────────────────────────────────────────
 # REMOVE TRACK FROM PLAYLIST TESTS
 # ────────────────────────────────────────────────────────
+
 
 def test_remove_track_from_playlist_success(monkeypatch):
     """Test successfully removing a track from playlist."""
@@ -622,7 +651,9 @@ def test_remove_track_from_playlist_success(monkeypatch):
         pass
 
     monkeypatch.setattr(PlaylistRepository, "get_by_id", fake_get_playlist)
-    monkeypatch.setattr(PlaylistRepository, "get_playlist_track", fake_get_playlist_track)
+    monkeypatch.setattr(
+        PlaylistRepository, "get_playlist_track", fake_get_playlist_track
+    )
     monkeypatch.setattr(PlaylistRepository, "remove_track", fake_remove_track)
 
     result = PlaylistService.remove_track_from_playlist(db, user, playlist_id, track_id)
@@ -639,6 +670,7 @@ def test_remove_track_playlist_not_found(monkeypatch):
     user = FakeUser()
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: None)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -663,6 +695,7 @@ def test_remove_track_unauthorized(monkeypatch):
     )
 
     from app.repositories.playlist_repo import PlaylistRepository
+
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -691,7 +724,9 @@ def test_remove_track_not_in_playlist(monkeypatch):
         return playlist if pid == playlist_id else None
 
     monkeypatch.setattr(PlaylistRepository, "get_by_id", fake_get_playlist)
-    monkeypatch.setattr(PlaylistRepository, "get_playlist_track", lambda db_arg, pid, tid: None)
+    monkeypatch.setattr(
+        PlaylistRepository, "get_playlist_track", lambda db_arg, pid, tid: None
+    )
 
     with pytest.raises(HTTPException) as exc_info:
         PlaylistService.remove_track_from_playlist(db, user, playlist_id, track_id)

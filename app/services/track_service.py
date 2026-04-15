@@ -14,7 +14,6 @@ from app.repositories.listening_history_repo import ListeningHistoryRepository
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 TRACK_MAX_SIZE = 100 * 1024 * 1024  # 100 MB

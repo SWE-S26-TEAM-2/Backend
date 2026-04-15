@@ -4,6 +4,7 @@ FastAPI application entry point.
 Initializes the FastAPI app, registers all routers,
 and creates database tables on startup.
 """
+
 import os
 from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
@@ -18,6 +19,7 @@ from app.models import (  # noqa: F401
     track,
     playlist,
     playlist_track,
+    playlist_like,
     follow,
     block,
     listening_history,
@@ -36,7 +38,6 @@ from app.routers.search import router as search_router
 from app.routers.track import router as track_router
 from app.routers.engagement import router as engagement_router
 from app.routers.notification import router as notification_router
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")

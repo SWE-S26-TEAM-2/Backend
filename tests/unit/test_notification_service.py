@@ -7,7 +7,6 @@ from fastapi import HTTPException
 from app.services.notification_service import NotificationService
 from tests.unit.conftest import make_fake_user
 
-
 NOTIF_REPO = "app.services.notification_service.NotificationRepository"
 
 
@@ -61,9 +60,7 @@ class TestGetNotifications:
         user = make_fake_user()
         mock_repo.get_by_user.return_value = []
 
-        NotificationService.get_notifications(
-            db, user, limit=10, offset=20
-        )
+        NotificationService.get_notifications(db, user, limit=10, offset=20)
 
         mock_repo.get_by_user.assert_called_once_with(
             db, user.user_id, limit=10, offset=20
@@ -83,9 +80,7 @@ class TestMarkAsRead:
         updated.notification_id = notif.notification_id
         mock_repo.mark_as_read.return_value = updated
 
-        result = NotificationService.mark_as_read(
-            db, user, notif.notification_id
-        )
+        result = NotificationService.mark_as_read(db, user, notif.notification_id)
 
         assert result["success"] is True
         assert result["data"]["is_read"] is True
@@ -110,9 +105,7 @@ class TestMarkAsRead:
         mock_repo.get_by_id.return_value = notif
 
         with pytest.raises(HTTPException) as exc:
-            NotificationService.mark_as_read(
-                db, user, notif.notification_id
-            )
+            NotificationService.mark_as_read(db, user, notif.notification_id)
         assert exc.value.status_code == 403
 
     @patch(NOTIF_REPO)
@@ -122,9 +115,7 @@ class TestMarkAsRead:
         notif = _make_notification(user_id=user.user_id, is_read=True)
         mock_repo.get_by_id.return_value = notif
 
-        result = NotificationService.mark_as_read(
-            db, user, notif.notification_id
-        )
+        result = NotificationService.mark_as_read(db, user, notif.notification_id)
 
         assert result["success"] is True
         assert result["data"]["is_read"] is True

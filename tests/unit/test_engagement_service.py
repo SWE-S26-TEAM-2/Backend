@@ -7,8 +7,8 @@ from fastapi import HTTPException
 from app.services.engagement_service import EngagementService
 from tests.unit.conftest import make_fake_user
 
-
 # ── Helpers ───────────────────────────────────────────────
+
 
 def _make_track(owner_id=None):
     track = MagicMock()
@@ -84,17 +84,13 @@ class TestLikeTrack:
     @patch(NOTIF_REPO)
     @patch(LIKE_REPO)
     @patch(TRACK_REPO)
-    def test_like_own_track_no_notification(
-        self, mock_track, mock_like, mock_notif
-    ):
+    def test_like_own_track_no_notification(self, mock_track, mock_like, mock_notif):
         db = MagicMock()
         user = make_fake_user()
         track = _make_track(owner_id=user.user_id)
         mock_track.get_by_id.return_value = track
         mock_like.get_like.return_value = None
-        mock_like.create.return_value = _make_like(
-            user.user_id, track.track_id
-        )
+        mock_like.create.return_value = _make_like(user.user_id, track.track_id)
 
         result = EngagementService.like_track(db, user, track.track_id)
 
@@ -119,9 +115,7 @@ class TestLikeTrack:
         user = make_fake_user()
         track = _make_track()
         mock_track.get_by_id.return_value = track
-        mock_like.get_like.return_value = _make_like(
-            user.user_id, track.track_id
-        )
+        mock_like.get_like.return_value = _make_like(user.user_id, track.track_id)
 
         with pytest.raises(HTTPException) as exc:
             EngagementService.like_track(db, user, track.track_id)
@@ -173,6 +167,7 @@ class TestUnlikeTrack:
 
 # ── Repost Tests ──────────────────────────────────────────
 
+
 class TestRepostTrack:
 
     @patch(NOTIF_REPO)
@@ -205,9 +200,7 @@ class TestRepostTrack:
         track = _make_track(owner_id=user.user_id)
         mock_track.get_by_id.return_value = track
         mock_repost.get_repost.return_value = None
-        mock_repost.create.return_value = _make_repost(
-            user.user_id, track.track_id
-        )
+        mock_repost.create.return_value = _make_repost(user.user_id, track.track_id)
 
         result = EngagementService.repost_track(db, user, track.track_id)
 
@@ -232,9 +225,7 @@ class TestRepostTrack:
         user = make_fake_user()
         track = _make_track()
         mock_track.get_by_id.return_value = track
-        mock_repost.get_repost.return_value = _make_repost(
-            user.user_id, track.track_id
-        )
+        mock_repost.get_repost.return_value = _make_repost(user.user_id, track.track_id)
 
         with pytest.raises(HTTPException) as exc:
             EngagementService.repost_track(db, user, track.track_id)
@@ -285,6 +276,7 @@ class TestRemoveRepost:
 
 
 # ── Comment Tests ─────────────────────────────────────────
+
 
 class TestGetTrackComments:
 
@@ -337,9 +329,7 @@ class TestAddComment:
         track = _make_track()
         mock_track.get_by_id.return_value = track
 
-        created = _make_comment(
-            user_id=user.user_id, track_id=track.track_id
-        )
+        created = _make_comment(user_id=user.user_id, track_id=track.track_id)
         mock_comment.create.return_value = created
 
         data = MagicMock()
@@ -347,9 +337,7 @@ class TestAddComment:
         data.timestamp_in_track = 30
         data.parent_comment_id = None
 
-        result = EngagementService.add_comment(
-            db, user, track.track_id, data
-        )
+        result = EngagementService.add_comment(db, user, track.track_id, data)
 
         assert result["success"] is True
         assert result["message"] == "Comment added."
@@ -367,9 +355,7 @@ class TestAddComment:
         track = _make_track(owner_id=user.user_id)
         mock_track.get_by_id.return_value = track
 
-        created = _make_comment(
-            user_id=user.user_id, track_id=track.track_id
-        )
+        created = _make_comment(user_id=user.user_id, track_id=track.track_id)
         mock_comment.create.return_value = created
 
         data = MagicMock()
@@ -377,9 +363,7 @@ class TestAddComment:
         data.timestamp_in_track = None
         data.parent_comment_id = None
 
-        result = EngagementService.add_comment(
-            db, user, track.track_id, data
-        )
+        result = EngagementService.add_comment(db, user, track.track_id, data)
 
         assert result["success"] is True
         mock_notif.create.assert_not_called()
@@ -415,17 +399,13 @@ class TestAddComment:
         data.parent_comment_id = uuid.uuid4()
 
         with pytest.raises(HTTPException) as exc:
-            EngagementService.add_comment(
-                db, user, track.track_id, data
-            )
+            EngagementService.add_comment(db, user, track.track_id, data)
         assert exc.value.status_code == 400
         assert "Parent comment not found" in exc.value.detail
 
     @patch(COMMENT_REPO)
     @patch(TRACK_REPO)
-    def test_add_comment_nested_reply_blocked(
-        self, mock_track, mock_comment
-    ):
+    def test_add_comment_nested_reply_blocked(self, mock_track, mock_comment):
         db = MagicMock()
         user = make_fake_user()
         track = _make_track()
@@ -440,18 +420,14 @@ class TestAddComment:
         data.parent_comment_id = parent.comment_id
 
         with pytest.raises(HTTPException) as exc:
-            EngagementService.add_comment(
-                db, user, track.track_id, data
-            )
+            EngagementService.add_comment(db, user, track.track_id, data)
         assert exc.value.status_code == 400
         assert "max 1 level" in exc.value.detail
 
     @patch(NOTIF_REPO)
     @patch(COMMENT_REPO)
     @patch(TRACK_REPO)
-    def test_add_reply_to_comment_success(
-        self, mock_track, mock_comment, mock_notif
-    ):
+    def test_add_reply_to_comment_success(self, mock_track, mock_comment, mock_notif):
         db = MagicMock()
         user = make_fake_user()
         track = _make_track()
@@ -468,9 +444,7 @@ class TestAddComment:
         data.timestamp_in_track = None
         data.parent_comment_id = parent.comment_id
 
-        result = EngagementService.add_comment(
-            db, user, track.track_id, data
-        )
+        result = EngagementService.add_comment(db, user, track.track_id, data)
 
         assert result["success"] is True
         assert result["message"] == "Comment added."

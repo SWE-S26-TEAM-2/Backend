@@ -42,8 +42,7 @@ class EngagementService:
                 actor_id=current_user.user_id,
                 notification_type="like",
                 message=(
-                    f"{current_user.display_name} liked your track"
-                    f' "{track.title}".'
+                    f"{current_user.display_name} liked your track" f' "{track.title}".'
                 ),
                 target_id=track_id,
             )
@@ -83,9 +82,7 @@ class EngagementService:
     # ── Reposts ───────────────────────────────────────────
 
     @staticmethod
-    def repost_track(
-        db: Session, current_user: User, track_id: UUID
-    ) -> dict:
+    def repost_track(db: Session, current_user: User, track_id: UUID) -> dict:
         track = TrackRepository.get_by_id(db, track_id)
         if not track:
             raise HTTPException(
@@ -93,9 +90,7 @@ class EngagementService:
                 detail="Track not found.",
             )
 
-        existing = RepostRepository.get_repost(
-            db, current_user.user_id, track_id
-        )
+        existing = RepostRepository.get_repost(db, current_user.user_id, track_id)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -128,9 +123,7 @@ class EngagementService:
         }
 
     @staticmethod
-    def remove_repost(
-        db: Session, current_user: User, track_id: UUID
-    ) -> dict:
+    def remove_repost(db: Session, current_user: User, track_id: UUID) -> dict:
         track = TrackRepository.get_by_id(db, track_id)
         if not track:
             raise HTTPException(
@@ -138,9 +131,7 @@ class EngagementService:
                 detail="Track not found.",
             )
 
-        existing = RepostRepository.get_repost(
-            db, current_user.user_id, track_id
-        )
+        existing = RepostRepository.get_repost(db, current_user.user_id, track_id)
         if not existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -184,9 +175,7 @@ class EngagementService:
                         "content": c.content,
                         "timestamp_in_track": c.timestamp_in_track,
                         "parent_comment_id": (
-                            str(c.parent_comment_id)
-                            if c.parent_comment_id
-                            else None
+                            str(c.parent_comment_id) if c.parent_comment_id else None
                         ),
                         "created_at": c.created_at,
                     }
