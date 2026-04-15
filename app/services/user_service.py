@@ -182,7 +182,7 @@ class UserService:
             file (UploadFile): The uploaded image file.
 
         Returns:
-            dict: URL/path to the uploaded avatar.
+            dict: Full updated user profile data.
 
         Raises:
             HTTPException: 400 if file type or size is invalid.
@@ -197,7 +197,22 @@ class UserService:
             "success": True,
             "message": "Avatar uploaded successfully.",
             "data": {
-                "profile_picture": path,
+                "user_id": str(current_user.user_id),
+                "email": current_user.email,
+                "display_name": current_user.display_name,
+                "account_type": current_user.account_type,
+                "is_verified": current_user.is_verified,
+                "is_suspended": current_user.is_suspended,
+                "bio": current_user.bio,
+                "location": current_user.location,
+                "is_premium": current_user.is_premium,
+                "is_private": current_user.is_private,
+                "profile_picture": current_user.profile_picture,
+                "cover_photo": current_user.cover_photo,
+                "follower_count": current_user.follower_count,
+                "following_count": current_user.following_count,
+                "track_count": current_user.track_count,
+                "created_at": current_user.created_at,
             },
         }
 
@@ -212,7 +227,7 @@ class UserService:
             file (UploadFile): The uploaded image file.
 
         Returns:
-            dict: URL/path to the uploaded cover photo.
+            dict: Full updated user profile data.
 
         Raises:
             HTTPException: 400 if file type or size is invalid.
@@ -227,7 +242,22 @@ class UserService:
             "success": True,
             "message": "Cover photo uploaded successfully.",
             "data": {
-                "cover_photo": path,
+                "user_id": str(current_user.user_id),
+                "email": current_user.email,
+                "display_name": current_user.display_name,
+                "account_type": current_user.account_type,
+                "is_verified": current_user.is_verified,
+                "is_suspended": current_user.is_suspended,
+                "bio": current_user.bio,
+                "location": current_user.location,
+                "is_premium": current_user.is_premium,
+                "is_private": current_user.is_private,
+                "profile_picture": current_user.profile_picture,
+                "cover_photo": current_user.cover_photo,
+                "follower_count": current_user.follower_count,
+                "following_count": current_user.following_count,
+                "track_count": current_user.track_count,
+                "created_at": current_user.created_at,
             },
         }
 
