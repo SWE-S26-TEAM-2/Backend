@@ -4,7 +4,7 @@ from fastapi import HTTPException, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.user import User  # type: ignore
-from app.repositories.notification_repo import NotificationRepository
+from app.repositories.notification_repo import NotificationRepository  # type: ignore
 
 
 class NotificationService:
@@ -77,3 +77,39 @@ class NotificationService:
                 "is_read": updated.is_read,
             },
         }
+
+    @staticmethod
+    def get_unread_count(db: Session, current_user: User) -> dict:
+        count = NotificationRepository.get_unread_count(db, current_user.user_id)
+        return {"success": True, "data": {"unread_count": count}}
+
+    @staticmethod
+    def mark_all_as_read(db: Session, current_user: User) -> dict:
+        count = NotificationRepository.mark_all_as_read(db, current_user.user_id)
+        return {
+            "success": True,
+            "message": f"{count} notification(s) marked as read.",
+            "data": {"marked_read": count},
+        }
+
+    @staticmethod
+    def delete_notification(
+        db: Session,
+        current_user: User,
+        notification_id: UUID,
+    ) -> dict:
+        notification = NotificationRepository.get_by_id(db, notification_id)
+        if not notification:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Notification not found.",
+            )
+
+        if str(notification.user_id) != str(current_user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only delete your own notifications.",
+            )
+
+        NotificationRepository.delete(db, notification)
+        return {"success": True, "message": "Notification deleted."}

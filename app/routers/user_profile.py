@@ -7,7 +7,7 @@ get_current_user dependency to extract the user from JWT.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, UploadFile, status  # type: ignore
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import get_current_user  # type: ignore
@@ -21,6 +21,7 @@ from app.schemas.user_schema import (  # type: ignore
     UpdateProfileRequest,
 )
 from app.services.social_link_service import SocialLinkService  # type: ignore
+from app.services.track_service import TrackService  # type: ignore
 from app.services.user_service import UserService  # type: ignore
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -101,6 +102,24 @@ def update_privacy(
         dict: Updated privacy status.
     """
     return UserService.update_privacy(db, current_user, data)
+
+
+@router.get("/me/recently-played", status_code=status.HTTP_200_OK)
+def get_recently_played(
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return TrackService.get_listening_history(db, current_user, limit)
+
+
+@router.get("/me/listening-history", status_code=status.HTTP_200_OK)
+def get_listening_history(
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return TrackService.get_listening_history(db, current_user, limit)
 
 
 # ── Media Asset Uploads ────────────────────────────────

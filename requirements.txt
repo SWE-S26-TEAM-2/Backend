@@ -10,3 +10,12 @@ google-auth
 requests
 sendgrid
 
+# Testing
+pytest
+pytest-mock
+httpx
+
+
+# Waveform generation
+pydub
+audioop-lts; python_version >= "3.13"

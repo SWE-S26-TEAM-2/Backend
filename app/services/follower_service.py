@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.user import User  # type: ignore
 from app.repositories.follow_repo import FollowRepository  # type: ignore
+from app.repositories.notification_repo import NotificationRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 
 
@@ -63,6 +64,15 @@ class FollowerService:
 
         # Create the follow record
         FollowRepository.create_follow(db, current_user.user_id, target_id)
+
+        # Notify the followed user
+        NotificationRepository.create(
+            db,
+            user_id=target_user.user_id,
+            actor_id=current_user.user_id,
+            notification_type="follow",
+            message=f"{current_user.display_name} started following you.",
+        )
 
         # Update counters on both users
         UserRepository.update_fields(

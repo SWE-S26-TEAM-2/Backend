@@ -16,6 +16,10 @@ from app.models.user import User  # type: ignore
 
 # This tells FastAPI to look for a Bearer token in the Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+optional_oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/auth/login",
+    auto_error=False,
+)
 
 
 def get_current_user(
@@ -65,3 +69,19 @@ def get_current_user(
         )
 
     return user
+
+
+def get_optional_current_user(
+    token: str | None = Depends(optional_oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """
+    Return the current user when a valid Bearer token is provided.
+
+    Public endpoints can use this to attach user-specific behavior without
+    requiring authentication for anonymous callers.
+    """
+    if token is None:
+        return None
+
+    return get_current_user(token=token, db=db)

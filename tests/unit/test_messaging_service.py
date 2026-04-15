@@ -582,10 +582,12 @@ class TestGetMessages:
 class TestSendMessage:
     """Tests for MessagingService.send_message()"""
 
+    @patch("app.services.messaging_service.NotificationRepository")
+    @patch("app.services.messaging_service.BlockRepository")
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_text_message_success(
-        self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
     ):
         """
         Participant sends a plain text message.
@@ -597,6 +599,7 @@ class TestSendMessage:
         conv.user1_id = str(verified_user.user_id)
         conv.user2_id = str(other_id)
         mock_conv_repo.get_by_id.return_value = conv
+        mock_block_repo.get_block.return_value = None
 
         created_msg = MagicMock()
         created_msg.message_id = uuid.uuid4()
@@ -624,10 +627,12 @@ class TestSendMessage:
         assert result["data"]["content"] == "Hello!"
         assert result["data"]["is_read"] is False
 
+    @patch("app.services.messaging_service.NotificationRepository")
+    @patch("app.services.messaging_service.BlockRepository")
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_message_with_track_id(
-        self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
     ):
         """
         User shares a track (no text content).
@@ -641,6 +646,7 @@ class TestSendMessage:
         conv.user1_id = str(verified_user.user_id)
         conv.user2_id = str(other_id)
         mock_conv_repo.get_by_id.return_value = conv
+        mock_block_repo.get_block.return_value = None
 
         created_msg = MagicMock()
         created_msg.message_id = uuid.uuid4()
@@ -668,10 +674,12 @@ class TestSendMessage:
         assert result["data"]["track_id"] == str(track_id)
         assert result["data"]["content"] is None
 
+    @patch("app.services.messaging_service.NotificationRepository")
+    @patch("app.services.messaging_service.BlockRepository")
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_message_receiver_is_auto_detected(
-        self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
     ):
         """
         MessageRepository.create must be called exactly once.
@@ -682,6 +690,7 @@ class TestSendMessage:
         conv.user1_id = str(verified_user.user_id)
         conv.user2_id = str(other_id)
         mock_conv_repo.get_by_id.return_value = conv
+        mock_block_repo.get_block.return_value = None
 
         created_msg = MagicMock()
         created_msg.message_id = uuid.uuid4()

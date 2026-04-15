@@ -22,6 +22,7 @@ from app.models import (  # noqa: F401
     playlist_like,
     follow,
     block,
+    listening_history,
     refresh_token,
     like,
     repost,

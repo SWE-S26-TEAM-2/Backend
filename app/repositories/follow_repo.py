@@ -57,6 +57,26 @@ class FollowRepository:
         return follow
 
     @staticmethod
+    def get_followers_of(db: Session, user_id) -> list:
+        """
+        Return all Follow records where following_id == user_id.
+
+        Used to fan-out notifications when a user uploads a new track.
+
+        Args:
+            db (Session): The database session.
+            user_id: UUID of the user whose followers are needed.
+
+        Returns:
+            list[Follow]: All follow records pointing at this user.
+        """
+        return (
+            db.query(Follow)
+            .filter(Follow.following_id == user_id)
+            .all()
+        )
+
+    @staticmethod
     def delete_follow(db: Session, follow: Follow) -> None:
         """
         Delete an existing follow record.

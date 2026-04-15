@@ -175,16 +175,33 @@ def mark_message_as_read(
 
     Only the receiver of the message can call this endpoint.
     Calling it on an already-read message is safe (idempotent).
-
-    Args:
-        conversation_id (UUID): Conversation UUID from the URL path.
-        message_id (UUID): Message UUID from the URL path.
-        db (Session): Database session injected by FastAPI.
-        current_user (User): Injected by JWT dependency.
-
-    Returns:
-        dict: Updated is_read status for the message.
     """
     return MessagingService.mark_message_as_read(
         db, current_user, conversation_id, message_id
     )
+
+
+@router.patch(
+    "/{conversation_id}/messages/read-all",
+    status_code=status.HTTP_200_OK,
+)
+def mark_all_messages_as_read(
+    conversation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Mark all unread messages in a conversation as read for the current user.
+    """
+    return MessagingService.mark_all_messages_as_read(db, current_user, conversation_id)
+
+
+@router.get("/unread-count", status_code=status.HTTP_200_OK)
+def get_unread_message_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Return the total number of unread messages across all conversations.
+    """
+    return MessagingService.get_unread_message_count(db, current_user)

@@ -10,6 +10,14 @@ from app.models.email_verification import EmailVerification  # noqa: F401
 from app.models.social_link import SocialLink  # noqa: F401
 from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.password_reset import PasswordReset  # noqa: F401
+from app.models.track import Track  # noqa: F401
+from app.models.playlist import Playlist  # noqa: F401
+from app.models.playlist_track import PlaylistTrack  # noqa: F401
+from app.models.follow import Follow  # noqa: F401
+from app.models.block import Block  # noqa: F401
+from app.models.conversation import Conversation  # noqa: F401
+from app.models.message import Message  # noqa: F401
+from app.models.listening_history import ListeningHistory  # noqa: F401
 
 config = context.config
 

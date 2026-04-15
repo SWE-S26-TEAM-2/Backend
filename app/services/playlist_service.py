@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status  # type: ignore
 
 from app.models.playlist import Playlist
+from app.repositories.notification_repo import NotificationRepository
 from app.repositories.playlist_repo import PlaylistRepository
 from app.repositories.track_repo import TrackRepository
 
@@ -139,6 +140,17 @@ class PlaylistService:
         playlist_like = PlaylistRepository.create_playlist_like(
             db, user.user_id, playlist_id
         )
+
+        # Notify playlist owner (skip if liking own playlist)
+        if str(playlist.user_id) != str(user.user_id):
+            NotificationRepository.create(
+                db,
+                user_id=playlist.user_id,
+                actor_id=user.user_id,
+                notification_type="like",
+                message=f"{user.display_name} liked your playlist \"{playlist.name}\".",
+                target_id=playlist_id,
+            )
 
         return {
             "success": True,

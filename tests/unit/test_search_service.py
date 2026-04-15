@@ -62,11 +62,21 @@ class FakeTrack:
         title="Test Track",
         description="Track description",
         file_url="https://example.com/track.mp3",
+        genre=None,
+        tags=None,
+        release_date=None,
+        visibility="public",
+        processing_status="finished",
     ):
         self.track_id = track_id or uuid.uuid4()
         self.title = title
         self.description = description
         self.file_url = file_url
+        self.genre = genre
+        self.tags = tags
+        self.release_date = release_date
+        self.visibility = visibility
+        self.processing_status = processing_status
 
 
 # ────────────────────────────────────────────────────────
