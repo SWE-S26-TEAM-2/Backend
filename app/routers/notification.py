@@ -23,6 +23,22 @@ def get_notifications(
     )
 
 
+@router.get("/unread-count")
+def get_unread_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return NotificationService.get_unread_count(db, current_user)
+
+
+@router.put("/read-all")
+def mark_all_as_read(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return NotificationService.mark_all_as_read(db, current_user)
+
+
 @router.put("/{notification_id}/read")
 def mark_notification_as_read(
     notification_id: UUID,
@@ -30,3 +46,12 @@ def mark_notification_as_read(
     current_user: User = Depends(get_current_user),
 ):
     return NotificationService.mark_as_read(db, current_user, notification_id)
+
+
+@router.delete("/{notification_id}")
+def delete_notification(
+    notification_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return NotificationService.delete_notification(db, current_user, notification_id)

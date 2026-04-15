@@ -68,6 +68,39 @@ class MessageRepository:
         return message
 
     @staticmethod
+    def get_last_by_conversation(db: Session, conversation_id) -> "Message | None":
+        return (
+            db.query(Message)
+            .filter(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.desc())
+            .first()
+        )
+
+    @staticmethod
+    def get_unread_count_for_user(db: Session, user_id) -> int:
+        return (
+            db.query(Message)
+            .filter(Message.receiver_id == user_id, Message.is_read == False)
+            .count()
+        )
+
+    @staticmethod
+    def mark_all_read_in_conversation(db: Session, conversation_id, user_id) -> int:
+        messages = (
+            db.query(Message)
+            .filter(
+                Message.conversation_id == conversation_id,
+                Message.receiver_id == user_id,
+                Message.is_read == False,
+            )
+            .all()
+        )
+        for m in messages:
+            m.is_read = True
+        db.commit()
+        return len(messages)
+
+    @staticmethod
     def create(
         db: Session,
         conversation_id,

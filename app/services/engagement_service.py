@@ -236,6 +236,23 @@ class EngagementService:
                 target_id=track_id,
             )
 
+        # Notify parent comment author when this is a reply (skip if replying to yourself
+        # or if they are the track owner who was already notified above)
+        if data.parent_comment_id:
+            parent = CommentRepository.get_by_id(db, data.parent_comment_id)
+            if parent and str(parent.user_id) != str(current_user.user_id) and str(parent.user_id) != str(track.user_id):
+                NotificationRepository.create(
+                    db,
+                    user_id=parent.user_id,
+                    actor_id=current_user.user_id,
+                    notification_type="reply",
+                    message=(
+                        f"{current_user.display_name} replied to your comment"
+                        f' on "{track.title}".'
+                    ),
+                    target_id=track_id,
+                )
+
         return {
             "success": True,
             "message": "Comment added.",

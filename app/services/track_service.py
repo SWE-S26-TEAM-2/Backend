@@ -10,7 +10,9 @@ from pydub import AudioSegment  # type: ignore
 
 from app.models.track import Track
 from app.models.listening_history import ListeningHistory
+from app.repositories.follow_repo import FollowRepository
 from app.repositories.listening_history_repo import ListeningHistoryRepository
+from app.repositories.notification_repo import NotificationRepository
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 
@@ -225,6 +227,19 @@ class TrackService:
         )
 
         TrackRepository.create(db, track)
+
+        # Notify all followers about the new track (only if public)
+        if visibility == "public":
+            followers = FollowRepository.get_followers_of(db, user.user_id)
+            for follow in followers:
+                NotificationRepository.create(
+                    db,
+                    user_id=follow.follower_id,
+                    actor_id=user.user_id,
+                    notification_type="new_track",
+                    message=f"{user.display_name} posted a new track: \"{title}\".",
+                    target_id=track.track_id,
+                )
 
         return {
             "success": True,

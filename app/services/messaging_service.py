@@ -16,8 +16,10 @@ from sqlalchemy.orm import Session  # type: ignore
 from app.models.conversation import Conversation  # type: ignore  # noqa: F401
 from app.models.message import Message  # type: ignore  # noqa: F401
 from app.models.user import User  # type: ignore
+from app.repositories.block_repo import BlockRepository  # type: ignore
 from app.repositories.conversation_repo import ConversationRepository  # type: ignore
 from app.repositories.message_repo import MessageRepository  # type: ignore
+from app.repositories.notification_repo import NotificationRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 from app.schemas.conversation_schema import (  # type: ignore
     CreateConversationRequest,
@@ -219,6 +221,14 @@ class MessagingService:
             else conversation.user1_id
         )
 
+        # Block check — either direction blocks messaging
+        if BlockRepository.get_block(db, current_user.user_id, receiver_id) or \
+                BlockRepository.get_block(db, receiver_id, current_user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You cannot send messages to this user.",
+            )
+
         message = MessageRepository.create(
             db,
             conversation_id=conversation_id,
@@ -227,6 +237,16 @@ class MessagingService:
             content=data.content,
             track_id=data.track_id,
             playlist_id=data.playlist_id,
+        )
+
+        # Notify the receiver
+        NotificationRepository.create(
+            db,
+            user_id=receiver_id,
+            actor_id=current_user.user_id,
+            notification_type="message",
+            message=f"{current_user.display_name} sent you a message.",
+            target_id=conversation_id,
         )
 
         return {
@@ -366,6 +386,7 @@ class MessagingService:
         for conv in conversations:
             user1 = UserRepository.get_by_id(db, conv.user1_id)
             user2 = UserRepository.get_by_id(db, conv.user2_id)
+            last_msg = MessageRepository.get_last_by_conversation(db, conv.conversation_id)
 
             result.append(
                 {
@@ -383,6 +404,15 @@ class MessagingService:
                             "profile_picture": user2.profile_picture,
                         },
                     ],
+                    "last_message": (
+                        {
+                            "content": last_msg.content,
+                            "sender_id": str(last_msg.sender_id),
+                            "created_at": last_msg.created_at,
+                            "is_read": last_msg.is_read,
+                        }
+                        if last_msg else None
+                    ),
                 }
             )
 
@@ -440,4 +470,41 @@ class MessagingService:
         return {
             "success": True,
             "message": "Conversation deleted successfully.",
+        }
+
+    @staticmethod
+    def get_unread_message_count(db: Session, current_user: User) -> dict:
+        count = MessageRepository.get_unread_count_for_user(db, current_user.user_id)
+        return {"success": True, "data": {"unread_count": count}}
+
+    @staticmethod
+    def mark_all_messages_as_read(
+        db: Session,
+        current_user: User,
+        conversation_id,
+    ) -> dict:
+        conversation = ConversationRepository.get_by_id(db, conversation_id)
+        if not conversation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conversation not found.",
+            )
+
+        is_participant = str(current_user.user_id) in [
+            str(conversation.user1_id),
+            str(conversation.user2_id),
+        ]
+        if not is_participant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a participant in this conversation.",
+            )
+
+        count = MessageRepository.mark_all_read_in_conversation(
+            db, conversation_id, current_user.user_id
+        )
+        return {
+            "success": True,
+            "message": f"{count} message(s) marked as read.",
+            "data": {"marked_read": count},
         }

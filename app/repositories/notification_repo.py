@@ -51,3 +51,28 @@ class NotificationRepository:
         db.commit()
         db.refresh(notification)
         return notification
+
+    @staticmethod
+    def get_unread_count(db: Session, user_id) -> int:
+        return (
+            db.query(Notification)
+            .filter(Notification.user_id == user_id, Notification.is_read == False)
+            .count()
+        )
+
+    @staticmethod
+    def mark_all_as_read(db: Session, user_id) -> int:
+        updated = (
+            db.query(Notification)
+            .filter(Notification.user_id == user_id, Notification.is_read == False)
+            .all()
+        )
+        for n in updated:
+            n.is_read = True
+        db.commit()
+        return len(updated)
+
+    @staticmethod
+    def delete(db: Session, notification: Notification) -> None:
+        db.delete(notification)
+        db.commit()
