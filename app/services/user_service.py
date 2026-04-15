@@ -283,7 +283,6 @@ class UserService:
         file_name = f"{user_id}.{file_ext}"
 
         absolute_path = os.path.join(upload_folder, file_name)
-        relative_path = os.path.join("Uploads", subfolder, file_name)
 
         with open(absolute_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)

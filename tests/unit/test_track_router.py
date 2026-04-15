@@ -1,3 +1,4 @@
+from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException
@@ -348,7 +349,7 @@ def test_get_track_stream_success(monkeypatch):
             "success": True,
             "data": {
                 "track_id": str(track_id),
-                "stream_url": "http://127.0.0.1:8000/api/uploads/test.mp3",
+                "stream_url": f"/api/tracks/{track_id}/audio",
                 "expires_in": None,
                 "content_type": "audio/mpeg",
                 "play_count": 5,
@@ -362,6 +363,38 @@ def test_get_track_stream_success(monkeypatch):
     body = response.json()
     assert body["success"] is True
     assert body["data"]["play_count"] == 5
+
+
+def test_stream_track_audio_supports_range_requests(monkeypatch):
+    track_id = uuid4()
+    audio_dir = Path("tmp") / "test-audio"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    audio_file = audio_dir / "range-test.mp3"
+    audio_file.write_bytes(b"0123456789")
+
+    fake_track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        file_url=f"http://127.0.0.1:8000/api/uploads/{audio_file.name}",
+        visibility="public",
+    )
+
+    from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(audio_dir))
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db, tid: fake_track)
+
+    response = client.get(
+        f"/tracks/{track_id}/audio",
+        headers={"Range": "bytes=0-3"},
+    )
+
+    assert response.status_code == 206
+    assert response.content == b"0123"
+    assert response.headers["accept-ranges"] == "bytes"
+    assert response.headers["content-range"] == "bytes 0-3/10"
+    assert response.headers["content-length"] == "4"
 
 
 def test_record_track_play_success(monkeypatch):

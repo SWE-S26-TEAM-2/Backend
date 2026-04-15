@@ -438,7 +438,7 @@ def test_get_stream_success(monkeypatch):
     result = TrackService.get_stream(db, track_id)
 
     assert result["success"] is True
-    assert result["data"]["stream_url"] == track.file_url
+    assert result["data"]["stream_url"] == f"/api/tracks/{track_id}/audio"
     assert result["data"]["play_count"] == 7
     assert result["data"]["expires_in"] is None
 
@@ -525,7 +525,7 @@ def test_get_playback_success_with_cached_waveform(monkeypatch):
 
     assert result["success"] is True
     assert result["data"]["title"] == "Player Song"
-    assert result["data"]["stream_url"] == track.file_url
+    assert result["data"]["stream_url"] == f"/api/tracks/{track_id}/audio"
     assert result["data"]["play_count"] == 4
     assert result["data"]["duration_seconds"] == 33
     assert result["data"]["waveform"]["peaks"] == [0.2, 0.8]

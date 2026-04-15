@@ -1,4 +1,5 @@
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, Request, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 import hashlib
@@ -22,6 +23,8 @@ ALLOWED_VISIBILITIES = {"public", "private"}
 
 
 class TrackService:
+    STREAM_CHUNK_SIZE = 1024 * 1024
+
     @staticmethod
     def _calculate_file_hash(file) -> str:
         file.seek(0)
@@ -37,6 +40,15 @@ class TrackService:
     def _get_content_type(track):
         content_type, _ = mimetypes.guess_type(track.file_url or "")
         return content_type or "audio/mpeg"
+
+    @staticmethod
+    def _get_audio_file_path(track):
+        filename = track.file_url.split("/")[-1]
+        return os.path.join(UPLOAD_DIR, filename)
+
+    @staticmethod
+    def _get_audio_stream_url(track):
+        return f"/api/tracks/{track.track_id}/audio"
 
     @staticmethod
     def _get_track_or_404(db: Session, track_id: UUID):
@@ -109,8 +121,7 @@ class TrackService:
                 "peaks": track.waveform_peaks,
             }
 
-        filename = track.file_url.split("/")[-1]
-        file_path = os.path.join(UPLOAD_DIR, filename)
+        file_path = TrackService._get_audio_file_path(track)
 
         if not os.path.exists(file_path):
             raise HTTPException(
@@ -347,13 +358,92 @@ class TrackService:
             "success": True,
             "data": {
                 "track_id": str(track.track_id),
-                "stream_url": track.file_url,
+                "stream_url": TrackService._get_audio_stream_url(track),
                 "expires_in": None,
                 "content_type": TrackService._get_content_type(track),
                 "play_count": int(track.play_count or 0),
                 "processing_status": track.processing_status,
             },
         }
+
+    @staticmethod
+    def stream_audio(db: Session, track_id: UUID, request: Request, user=None):
+        track = TrackService._get_track_or_404(db, track_id)
+        TrackService._ensure_track_access(track, user)
+
+        file_path = TrackService._get_audio_file_path(track)
+        if not os.path.exists(file_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Audio file not found",
+            )
+
+        file_size = os.path.getsize(file_path)
+        content_type = TrackService._get_content_type(track)
+        range_header = request.headers.get("range")
+
+        def iter_file(start: int, end: int):
+            with open(file_path, "rb") as audio_file:
+                audio_file.seek(start)
+                bytes_remaining = end - start + 1
+
+                while bytes_remaining > 0:
+                    chunk = audio_file.read(
+                        min(TrackService.STREAM_CHUNK_SIZE, bytes_remaining)
+                    )
+                    if not chunk:
+                        break
+
+                    bytes_remaining -= len(chunk)
+                    yield chunk
+
+        if not range_header:
+            return StreamingResponse(
+                iter_file(0, file_size - 1),
+                media_type=content_type,
+                headers={
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(file_size),
+                },
+            )
+
+        try:
+            range_value = range_header.strip().lower()
+            if not range_value.startswith("bytes="):
+                raise ValueError
+
+            start_text, end_text = range_value.replace("bytes=", "", 1).split("-", 1)
+
+            if start_text == "":
+                suffix_length = int(end_text)
+                if suffix_length <= 0:
+                    raise ValueError
+                start = max(file_size - suffix_length, 0)
+                end = file_size - 1
+            else:
+                start = int(start_text)
+                end = int(end_text) if end_text else file_size - 1
+
+            if start < 0 or end >= file_size or start > end:
+                raise ValueError
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                detail="Requested range is not satisfiable",
+                headers={"Content-Range": f"bytes */{file_size}"},
+            )
+
+        content_length = end - start + 1
+        return StreamingResponse(
+            iter_file(start, end),
+            status_code=status.HTTP_206_PARTIAL_CONTENT,
+            media_type=content_type,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Content-Length": str(content_length),
+            },
+        )
 
     @staticmethod
     def record_play(
@@ -434,7 +524,7 @@ class TrackService:
                 "track_id": str(track.track_id),
                 "title": track.title,
                 "description": track.description,
-                "stream_url": track.file_url,
+                "stream_url": TrackService._get_audio_stream_url(track),
                 "expires_in": None,
                 "content_type": TrackService._get_content_type(track),
                 "play_count": int(track.play_count or 0),
