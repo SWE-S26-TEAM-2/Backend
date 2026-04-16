@@ -14,6 +14,7 @@ from app.schemas.auth_schema import (  # type: ignore
     LoginRequest,
     LogoutRequest,
     GoogleLoginRequest,
+    FacebookLoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
     ResendVerificationRequest,
@@ -115,6 +116,24 @@ def google_login(
         dict: Access token, refresh token, is_new_user flag, and user info.
     """
     return AuthService.google_login(db, request)
+
+
+@router.post("/facebook")
+def facebook_login(
+    request: FacebookLoginRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Authenticate or auto-register a user via Facebook OAuth2.
+
+    Args:
+        request (FacebookLoginRequest): Facebook access token from the client SDK.
+        db (Session): Database session injected by FastAPI.
+
+    Returns:
+        dict: Access token, refresh token, is_new_user flag, and user info.
+    """
+    return AuthService.facebook_login(db, request)
 
 
 @router.post("/refresh")

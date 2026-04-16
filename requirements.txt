@@ -9,7 +9,7 @@ pydantic[email]
 google-auth
 requests
 sendgrid
-
+facebook-sdk
 # Testing
 pytest
 pytest-mock

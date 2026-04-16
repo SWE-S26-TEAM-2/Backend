@@ -40,7 +40,8 @@ class SearchService:
                         "tags": track.tags or [],
                         "release_date": (
                             track.release_date.isoformat()
-                            if track.release_date else None
+                            if track.release_date
+                            else None
                         ),
                         "file_url": track.file_url,
                         "visibility": track.visibility,

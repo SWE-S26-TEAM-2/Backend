@@ -587,7 +587,13 @@ class TestSendMessage:
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_text_message_success(
-        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
+        self,
+        mock_conv_repo,
+        mock_msg_repo,
+        mock_block_repo,
+        mock_notif_repo,
+        mock_db,
+        verified_user,
     ):
         """
         Participant sends a plain text message.
@@ -632,7 +638,13 @@ class TestSendMessage:
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_message_with_track_id(
-        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
+        self,
+        mock_conv_repo,
+        mock_msg_repo,
+        mock_block_repo,
+        mock_notif_repo,
+        mock_db,
+        verified_user,
     ):
         """
         User shares a track (no text content).
@@ -679,7 +691,13 @@ class TestSendMessage:
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     def test_send_message_receiver_is_auto_detected(
-        self, mock_conv_repo, mock_msg_repo, mock_block_repo, mock_notif_repo, mock_db, verified_user
+        self,
+        mock_conv_repo,
+        mock_msg_repo,
+        mock_block_repo,
+        mock_notif_repo,
+        mock_db,
+        verified_user,
     ):
         """
         MessageRepository.create must be called exactly once.

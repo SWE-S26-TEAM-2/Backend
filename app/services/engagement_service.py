@@ -243,9 +243,7 @@ class EngagementService:
             is_self = (
                 str(parent.user_id) == str(current_user.user_id) if parent else True
             )
-            is_owner = (
-                str(parent.user_id) == str(track.user_id) if parent else True
-            )
+            is_owner = str(parent.user_id) == str(track.user_id) if parent else True
             if parent and not is_self and not is_owner:
                 NotificationRepository.create(
                     db,

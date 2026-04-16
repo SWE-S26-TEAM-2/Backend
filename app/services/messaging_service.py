@@ -222,8 +222,9 @@ class MessagingService:
         )
 
         # Block check — either direction blocks messaging
-        if BlockRepository.get_block(db, current_user.user_id, receiver_id) or \
-                BlockRepository.get_block(db, receiver_id, current_user.user_id):
+        if BlockRepository.get_block(
+            db, current_user.user_id, receiver_id
+        ) or BlockRepository.get_block(db, receiver_id, current_user.user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot send messages to this user.",
@@ -413,7 +414,8 @@ class MessagingService:
                             "created_at": last_msg.created_at,
                             "is_read": last_msg.is_read,
                         }
-                        if last_msg else None
+                        if last_msg
+                        else None
                     ),
                 }
             )
