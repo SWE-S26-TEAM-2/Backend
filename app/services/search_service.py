@@ -37,10 +37,7 @@ class SearchService:
                 "description": track.description,
                 "genre": getattr(track, "genre", None),
                 "tags": getattr(track, "tags", None) or [],
-                "release_date": (
-                    release_date.isoformat()
-                    if release_date else None
-                ),
+                "release_date": (release_date.isoformat() if release_date else None),
                 "file_url": track.file_url,
                 "visibility": getattr(track, "visibility", None) or "public",
                 "processing_status": (
@@ -50,10 +47,5 @@ class SearchService:
 
         return {
             "success": True,
-            "data": {
-                "tracks": [
-                    serialize_track(track)
-                    for track in tracks
-                ]
-            },
+            "data": {"tracks": [serialize_track(track) for track in tracks]},
         }

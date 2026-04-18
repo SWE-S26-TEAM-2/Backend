@@ -84,11 +84,7 @@ class TrackService:
         if tags is None:
             return None
 
-        parsed_tags = [
-            tag.strip()
-            for tag in tags.split(",")
-            if tag.strip()
-        ]
+        parsed_tags = [tag.strip() for tag in tags.split(",") if tag.strip()]
         return parsed_tags or None
 
     @staticmethod
@@ -248,7 +244,7 @@ class TrackService:
                     user_id=follow.follower_id,
                     actor_id=user.user_id,
                     notification_type="new_track",
-                    message=f"{user.display_name} posted a new track: \"{title}\".",
+                    message=f'{user.display_name} posted a new track: "{title}".',
                     target_id=track.track_id,
                 )
 
@@ -512,9 +508,7 @@ class TrackService:
     def _serialize_history_item(history, track):
         return {
             "history_id": str(history.history_id),
-            "played_at": (
-                history.played_at.isoformat() if history.played_at else None
-            ),
+            "played_at": (history.played_at.isoformat() if history.played_at else None),
             "duration_listened_seconds": history.duration_listened_seconds,
             "track": {
                 "track_id": str(track.track_id),
@@ -546,8 +540,7 @@ class TrackService:
                 "genre": track.genre,
                 "tags": track.tags or [],
                 "release_date": (
-                    track.release_date.isoformat()
-                    if track.release_date else None
+                    track.release_date.isoformat() if track.release_date else None
                 ),
                 "duration_seconds": waveform["duration_seconds"],
                 "waveform": {

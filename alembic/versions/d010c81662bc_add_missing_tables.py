@@ -379,9 +379,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
             name=op.f("playlist_likes_playlist_id_fkey"),
         ),
-        sa.PrimaryKeyConstraint(
-            "playlist_like_id", name=op.f("playlist_likes_pkey")
-        ),
+        sa.PrimaryKeyConstraint("playlist_like_id", name=op.f("playlist_likes_pkey")),
         sa.UniqueConstraint("user_id", "playlist_id", name="uq_user_playlist_like"),
     )
 

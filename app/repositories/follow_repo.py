@@ -70,11 +70,7 @@ class FollowRepository:
         Returns:
             list[Follow]: All follow records pointing at this user.
         """
-        return (
-            db.query(Follow)
-            .filter(Follow.following_id == user_id)
-            .all()
-        )
+        return db.query(Follow).filter(Follow.following_id == user_id).all()
 
     @staticmethod
     def delete_follow(db: Session, follow: Follow) -> None:
