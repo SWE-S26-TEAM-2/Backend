@@ -138,6 +138,7 @@ def test_create_playlist_success(monkeypatch):
             playlist.playlist_id = uuid.uuid4()
 
     monkeypatch.setattr(PlaylistRepository, "create", fake_create)
+    monkeypatch.setattr(PlaylistRepository, "create_playlist_like", lambda db_arg, user_id, pid: None)
 
     result = PlaylistService.create_playlist(db, user, data)
 
@@ -162,6 +163,7 @@ def test_create_playlist_without_description(monkeypatch):
             playlist.playlist_id = uuid.uuid4()
 
     monkeypatch.setattr(PlaylistRepository, "create", fake_create)
+    monkeypatch.setattr(PlaylistRepository, "create_playlist_like", lambda db_arg, user_id, pid: None)
 
     result = PlaylistService.create_playlist(db, user, data)
 

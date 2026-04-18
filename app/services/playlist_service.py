@@ -25,6 +25,9 @@ class PlaylistService:
         )
         PlaylistRepository.create(db, playlist)
 
+        # Automatically like the playlist for the creator
+        PlaylistRepository.create_playlist_like(db, user.user_id, playlist.playlist_id)
+
         return {
             "success": True,
             "message": "Playlist created successfully.",
