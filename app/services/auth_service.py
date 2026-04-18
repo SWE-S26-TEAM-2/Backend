@@ -29,7 +29,10 @@ from app.repositories.user_repo import UserRepository  # type: ignore
 from app.core.config import (
     GOOGLE_CLIENT_ID_ANDROID,
     GOOGLE_CLIENT_ID_WEB,
+    FACEBOOK_APP_ID,
+    FACEBOOK_APP_SECRET,
 )  # type: ignore
+import requests
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
 from app.repositories.password_reset_repo import PasswordResetRepository  # type: ignore
 from app.core.email import (  # type: ignore
@@ -361,6 +364,134 @@ class AuthService:
                 "is_new_user": is_new_user,
                 "user": {
                     "user_id": str(user.user_id),
+                    "display_name": user.display_name,
+                    "account_type": user.account_type,
+                    "is_premium": user.is_premium,
+                },
+            },
+        }
+
+    @staticmethod
+    def facebook_login(db: Session, data) -> dict:
+        """
+        Authenticate or auto-register a user via Facebook OAuth2 access token.
+
+        Validates the Facebook token, extracts user info, and either creates
+        a new account or logs in the existing user.
+
+        Args:
+            db (Session): The database session.
+            data: The FacebookLoginRequest schema containing facebook_token.
+
+        Returns:
+            dict: Access token, refresh token, token metadata, is_new_user
+                flag, and basic user info.
+
+        Raises:
+            HTTPException: 400 if the facebook_token field is missing or empty.
+            HTTPException: 401 if the Facebook token is invalid or expired.
+            HTTPException: 403 if the account is suspended.
+            HTTPException: 503 if the Facebook service is unreachable.
+        """
+        if not data.facebook_token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing or empty facebook_token.",
+            )
+
+        # Verify the access token with Facebook's API
+        try:
+            # Call Facebook's debug token endpoint to validate and get token info
+            debug_url = "https://graph.facebook.com/debug_token"
+            debug_params = {
+                "input_token": data.facebook_token,
+                "access_token": f"{FACEBOOK_APP_ID}|{FACEBOOK_APP_SECRET}",
+            }
+            debug_response = requests.get(debug_url, params=debug_params, timeout=5)
+            debug_data = debug_response.json()
+
+            if not debug_data.get("data", {}).get("is_valid"):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Facebook token invalid or expired.",
+                )
+
+            # Get user info from Facebook
+            user_url = "https://graph.facebook.com/me"
+            user_params = {
+                "fields": "id,email,name,picture",
+                "access_token": data.facebook_token,
+            }
+            user_response = requests.get(user_url, params=user_params, timeout=5)
+            facebook_user_data = user_response.json()
+
+            if "error" in facebook_user_data:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Facebook token invalid or expired.",
+                )
+
+        except requests.exceptions.RequestException:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Facebook service unavailable.",
+            )
+
+        facebook_email: str = facebook_user_data.get("email")
+        facebook_name: str = facebook_user_data.get("name", "Facebook User")
+        facebook_picture: str = (
+            facebook_user_data.get("picture", {}).get("data", {}).get("url")
+        )
+
+        # If no email is provided by Facebook, we cannot create an account
+        if not facebook_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Facebook account must have a public email.",
+            )
+
+        existing_user = UserRepository.get_by_email(db, facebook_email)
+        is_new_user = existing_user is None
+
+        if is_new_user:
+            # Auto-register the user with a random unusable password
+            unusable_hash = hash_password(secrets.token_urlsafe(32))
+
+            new_user = User(
+                email=facebook_email,
+                password_hash=unusable_hash,
+                display_name=facebook_name,
+                account_type="listener",
+                is_verified=True,
+                profile_picture=facebook_picture,
+            )
+            UserRepository.create(db, new_user)
+            user = new_user
+        else:
+            user = existing_user
+
+        if user.is_suspended:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account suspended.",
+            )
+
+        access_token = create_access_token(str(user.user_id))
+        refresh_token = create_refresh_token(str(user.user_id))
+        refresh_payload = decode_refresh_token(refresh_token)
+        RefreshTokenRepository.create(db, refresh_payload["jti"], str(user.user_id))
+
+        return {
+            "success": True,
+            "data": {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+                "expires_in": 900,
+                "is_new_user": is_new_user,
+                "user": {
+                    "user_id": str(user.user_id),
+                    "email": user.email,
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,
