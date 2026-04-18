@@ -6,6 +6,7 @@ import hashlib
 import os
 import mimetypes
 from datetime import date
+from urllib.parse import unquote, urlparse
 from uuid import UUID, uuid4  # type: ignore
 from pydub import AudioSegment  # type: ignore
 
@@ -18,7 +19,8 @@ from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
+PUBLIC_UPLOAD_BASE_URL = os.environ.get("PUBLIC_UPLOAD_BASE_URL", "/api/uploads")
 TRACK_MAX_SIZE = 100 * 1024 * 1024  # 100 MB
 ALLOWED_VISIBILITIES = {"public", "private"}
 
@@ -43,9 +45,43 @@ class TrackService:
         return content_type or "audio/mpeg"
 
     @staticmethod
-    def _get_audio_file_path(track):
-        filename = track.file_url.split("/")[-1]
+    def _get_upload_filename(file_url: str | None) -> str:
+        if not file_url:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Audio file not found",
+            )
+
+        parsed_path = urlparse(file_url).path or file_url
+        filename = os.path.basename(unquote(parsed_path.rstrip("/")))
+
+        if not filename or filename in {".", ".."}:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Audio file not found",
+            )
+
+        return filename
+
+    @staticmethod
+    def _get_audio_file_path(track) -> str:
+        filename = TrackService._get_upload_filename(track.file_url)
         return os.path.join(UPLOAD_DIR, filename)
+
+    @staticmethod
+    def _get_upload_url(filename: str) -> str:
+        return f"{PUBLIC_UPLOAD_BASE_URL.rstrip('/')}/{filename}"
+
+    @staticmethod
+    def _ensure_audio_file_exists(file_url: str | None):
+        filename = TrackService._get_upload_filename(file_url)
+        file_path = os.path.join(UPLOAD_DIR, filename)
+
+        if not os.path.isfile(file_path):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Audio file does not exist in uploads",
+            )
 
     @staticmethod
     def _get_audio_stream_url(track):
@@ -218,7 +254,7 @@ class TrackService:
         with open(file_path, "wb") as buffer:
             buffer.write(file.file.read())
 
-        file_url = f"http://127.0.0.1:8000/api/uploads/{unique_filename}"
+        file_url = TrackService._get_upload_url(unique_filename)
 
         track = Track(
             user_id=user.user_id,
@@ -339,6 +375,7 @@ class TrackService:
             track.release_date = track_data.release_date
 
         if track_data.file_url is not None:
+            TrackService._ensure_audio_file_exists(track_data.file_url)
             track.file_url = track_data.file_url
             track.waveform_peaks = None
             track.duration_seconds = None

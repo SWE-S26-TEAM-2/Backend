@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 from datetime import datetime, timezone
 import os
@@ -280,7 +281,13 @@ def test_update_track_success(monkeypatch):
     track = FakeTrack(track_id=track_id, user_id=owner_id)
 
     from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
 
+    upload_dir = Path("tmp") / "test-track-service" / str(uuid4())
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    audio_file = upload_dir / "new.mp3"
+    audio_file.write_bytes(b"fake audio")
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
     monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
 
     update_data = FakeTrackUpdate(
@@ -305,6 +312,29 @@ def test_update_track_success(monkeypatch):
     assert track.duration_seconds is None
     assert db.committed is True
     assert db.refreshed == track
+
+
+def test_update_track_rejects_missing_audio_file(monkeypatch):
+    db = FakeDB()
+    owner_id = uuid4()
+    track_id = uuid4()
+    track = FakeTrack(track_id=track_id, user_id=owner_id)
+
+    from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    upload_dir = Path("tmp") / "test-track-service" / str(uuid4())
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+
+    update_data = FakeTrackUpdate(file_url="missing.mp3")
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.update_track(db, track_id, update_data, owner_id)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Audio file does not exist in uploads"
 
 
 def test_update_track_not_found(monkeypatch):
