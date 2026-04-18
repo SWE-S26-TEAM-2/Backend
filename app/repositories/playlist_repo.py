@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.playlist import Playlist
+from app.models.playlist_like import PlaylistLike
 from app.models.playlist_track import PlaylistTrack
 
 
@@ -72,3 +73,42 @@ class PlaylistRepository:
     @staticmethod
     def get_playlist_tracks_by_track(db, track_id):
         return db.query(PlaylistTrack).filter(PlaylistTrack.track_id == track_id).all()
+
+    @staticmethod
+    def get_playlist_like(db: Session, user_id, playlist_id):
+        return (
+            db.query(PlaylistLike)
+            .filter(
+                PlaylistLike.user_id == user_id,
+                PlaylistLike.playlist_id == playlist_id,
+            )
+            .first()
+        )
+
+    @staticmethod
+    def create_playlist_like(db: Session, user_id, playlist_id):
+        playlist_like = PlaylistLike(
+            user_id=user_id,
+            playlist_id=playlist_id,
+        )
+        db.add(playlist_like)
+        db.commit()
+        db.refresh(playlist_like)
+        return playlist_like
+
+    @staticmethod
+    def delete_playlist_like(db: Session, playlist_like: PlaylistLike):
+        db.delete(playlist_like)
+        db.commit()
+
+    @staticmethod
+    def get_liked_playlists(db: Session, user_id):
+        return (
+            db.query(Playlist)
+            .join(
+                PlaylistLike,
+                Playlist.playlist_id == PlaylistLike.playlist_id,
+            )
+            .filter(PlaylistLike.user_id == user_id)
+            .all()
+        )
