@@ -1,7 +1,6 @@
 from fastapi import HTTPException, status  # type: ignore
 from fastapi import UploadFile  # type: ignore
 import os
-from uuid import uuid4
 
 from app.models.playlist import Playlist
 from app.repositories.notification_repo import NotificationRepository
@@ -66,23 +65,25 @@ class PlaylistService:
 
         playlist_tracks = PlaylistRepository.get_playlist_tracks(db, playlist_id)
         tracks = []
-        
+
         for playlist_track in playlist_tracks:
             track = TrackRepository.get_by_id(db, playlist_track.track_id)
             if track:
-                tracks.append({
-                    "track_id": str(track.track_id),
-                    "user_id": str(track.user_id),
-                    "title": track.title,
-                    "description": track.description,
-                    "genre": track.genre,
-                    "tags": track.tags,
-                    "release_date": track.release_date,
-                    "file_url": track.file_url,
-                    "visibility": track.visibility,
-                    "play_count": track.play_count,
-                    "duration_seconds": track.duration_seconds,
-                })
+                tracks.append(
+                    {
+                        "track_id": str(track.track_id),
+                        "user_id": str(track.user_id),
+                        "title": track.title,
+                        "description": track.description,
+                        "genre": track.genre,
+                        "tags": track.tags,
+                        "release_date": track.release_date,
+                        "file_url": track.file_url,
+                        "visibility": track.visibility,
+                        "play_count": track.play_count,
+                        "duration_seconds": track.duration_seconds,
+                    }
+                )
 
         return {
             "success": True,

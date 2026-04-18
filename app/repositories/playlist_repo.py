@@ -115,8 +115,4 @@ class PlaylistRepository:
 
     @staticmethod
     def search_by_name(db: Session, keyword: str):
-        return (
-            db.query(Playlist)
-            .filter(Playlist.name.ilike(f"%{keyword}%"))
-            .all()
-        )
+        return db.query(Playlist).filter(Playlist.name.ilike(f"%{keyword}%")).all()

@@ -54,38 +54,44 @@ class SearchService:
     @staticmethod
     def search_playlists(db, keyword: str):
         playlists = PlaylistRepository.search_by_name(db, keyword)
-        
+
         playlist_results = []
         for playlist in playlists:
-            playlist_tracks = PlaylistRepository.get_playlist_tracks(db, playlist.playlist_id)
+            playlist_tracks = PlaylistRepository.get_playlist_tracks(
+                db, playlist.playlist_id
+            )
             tracks = []
-            
+
             for playlist_track in playlist_tracks:
                 track = TrackRepository.get_by_id(db, playlist_track.track_id)
                 if track:
-                    tracks.append({
-                        "track_id": str(track.track_id),
-                        "user_id": str(track.user_id),
-                        "title": track.title,
-                        "description": track.description,
-                        "genre": track.genre,
-                        "tags": track.tags,
-                        "release_date": track.release_date,
-                        "file_url": track.file_url,
-                        "visibility": track.visibility,
-                        "play_count": track.play_count,
-                        "duration_seconds": track.duration_seconds,
-                    })
-            
-            playlist_results.append({
-                "playlist_id": str(playlist.playlist_id),
-                "user_id": str(playlist.user_id),
-                "name": playlist.name,
-                "description": playlist.description,
-                "cover_photo_url": playlist.cover_photo_url,
-                "tracks": tracks,
-            })
-        
+                    tracks.append(
+                        {
+                            "track_id": str(track.track_id),
+                            "user_id": str(track.user_id),
+                            "title": track.title,
+                            "description": track.description,
+                            "genre": track.genre,
+                            "tags": track.tags,
+                            "release_date": track.release_date,
+                            "file_url": track.file_url,
+                            "visibility": track.visibility,
+                            "play_count": track.play_count,
+                            "duration_seconds": track.duration_seconds,
+                        }
+                    )
+
+            playlist_results.append(
+                {
+                    "playlist_id": str(playlist.playlist_id),
+                    "user_id": str(playlist.user_id),
+                    "name": playlist.name,
+                    "description": playlist.description,
+                    "cover_photo_url": playlist.cover_photo_url,
+                    "tracks": tracks,
+                }
+            )
+
         return {
             "success": True,
             "data": {"playlists": playlist_results},

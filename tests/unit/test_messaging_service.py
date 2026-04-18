@@ -23,7 +23,6 @@ from fastapi import HTTPException
 
 from app.services.messaging_service import MessagingService  # type: ignore
 
-
 # ══════════════════════════════════════════════════════
 # CREATE / GET CONVERSATION TESTS
 # ══════════════════════════════════════════════════════
