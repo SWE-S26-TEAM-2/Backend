@@ -1,9 +1,18 @@
 from fastapi import HTTPException, status  # type: ignore
+from fastapi import UploadFile  # type: ignore
+import os
+from uuid import uuid4
 
 from app.models.playlist import Playlist
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.playlist_repo import PlaylistRepository
 from app.repositories.track_repo import TrackRepository
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
+PUBLIC_UPLOAD_BASE_URL = os.environ.get("PUBLIC_UPLOAD_BASE_URL", "/api/uploads")
+COVER_PHOTO_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 
 class PlaylistService:
@@ -24,6 +33,7 @@ class PlaylistService:
                 "playlist_id": str(playlist.playlist_id),
                 "name": playlist.name,
                 "description": playlist.description,
+                "cover_photo_url": playlist.cover_photo_url,
             },
         }
 
@@ -39,6 +49,7 @@ class PlaylistService:
                     "user_id": str(playlist.user_id),
                     "name": playlist.name,
                     "description": playlist.description,
+                    "cover_photo_url": playlist.cover_photo_url,
                 }
                 for playlist in playlists
             ],
@@ -53,6 +64,26 @@ class PlaylistService:
                 detail="Playlist not found",
             )
 
+        playlist_tracks = PlaylistRepository.get_playlist_tracks(db, playlist_id)
+        tracks = []
+        
+        for playlist_track in playlist_tracks:
+            track = TrackRepository.get_by_id(db, playlist_track.track_id)
+            if track:
+                tracks.append({
+                    "track_id": str(track.track_id),
+                    "user_id": str(track.user_id),
+                    "title": track.title,
+                    "description": track.description,
+                    "genre": track.genre,
+                    "tags": track.tags,
+                    "release_date": track.release_date,
+                    "file_url": track.file_url,
+                    "visibility": track.visibility,
+                    "play_count": track.play_count,
+                    "duration_seconds": track.duration_seconds,
+                })
+
         return {
             "success": True,
             "data": {
@@ -60,7 +91,8 @@ class PlaylistService:
                 "user_id": str(playlist.user_id),
                 "name": playlist.name,
                 "description": playlist.description,
-                "tracks": [],
+                "cover_photo_url": playlist.cover_photo_url,
+                "tracks": tracks,
             },
         }
 
@@ -249,4 +281,63 @@ class PlaylistService:
         return {
             "success": True,
             "message": "Track removed from playlist successfully.",
+        }
+
+    @staticmethod
+    def upload_cover_photo(db, user, playlist_id, file: UploadFile):
+        playlist = PlaylistRepository.get_by_id(db, playlist_id)
+        if not playlist:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Playlist not found",
+            )
+
+        if str(playlist.user_id) != str(user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only upload cover photos for your own playlists",
+            )
+
+        if not file.filename:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No file uploaded",
+            )
+
+        if not file.content_type or file.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Only image files are allowed (JPEG, PNG, GIF, WebP)",
+            )
+
+        file.file.seek(0, os.SEEK_END)
+        file_size = file.file.tell()
+        file.file.seek(0)
+
+        if file_size > COVER_PHOTO_MAX_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File size must not exceed 5 MB",
+            )
+
+        file_extension = os.path.splitext(file.filename)[1] or ".jpg"
+        unique_filename = f"playlist_{playlist_id}{file_extension}"
+
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+
+        with open(file_path, "wb") as buffer:
+            buffer.write(file.file.read())
+
+        cover_photo_url = f"{PUBLIC_UPLOAD_BASE_URL.rstrip('/')}/{unique_filename}"
+
+        PlaylistRepository.update(db, playlist, {"cover_photo_url": cover_photo_url})
+
+        return {
+            "success": True,
+            "message": "Cover photo uploaded successfully.",
+            "data": {
+                "playlist_id": str(playlist.playlist_id),
+                "cover_photo_url": cover_photo_url,
+            },
         }

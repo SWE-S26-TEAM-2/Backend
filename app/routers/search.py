@@ -21,3 +21,11 @@ def search_tracks(
     db: Session = Depends(get_db),
 ):
     return SearchService.search_tracks(db, keyword)
+
+
+@router.get("/playlists")
+def search_playlists(
+    keyword: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    return SearchService.search_playlists(db, keyword)

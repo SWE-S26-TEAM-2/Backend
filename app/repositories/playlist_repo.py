@@ -112,3 +112,11 @@ class PlaylistRepository:
             .filter(PlaylistLike.user_id == user_id)
             .all()
         )
+
+    @staticmethod
+    def search_by_name(db: Session, keyword: str):
+        return (
+            db.query(Playlist)
+            .filter(Playlist.name.ilike(f"%{keyword}%"))
+            .all()
+        )
