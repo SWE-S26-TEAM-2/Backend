@@ -89,12 +89,16 @@ class ConversationRepository:
         Returns:
             list[Conversation]: All conversations for this user.
         """
-        from app.models.conversation import Conversation  # avoid circular
+        from app.models.conversation import Conversation
+
+        # Cast to string for consistent UUID comparison across SQLite/PostgreSQL
+        user_id_str = str(user_id)
 
         return (
             db.query(Conversation)
             .filter(
-                (Conversation.user1_id == user_id) | (Conversation.user2_id == user_id)
+                (Conversation.user1_id == user_id_str)
+                | (Conversation.user2_id == user_id_str)
             )
             .order_by(Conversation.created_at.desc())
             .all()

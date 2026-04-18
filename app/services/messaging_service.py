@@ -39,7 +39,7 @@ class MessagingService:
         Create a new 1-to-1 conversation or return the existing one.
 
         Business rules:
-        - participant_id must be a valid UUID.
+        - display_name must not be empty.
         - Cannot start a conversation with yourself.
         - Target user must exist in the database.
         - If a conversation already exists between these two users,
@@ -49,41 +49,39 @@ class MessagingService:
         Args:
             db (Session): The database session.
             current_user (User): The authenticated requesting user.
-            data (CreateConversationRequest): Contains participant_id.
+            data (CreateConversationRequest): Contains display_name.
 
         Returns:
             dict: conversation_id of the new or existing conversation.
 
         Raises:
-            HTTPException 400: Invalid UUID, self-messaging, or
+            HTTPException 400: Invalid display_name, self-messaging, or
                                participant not found.
         """
-        # Validate that participant_id is a proper UUID string
-        try:
-            participant_uuid = UUID(str(data.participant_id))
-        except ValueError:
+        # Validate that display_name is not empty
+        if not data.display_name or not data.display_name.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid participant_id — must be a valid UUID.",
-            )
-
-        # Cannot message yourself
-        if str(current_user.user_id) == str(participant_uuid):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot start a conversation with yourself.",
+                detail="Invalid display_name — must not be empty.",
             )
 
         # Participant must be a real user
-        participant = UserRepository.get_by_id(db, participant_uuid)
+        participant = UserRepository.get_by_display_name(db, data.display_name)
         if not participant:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid participant — user does not exist.",
             )
 
+        # Cannot message yourself
+        if str(current_user.user_id) == str(participant.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You cannot start a conversation with yourself.",
+            )
+
         # Sort IDs so (A,B) and (B,A) always map to the same DB row
-        ids = sorted([str(current_user.user_id), str(participant_uuid)])
+        ids = sorted([str(current_user.user_id), str(participant.user_id)])
         user1 = UUID(ids[0])
         user2 = UUID(ids[1])
 
@@ -381,6 +379,11 @@ class MessagingService:
         Returns:
             dict: List of conversations with participant details.
         """
+        if not current_user or not current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not authenticated.",
+            )
         conversations = ConversationRepository.get_all_by_user(db, current_user.user_id)
 
         result = []

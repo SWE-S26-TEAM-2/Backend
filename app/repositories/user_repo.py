@@ -44,6 +44,20 @@ class UserRepository:
         return db.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
+    def get_by_display_name(db: Session, display_name: str):
+        """
+        Find a user by their display name (exact match).
+
+        Args:
+            db (Session): The database session.
+            display_name (str): The display name to search for.
+
+        Returns:
+            User or None: The user if found, None otherwise.
+        """
+        return db.query(User).filter(User.display_name == display_name).first()
+
+    @staticmethod
     def create(db: Session, user: User) -> User:
         """
         Insert a new user into the database.

@@ -4,6 +4,12 @@ Unit tests for Module 9: Messaging & Track Sharing.
 Tests MessagingService in isolation using MagicMock.
 No real database needed.
 
+Changes from previous version:
+- create_or_get_conversation now uses display_name instead of participant_id
+  and calls UserRepository.get_by_display_name
+- send_message now also calls BlockRepository and NotificationRepository
+- get_user_conversations now also calls MessageRepository.get_last_by_conversation
+
 Every test follows the same 3 steps:
   1. SETUP  — control what the repositories return
   2. CALL   — call the service method directly
@@ -17,13 +23,19 @@ from fastapi import HTTPException
 
 from app.services.messaging_service import MessagingService  # type: ignore
 
+
 # ══════════════════════════════════════════════════════
 # CREATE / GET CONVERSATION TESTS
 # ══════════════════════════════════════════════════════
 
 
 class TestCreateOrGetConversation:
-    """Tests for MessagingService.create_or_get_conversation()"""
+    """
+    Tests for MessagingService.create_or_get_conversation()
+
+    The service now looks up the participant by display_name
+    using UserRepository.get_by_display_name, not by UUID.
+    """
 
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
@@ -31,16 +43,17 @@ class TestCreateOrGetConversation:
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        No existing conversation between the two users.
-        A new one must be created and its ID returned.
+        Valid display_name provided, no existing conversation.
+        A new conversation must be created and its ID returned.
         Expect success=True and conversation_id in the response.
         """
         # SETUP
-        participant_id = uuid.uuid4()
         participant = MagicMock()
-        participant.user_id = participant_id
+        participant.user_id = uuid.uuid4()
+        participant.display_name = "DJ Khaled"
 
-        mock_user_repo.get_by_id.return_value = participant
+        # Service calls get_by_display_name now
+        mock_user_repo.get_by_display_name.return_value = participant
         mock_conv_repo.get_by_participants.return_value = None
 
         new_conv = MagicMock()
@@ -48,7 +61,7 @@ class TestCreateOrGetConversation:
         mock_conv_repo.create.return_value = new_conv
 
         data = MagicMock()
-        data.participant_id = str(participant_id)
+        data.display_name = "DJ Khaled"
 
         # CALL
         result = MessagingService.create_or_get_conversation(
@@ -66,22 +79,21 @@ class TestCreateOrGetConversation:
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        A conversation already exists between the two users.
-        Must return it without creating a duplicate.
-        create() must NOT be called.
+        Conversation already exists between the two users.
+        Must return the existing one — create() must NOT be called.
         """
         # SETUP
-        participant_id = uuid.uuid4()
         participant = MagicMock()
+        participant.user_id = uuid.uuid4()
 
-        mock_user_repo.get_by_id.return_value = participant
+        mock_user_repo.get_by_display_name.return_value = participant
 
         existing_conv = MagicMock()
         existing_conv.conversation_id = uuid.uuid4()
         mock_conv_repo.get_by_participants.return_value = existing_conv
 
         data = MagicMock()
-        data.participant_id = str(participant_id)
+        data.display_name = "DJ Khaled"
 
         # CALL
         result = MessagingService.create_or_get_conversation(
@@ -99,12 +111,14 @@ class TestCreateOrGetConversation:
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        User tries to create a conversation with themselves.
+        The display_name belongs to the current user themselves.
         Expect 400 Bad Request with 'yourself' in the detail.
         """
-        # SETUP
+        # SETUP — get_by_display_name returns verified_user themselves
+        mock_user_repo.get_by_display_name.return_value = verified_user
+
         data = MagicMock()
-        data.participant_id = str(verified_user.user_id)
+        data.display_name = verified_user.display_name
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -115,16 +129,16 @@ class TestCreateOrGetConversation:
 
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
-    def test_invalid_participant_uuid_returns_400(
+    def test_empty_display_name_returns_400(
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        participant_id is not a valid UUID string.
+        display_name is empty or whitespace only.
         Expect 400 Bad Request with 'invalid' in the detail.
         """
         # SETUP
         data = MagicMock()
-        data.participant_id = "this-is-not-a-uuid"
+        data.display_name = "   "  # whitespace only
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -135,18 +149,18 @@ class TestCreateOrGetConversation:
 
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
-    def test_nonexistent_participant_returns_400(
+    def test_nonexistent_display_name_returns_400(
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        Participant UUID does not match any user in the database.
+        display_name does not match any user in the database.
         Expect 400 Bad Request with 'does not exist' in the detail.
         """
-        # SETUP
-        mock_user_repo.get_by_id.return_value = None
+        # SETUP — no user found with this display name
+        mock_user_repo.get_by_display_name.return_value = None
 
         data = MagicMock()
-        data.participant_id = str(uuid.uuid4())
+        data.display_name = "UnknownUser"
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -155,6 +169,35 @@ class TestCreateOrGetConversation:
         assert exc_info.value.status_code == 400
         assert "does not exist" in exc_info.value.detail.lower()
 
+    @patch("app.services.messaging_service.ConversationRepository")
+    @patch("app.services.messaging_service.UserRepository")
+    def test_uses_get_by_display_name_not_get_by_id(
+        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+    ):
+        """
+        Service must call get_by_display_name, never get_by_id,
+        when creating a conversation.
+        """
+        # SETUP
+        participant = MagicMock()
+        participant.user_id = uuid.uuid4()
+        mock_user_repo.get_by_display_name.return_value = participant
+        mock_conv_repo.get_by_participants.return_value = None
+
+        new_conv = MagicMock()
+        new_conv.conversation_id = uuid.uuid4()
+        mock_conv_repo.create.return_value = new_conv
+
+        data = MagicMock()
+        data.display_name = "DJ Khaled"
+
+        # CALL
+        MessagingService.create_or_get_conversation(mock_db, verified_user, data)
+
+        # CHECK
+        mock_user_repo.get_by_display_name.assert_called_once_with(mock_db, "DJ Khaled")
+        mock_user_repo.get_by_id.assert_not_called()
+
 
 # ══════════════════════════════════════════════════════
 # GET USER CONVERSATIONS TESTS
@@ -162,15 +205,21 @@ class TestCreateOrGetConversation:
 
 
 class TestGetUserConversations:
-    """Tests for MessagingService.get_user_conversations()"""
+    """
+    Tests for MessagingService.get_user_conversations()
 
+    The service now also calls MessageRepository.get_last_by_conversation
+    to include last_message in each conversation entry.
+    """
+
+    @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
     def test_returns_empty_list_when_no_conversations(
-        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
-        User has no conversations at all.
+        User has no conversations.
         Expect success=True and an empty data list.
         """
         # SETUP
@@ -183,10 +232,11 @@ class TestGetUserConversations:
         assert result["success"] is True
         assert result["data"] == []
 
+    @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
     def test_returns_correct_number_of_conversations(
-        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
         User has one conversation. List must have exactly one entry.
@@ -210,6 +260,8 @@ class TestGetUserConversations:
 
         mock_conv_repo.get_all_by_user.return_value = [conv]
         mock_user_repo.get_by_id.side_effect = [user1, user2]
+        # get_last_by_conversation returns None (no messages yet)
+        mock_msg_repo.get_last_by_conversation.return_value = None
 
         # CALL
         result = MessagingService.get_user_conversations(mock_db, verified_user)
@@ -217,10 +269,11 @@ class TestGetUserConversations:
         # CHECK
         assert len(result["data"]) == 1
 
+    @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
     def test_each_conversation_has_two_participants(
-        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
         Each conversation entry must contain exactly two participants.
@@ -244,6 +297,7 @@ class TestGetUserConversations:
 
         mock_conv_repo.get_all_by_user.return_value = [conv]
         mock_user_repo.get_by_id.side_effect = [user1, user2]
+        mock_msg_repo.get_last_by_conversation.return_value = None
 
         # CALL
         result = MessagingService.get_user_conversations(mock_db, verified_user)
@@ -252,14 +306,15 @@ class TestGetUserConversations:
         participants = result["data"][0]["participants"]
         assert len(participants) == 2
 
+    @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
     def test_each_conversation_has_required_fields(
-        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
         Each conversation entry must have:
-        conversation_id, created_at, and participants.
+        conversation_id, created_at, participants, and last_message.
         """
         # SETUP
         user1 = MagicMock()
@@ -280,6 +335,7 @@ class TestGetUserConversations:
 
         mock_conv_repo.get_all_by_user.return_value = [conv]
         mock_user_repo.get_by_id.side_effect = [user1, user2]
+        mock_msg_repo.get_last_by_conversation.return_value = None
 
         # CALL
         result = MessagingService.get_user_conversations(mock_db, verified_user)
@@ -289,15 +345,16 @@ class TestGetUserConversations:
         assert "conversation_id" in entry
         assert "created_at" in entry
         assert "participants" in entry
+        assert "last_message" in entry
 
+    @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
-    def test_participant_info_has_required_fields(
-        self, mock_user_repo, mock_conv_repo, mock_db, verified_user
+    def test_last_message_is_none_when_no_messages(
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
-        Each participant in the response must have:
-        user_id, display_name, and profile_picture.
+        When there are no messages, last_message must be None.
         """
         # SETUP
         user1 = MagicMock()
@@ -318,6 +375,92 @@ class TestGetUserConversations:
 
         mock_conv_repo.get_all_by_user.return_value = [conv]
         mock_user_repo.get_by_id.side_effect = [user1, user2]
+        mock_msg_repo.get_last_by_conversation.return_value = None
+
+        # CALL
+        result = MessagingService.get_user_conversations(mock_db, verified_user)
+
+        # CHECK
+        assert result["data"][0]["last_message"] is None
+
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    @patch("app.services.messaging_service.UserRepository")
+    def test_last_message_populated_when_messages_exist(
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+    ):
+        """
+        When a last message exists, it must be included with
+        content, sender_id, created_at, and is_read fields.
+        """
+        # SETUP
+        user1 = MagicMock()
+        user1.user_id = uuid.uuid4()
+        user1.display_name = "User A"
+        user1.profile_picture = None
+
+        user2 = MagicMock()
+        user2.user_id = uuid.uuid4()
+        user2.display_name = "User B"
+        user2.profile_picture = None
+
+        conv = MagicMock()
+        conv.conversation_id = uuid.uuid4()
+        conv.user1_id = user1.user_id
+        conv.user2_id = user2.user_id
+        conv.created_at = None
+
+        last_msg = MagicMock()
+        last_msg.content = "See you soon!"
+        last_msg.sender_id = user1.user_id
+        last_msg.created_at = None
+        last_msg.is_read = False
+
+        mock_conv_repo.get_all_by_user.return_value = [conv]
+        mock_user_repo.get_by_id.side_effect = [user1, user2]
+        mock_msg_repo.get_last_by_conversation.return_value = last_msg
+
+        # CALL
+        result = MessagingService.get_user_conversations(mock_db, verified_user)
+
+        # CHECK
+        last = result["data"][0]["last_message"]
+        assert last is not None
+        assert last["content"] == "See you soon!"
+        assert "sender_id" in last
+        assert "created_at" in last
+        assert "is_read" in last
+
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    @patch("app.services.messaging_service.UserRepository")
+    def test_participant_info_has_required_fields(
+        self, mock_user_repo, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+    ):
+        """
+        Each participant must have user_id, display_name,
+        and profile_picture fields.
+        """
+        # SETUP
+        user1 = MagicMock()
+        user1.user_id = uuid.uuid4()
+        user1.display_name = "User A"
+        user1.profile_picture = None
+
+        user2 = MagicMock()
+        user2.user_id = uuid.uuid4()
+        user2.display_name = "User B"
+        user2.profile_picture = None
+
+        conv = MagicMock()
+        conv.conversation_id = uuid.uuid4()
+        conv.user1_id = user1.user_id
+        conv.user2_id = user2.user_id
+        conv.created_at = None
+
+        mock_conv_repo.get_all_by_user.return_value = [conv]
+        mock_user_repo.get_by_id.side_effect = [user1, user2]
+        mock_msg_repo.get_last_by_conversation.return_value = None
 
         # CALL
         result = MessagingService.get_user_conversations(mock_db, verified_user)
@@ -580,7 +723,13 @@ class TestGetMessages:
 
 
 class TestSendMessage:
-    """Tests for MessagingService.send_message()"""
+    """
+    Tests for MessagingService.send_message()
+
+    The service now also calls BlockRepository to check for blocks
+    and NotificationRepository to notify the receiver.
+    Both must be patched in every send_message test.
+    """
 
     @patch("app.services.messaging_service.NotificationRepository")
     @patch("app.services.messaging_service.BlockRepository")
@@ -596,7 +745,7 @@ class TestSendMessage:
         verified_user,
     ):
         """
-        Participant sends a plain text message.
+        Participant sends a plain text message with no block.
         Expect success=True with correct content and is_read=False.
         """
         # SETUP
@@ -605,6 +754,8 @@ class TestSendMessage:
         conv.user1_id = str(verified_user.user_id)
         conv.user2_id = str(other_id)
         mock_conv_repo.get_by_id.return_value = conv
+
+        # No block in either direction
         mock_block_repo.get_block.return_value = None
 
         created_msg = MagicMock()
@@ -632,6 +783,95 @@ class TestSendMessage:
         assert result["success"] is True
         assert result["data"]["content"] == "Hello!"
         assert result["data"]["is_read"] is False
+
+    @patch("app.services.messaging_service.NotificationRepository")
+    @patch("app.services.messaging_service.BlockRepository")
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_send_message_blocked_returns_403(
+        self,
+        mock_conv_repo,
+        mock_msg_repo,
+        mock_block_repo,
+        mock_notif_repo,
+        mock_db,
+        verified_user,
+    ):
+        """
+        A block exists between the two users.
+        Expect 403 Forbidden — cannot send messages to this user.
+        """
+        # SETUP
+        other_id = uuid.uuid4()
+        conv = MagicMock()
+        conv.user1_id = str(verified_user.user_id)
+        conv.user2_id = str(other_id)
+        mock_conv_repo.get_by_id.return_value = conv
+
+        # Block exists — current user blocked the receiver
+        mock_block_repo.get_block.return_value = MagicMock()
+
+        data = MagicMock()
+        data.content = "Hello!"
+        data.track_id = None
+        data.playlist_id = None
+
+        # CALL + CHECK
+        with pytest.raises(HTTPException) as exc_info:
+            MessagingService.send_message(
+                mock_db, verified_user, conv.conversation_id, data
+            )
+
+        assert exc_info.value.status_code == 403
+
+    @patch("app.services.messaging_service.NotificationRepository")
+    @patch("app.services.messaging_service.BlockRepository")
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_send_message_creates_notification(
+        self,
+        mock_conv_repo,
+        mock_msg_repo,
+        mock_block_repo,
+        mock_notif_repo,
+        mock_db,
+        verified_user,
+    ):
+        """
+        After sending a message, a notification must be created
+        for the receiver.
+        """
+        # SETUP
+        other_id = uuid.uuid4()
+        conv = MagicMock()
+        conv.user1_id = str(verified_user.user_id)
+        conv.user2_id = str(other_id)
+        mock_conv_repo.get_by_id.return_value = conv
+        mock_block_repo.get_block.return_value = None
+
+        created_msg = MagicMock()
+        created_msg.message_id = uuid.uuid4()
+        created_msg.sender_id = verified_user.user_id
+        created_msg.receiver_id = other_id
+        created_msg.content = "Hey!"
+        created_msg.track_id = None
+        created_msg.playlist_id = None
+        created_msg.is_read = False
+        created_msg.created_at = None
+        mock_msg_repo.create.return_value = created_msg
+
+        data = MagicMock()
+        data.content = "Hey!"
+        data.track_id = None
+        data.playlist_id = None
+
+        # CALL
+        MessagingService.send_message(
+            mock_db, verified_user, conv.conversation_id, data
+        )
+
+        # CHECK — notification was created
+        mock_notif_repo.create.assert_called_once()
 
     @patch("app.services.messaging_service.NotificationRepository")
     @patch("app.services.messaging_service.BlockRepository")
@@ -685,54 +925,6 @@ class TestSendMessage:
         assert result["success"] is True
         assert result["data"]["track_id"] == str(track_id)
         assert result["data"]["content"] is None
-
-    @patch("app.services.messaging_service.NotificationRepository")
-    @patch("app.services.messaging_service.BlockRepository")
-    @patch("app.services.messaging_service.MessageRepository")
-    @patch("app.services.messaging_service.ConversationRepository")
-    def test_send_message_receiver_is_auto_detected(
-        self,
-        mock_conv_repo,
-        mock_msg_repo,
-        mock_block_repo,
-        mock_notif_repo,
-        mock_db,
-        verified_user,
-    ):
-        """
-        MessageRepository.create must be called exactly once.
-        """
-        # SETUP
-        other_id = uuid.uuid4()
-        conv = MagicMock()
-        conv.user1_id = str(verified_user.user_id)
-        conv.user2_id = str(other_id)
-        mock_conv_repo.get_by_id.return_value = conv
-        mock_block_repo.get_block.return_value = None
-
-        created_msg = MagicMock()
-        created_msg.message_id = uuid.uuid4()
-        created_msg.sender_id = verified_user.user_id
-        created_msg.receiver_id = other_id
-        created_msg.content = "Hi"
-        created_msg.track_id = None
-        created_msg.playlist_id = None
-        created_msg.is_read = False
-        created_msg.created_at = None
-        mock_msg_repo.create.return_value = created_msg
-
-        data = MagicMock()
-        data.content = "Hi"
-        data.track_id = None
-        data.playlist_id = None
-
-        # CALL
-        MessagingService.send_message(
-            mock_db, verified_user, conv.conversation_id, data
-        )
-
-        # CHECK
-        mock_msg_repo.create.assert_called_once()
 
     @patch("app.services.messaging_service.MessageRepository")
     @patch("app.services.messaging_service.ConversationRepository")
@@ -812,9 +1004,7 @@ class TestMarkMessageAsRead:
     """
     Tests for MessagingService.mark_message_as_read()
 
-    The service now uses MessageRepository.get_by_id to look up
-    the message, so we mock MessageRepository — not db.query.
-    No @patch for Message model needed anymore.
+    Uses MessageRepository.get_by_id — mock that, not db.query.
     """
 
     @patch("app.services.messaging_service.MessageRepository")
@@ -836,8 +1026,6 @@ class TestMarkMessageAsRead:
         msg.message_id = uuid.uuid4()
         msg.receiver_id = str(verified_user.user_id)
         msg.is_read = False
-
-        # Service calls MessageRepository.get_by_id — mock it here
         mock_msg_repo.get_by_id.return_value = msg
 
         updated_msg = MagicMock()
@@ -874,10 +1062,8 @@ class TestMarkMessageAsRead:
 
         msg = MagicMock()
         msg.message_id = uuid.uuid4()
-        # receiver is the OTHER user — verified_user is the sender
-        msg.receiver_id = str(other_id)
+        msg.receiver_id = str(other_id)  # other user is receiver
         msg.is_read = False
-
         mock_msg_repo.get_by_id.return_value = msg
 
         # CALL + CHECK
@@ -907,7 +1093,6 @@ class TestMarkMessageAsRead:
         msg.message_id = uuid.uuid4()
         msg.receiver_id = str(verified_user.user_id)
         msg.is_read = True  # already read
-
         mock_msg_repo.get_by_id.return_value = msg
 
         # CALL
@@ -918,7 +1103,6 @@ class TestMarkMessageAsRead:
         # CHECK
         assert result["success"] is True
         assert result["data"]["is_read"] is True
-        # mark_as_read must NOT be called again
         mock_msg_repo.mark_as_read.assert_not_called()
 
     @patch("app.services.messaging_service.MessageRepository")
@@ -936,7 +1120,6 @@ class TestMarkMessageAsRead:
         conv.user2_id = str(uuid.uuid4())
         mock_conv_repo.get_by_id.return_value = conv
 
-        # get_by_id returns None — message not found
         mock_msg_repo.get_by_id.return_value = None
 
         # CALL + CHECK
@@ -973,10 +1156,10 @@ class TestMarkMessageAsRead:
         self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
     ):
         """
-        User is not part of the conversation at all.
+        User is not part of the conversation.
         Expect 403 Forbidden.
         """
-        # SETUP — neither user1 nor user2 matches verified_user
+        # SETUP
         conv = MagicMock()
         conv.user1_id = str(uuid.uuid4())
         conv.user2_id = str(uuid.uuid4())
