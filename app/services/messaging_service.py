@@ -222,8 +222,9 @@ class MessagingService:
         )
 
         # Block check — either direction blocks messaging
-        if BlockRepository.get_block(db, current_user.user_id, receiver_id) or \
-                BlockRepository.get_block(db, receiver_id, current_user.user_id):
+        if BlockRepository.get_block(
+            db, current_user.user_id, receiver_id
+        ) or BlockRepository.get_block(db, receiver_id, current_user.user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You cannot send messages to this user.",
@@ -380,6 +381,11 @@ class MessagingService:
         Returns:
             dict: List of conversations with participant details.
         """
+        if not current_user or not current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not authenticated.",
+            )
         conversations = ConversationRepository.get_all_by_user(db, current_user.user_id)
 
         result = []
@@ -413,7 +419,8 @@ class MessagingService:
                             "created_at": last_msg.created_at,
                             "is_read": last_msg.is_read,
                         }
-                        if last_msg else None
+                        if last_msg
+                        else None
                     ),
                 }
             )
