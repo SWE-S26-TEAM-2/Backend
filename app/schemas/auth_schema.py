@@ -86,6 +86,18 @@ class GoogleLoginRequest(BaseModel):
     google_token: str
 
 
+class FacebookLoginRequest(BaseModel):
+    """
+    Schema for Facebook OAuth2 social login request.
+
+    Args:
+        facebook_token (str): The Facebook access token returned by the
+            client-side Facebook SDK.
+    """
+
+    facebook_token: str
+
+
 class LogoutRequest(BaseModel):
     """
     Schema for logout request.
