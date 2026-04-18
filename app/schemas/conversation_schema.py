@@ -19,7 +19,7 @@ class CreateConversationRequest(BaseModel):
         participant_id (str): UUID string of the other user.
     """
 
-    participant_id: str
+    display_name: str
 
 
 class SendMessageRequest(BaseModel):

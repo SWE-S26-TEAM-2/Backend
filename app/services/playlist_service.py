@@ -148,7 +148,7 @@ class PlaylistService:
                 user_id=playlist.user_id,
                 actor_id=user.user_id,
                 notification_type="like",
-                message=f"{user.display_name} liked your playlist \"{playlist.name}\".",
+                message=f'{user.display_name} liked your playlist "{playlist.name}".',
                 target_id=playlist_id,
             )
 

@@ -18,14 +18,22 @@ class TrackRepository:
 
     @staticmethod
     def get_by_user_id_and_file_hash(db: Session, user_id, file_hash: str):
-        return db.query(Track).filter(
-            Track.user_id == user_id,
-            Track.file_hash == file_hash,
-        ).first()
+        return (
+            db.query(Track)
+            .filter(
+                Track.user_id == user_id,
+                Track.file_hash == file_hash,
+            )
+            .first()
+        )
 
     @staticmethod
     def search_by_title(db: Session, keyword: str):
-        return db.query(Track).filter(
-            Track.title.ilike(f"%{keyword}%"),
-            Track.visibility == "public",
-        ).all()
+        return (
+            db.query(Track)
+            .filter(
+                Track.title.ilike(f"%{keyword}%"),
+                Track.visibility == "public",
+            )
+            .all()
+        )
