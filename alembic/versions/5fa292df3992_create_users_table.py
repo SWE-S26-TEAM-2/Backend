@@ -25,12 +25,19 @@ def upgrade() -> None:
         "users",
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("email", sa.String(), nullable=False),
-        sa.Column("password", sa.String(), nullable=False),
+        sa.Column("password_hash", sa.String(), nullable=False),
         sa.Column("display_name", sa.String(), nullable=False),
         sa.Column(
             "account_type", sa.String(), server_default="listener", nullable=True
         ),
         sa.Column("is_verified", sa.Boolean(), server_default="false", nullable=True),
+        sa.Column("is_suspended", sa.Boolean(), server_default="false", nullable=True),
+        sa.Column(
+            "CAPTCHA_verified",
+            sa.Boolean(),
+            server_default="false",
+            nullable=True,
+        ),
         sa.Column("bio", sa.String(), nullable=True),
         sa.Column("location", sa.String(), nullable=True),
         sa.Column("is_premium", sa.Boolean(), server_default="false", nullable=True),

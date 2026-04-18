@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     File,
     Form,
+    Request,
 )  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
@@ -97,6 +98,16 @@ def get_track_stream(
     current_user: User | None = Depends(get_optional_current_user),
 ):
     return TrackService.get_stream(db, track_id, current_user)
+
+
+@router.get("/{track_id}/audio")
+def stream_track_audio(
+    track_id: UUID,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    return TrackService.stream_audio(db, track_id, request, current_user)
 
 
 @router.post("/{track_id}/plays")

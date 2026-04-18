@@ -24,10 +24,6 @@ from app.models import (  # noqa: F401
     block,
     listening_history,
     refresh_token,
-    like,
-    repost,
-    comment,
-    notification,
 )
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
@@ -36,8 +32,6 @@ from app.routers.follower import router as follower_router
 from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
 from app.routers.track import router as track_router
-from app.routers.engagement import router as engagement_router
-from app.routers.notification import router as notification_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
@@ -74,8 +68,6 @@ app.include_router(follower_router)
 app.include_router(playlist_router)
 app.include_router(search_router)
 app.include_router(track_router)
-app.include_router(engagement_router)
-app.include_router(notification_router)
 
 
 @app.get("/")

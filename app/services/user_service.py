@@ -189,7 +189,7 @@ class UserService:
         """
         UserService._validate_image(file, AVATAR_MAX_SIZE, "5 MB")
 
-        path = UserService._save_file(file, current_user.user_id, "avatar")
+        path = UserService._save_file(file, current_user.user_id, "Avatar")
 
         UserRepository.update_fields(db, current_user, {"profile_picture": path})
 
@@ -234,7 +234,7 @@ class UserService:
         """
         UserService._validate_image(file, COVER_MAX_SIZE, "10 MB")
 
-        path = UserService._save_file(file, current_user.user_id, "cover")
+        path = UserService._save_file(file, current_user.user_id, "Cover")
 
         UserRepository.update_fields(db, current_user, {"cover_photo": path})
 
@@ -295,21 +295,18 @@ class UserService:
     @staticmethod
     def _save_file(file: UploadFile, user_id, subfolder: str) -> str:
         """
-        Save an uploaded file to the uploads directory served by FastAPI
-        StaticFiles, and return the URL path stored in the database.
+        Save an uploaded file to the Uploads directory.
 
         Args:
             file (UploadFile): The uploaded file.
             user_id: The UUID of the user.
-            subfolder (str): Subfolder name (avatar or cover).
+            subfolder (str): Subfolder name (Avatar or Cover).
 
         Returns:
-            str: URL path accessible via /uploads/subfolder/filename.
+            str: Relative file path for storage in the database.
         """
-        # app/ directory — must match the StaticFiles mount in main.py
-        app_dir = os.path.dirname(os.path.abspath(__file__))
-        app_dir = os.path.dirname(app_dir)  # go up from services/ to app/
-        upload_folder = os.path.join(app_dir, "uploads", subfolder)
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        upload_folder = os.path.join(base_dir, "Uploads", subfolder)
         os.makedirs(upload_folder, exist_ok=True)
 
         file_ext = file.filename.split(".")[-1]
