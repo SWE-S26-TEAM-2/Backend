@@ -1,7 +1,7 @@
 """add cover photo to playlists
 
 Revision ID: 3a1b2c3d4e5f
-Revises: 2f4a8b1c9d3e
+Revises: 7b8c9d0e1f2a
 Create Date: 2026-04-18 12:30:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "3a1b2c3d4e5f"
-down_revision: Union[str, Sequence[str], None] = "2f4a8b1c9d3e"
+down_revision: Union[str, Sequence[str], None] = "7b8c9d0e1f2a"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
