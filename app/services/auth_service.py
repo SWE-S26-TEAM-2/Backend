@@ -28,6 +28,7 @@ from app.repositories.token_repo import TokenRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 from app.core.config import (
     GOOGLE_CLIENT_ID_ANDROID,
+    GOOGLE_CLIENT_ID_IOS,
     GOOGLE_CLIENT_ID_WEB,
     FACEBOOK_APP_ID,
     FACEBOOK_APP_SECRET,
@@ -289,28 +290,38 @@ class AuthService:
             )
 
         # Verify the ID token against Google's public keys.
-        # Try Android client ID first, then Web client ID.
+        # Accept tokens issued for any configured app client.
         id_info = None
-        try:
-            id_info = id_token.verify_oauth2_token(
-                data.google_token,
-                google_requests.Request(),
+        google_client_ids = [
+            client_id
+            for client_id in (
                 GOOGLE_CLIENT_ID_ANDROID,
+                GOOGLE_CLIENT_ID_IOS,
+                GOOGLE_CLIENT_ID_WEB,
             )
-        except ValueError:
-            # Try Web client ID if Android fails
-            try:
-                id_info = id_token.verify_oauth2_token(
-                    data.google_token,
-                    google_requests.Request(),
-                    GOOGLE_CLIENT_ID_WEB,
-                )
-            except ValueError:
+            if client_id
+        ]
+
+        try:
+            for client_id in google_client_ids:
+                try:
+                    id_info = id_token.verify_oauth2_token(
+                        data.google_token,
+                        google_requests.Request(),
+                        client_id,
+                    )
+                    break
+                except ValueError:
+                    continue
+
+            if id_info is None:
                 # verify_oauth2_token raises ValueError for invalid/expired tokens.
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Google token invalid or expired.",
                 )
+        except HTTPException:
+            raise
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

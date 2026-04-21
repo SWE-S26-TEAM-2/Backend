@@ -40,6 +40,12 @@ def _login_data(email="test@example.com", password="Pass1234"):
     return data
 
 
+def _google_data(google_token="google-id-token"):
+    data = MagicMock()
+    data.google_token = google_token
+    return data
+
+
 def _verify_email_data(token="some-token"):
     data = MagicMock()
     data.token = token
@@ -288,6 +294,51 @@ class TestLoginUser:
 # ══════════════════════════════════════════════════════
 #  refresh_access_token
 # ══════════════════════════════════════════════════════
+
+
+class TestGoogleLogin:
+    """Tests for AuthService.google_login."""
+
+    @patch("app.services.auth_service.GOOGLE_CLIENT_ID_ANDROID", "android-client")
+    @patch("app.services.auth_service.GOOGLE_CLIENT_ID_IOS", "ios-client")
+    @patch("app.services.auth_service.GOOGLE_CLIENT_ID_WEB", "web-client")
+    @patch("app.services.auth_service.RefreshTokenRepository")
+    @patch("app.services.auth_service.decode_refresh_token")
+    @patch("app.services.auth_service.create_refresh_token", return_value="rt")
+    @patch("app.services.auth_service.create_access_token", return_value="at")
+    @patch("app.services.auth_service.UserRepository")
+    @patch("app.services.auth_service.id_token.verify_oauth2_token")
+    def test_accepts_ios_client_id(
+        self,
+        mock_verify_google,
+        mock_user_repo,
+        mock_at,
+        mock_rt,
+        mock_decode,
+        mock_rt_repo,
+        mock_db,
+    ):
+        """A Google ID token issued to the iOS client should be accepted."""
+        mock_verify_google.side_effect = [
+            ValueError("wrong audience"),
+            {
+                "email": "ios@example.com",
+                "name": "iOS User",
+                "picture": "https://example.com/avatar.png",
+            },
+        ]
+        mock_user_repo.get_by_email.return_value = make_fake_user(
+            email="ios@example.com",
+            display_name="iOS User",
+        )
+        mock_decode.return_value = {"jti": str(uuid.uuid4()), "sub": "x"}
+
+        result = AuthService.google_login(mock_db, _google_data())
+
+        assert result["success"] is True
+        assert result["data"]["access_token"] == "at"
+        assert mock_verify_google.call_count == 2
+        assert mock_verify_google.call_args_list[1].args[2] == "ios-client"
 
 
 class TestRefreshAccessToken:
