@@ -135,6 +135,7 @@ class TrackService:
                 track.release_date.isoformat() if track.release_date else None
             ),
             "file_url": track.file_url,
+            "stream_url": TrackService._get_audio_stream_url(track),
             "user_id": str(track.user_id),
             "visibility": track.visibility,
             "processing_status": track.processing_status,
@@ -296,6 +297,7 @@ class TrackService:
                     track.release_date.isoformat() if track.release_date else None
                 ),
                 "file_url": track.file_url,
+                "stream_url": TrackService._get_audio_stream_url(track),
                 "visibility": track.visibility,
                 "processing_status": track.processing_status,
             },
@@ -552,6 +554,7 @@ class TrackService:
                 "title": track.title,
                 "description": track.description,
                 "file_url": track.file_url,
+                "stream_url": TrackService._get_audio_stream_url(track),
                 "duration_seconds": track.duration_seconds,
                 "play_count": int(track.play_count or 0),
             },
