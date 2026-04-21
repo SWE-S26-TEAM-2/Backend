@@ -34,7 +34,7 @@ from app.routers.search import router as search_router
 from app.routers.track import router as track_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
 
 
 app = FastAPI(
@@ -51,7 +51,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
