@@ -55,11 +55,13 @@ class FakePlaylist:
         user_id=None,
         name="Test Playlist",
         description="Test Description",
+        cover_photo_url=None,
     ):
         self.playlist_id = playlist_id or uuid.uuid4()
         self.user_id = user_id or uuid.uuid4()
         self.name = name
         self.description = description
+        self.cover_photo_url = cover_photo_url
 
 
 class FakeTrack:
@@ -136,6 +138,7 @@ def test_create_playlist_success(monkeypatch):
             playlist.playlist_id = uuid.uuid4()
 
     monkeypatch.setattr(PlaylistRepository, "create", fake_create)
+    monkeypatch.setattr(PlaylistRepository, "create_playlist_like", lambda db_arg, user_id, pid: None)
 
     result = PlaylistService.create_playlist(db, user, data)
 
@@ -160,6 +163,7 @@ def test_create_playlist_without_description(monkeypatch):
             playlist.playlist_id = uuid.uuid4()
 
     monkeypatch.setattr(PlaylistRepository, "create", fake_create)
+    monkeypatch.setattr(PlaylistRepository, "create_playlist_like", lambda db_arg, user_id, pid: None)
 
     result = PlaylistService.create_playlist(db, user, data)
 
@@ -188,6 +192,7 @@ def test_get_playlist_success(monkeypatch):
     from app.repositories.playlist_repo import PlaylistRepository
 
     monkeypatch.setattr(PlaylistRepository, "get_by_id", lambda db_arg, pid: playlist)
+    monkeypatch.setattr(PlaylistRepository, "get_playlist_tracks", lambda db_arg, pid: [])
 
     result = PlaylistService.get_playlist(db, playlist_id)
 
@@ -196,6 +201,7 @@ def test_get_playlist_success(monkeypatch):
     assert result["data"]["user_id"] == str(user_id)
     assert result["data"]["name"] == "My Playlist"
     assert result["data"]["description"] == "My description"
+    assert result["data"]["tracks"] == []
 
 
 def test_get_playlist_not_found(monkeypatch):

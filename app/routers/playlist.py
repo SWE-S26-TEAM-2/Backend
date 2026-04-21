@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends  # type: ignore
+from fastapi import APIRouter, Depends, UploadFile, File  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import get_current_user
@@ -75,6 +75,16 @@ def unlike_playlist(
     user=Depends(get_current_user),
 ):
     return PlaylistService.unlike_playlist(db, user, playlist_id)
+
+
+@router.post("/{playlist_id}/cover")
+def upload_cover_photo(
+    playlist_id: UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    return PlaylistService.upload_cover_photo(db, user, playlist_id, file)
 
 
 @router.post("/{playlist_id}/tracks")
