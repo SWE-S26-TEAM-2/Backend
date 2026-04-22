@@ -39,7 +39,8 @@ class SearchService:
                 "genre": getattr(track, "genre", None),
                 "tags": getattr(track, "tags", None) or [],
                 "release_date": (release_date.isoformat() if release_date else None),
-                "file_url": track.file_url,
+                "stream_url": f"/api/tracks/{track.track_id}/audio",
+                "cover_image_url": getattr(track, "cover_image_url", None),
                 "visibility": getattr(track, "visibility", None) or "public",
                 "processing_status": (
                     getattr(track, "processing_status", None) or "finished"
@@ -74,7 +75,8 @@ class SearchService:
                             "genre": track.genre,
                             "tags": track.tags,
                             "release_date": track.release_date,
-                            "file_url": track.file_url,
+                            "stream_url": f"/api/tracks/{track.track_id}/audio",
+                            "cover_image_url": getattr(track, "cover_image_url", None),
                             "visibility": track.visibility,
                             "play_count": track.play_count,
                             "duration_seconds": track.duration_seconds,

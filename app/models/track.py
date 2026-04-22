@@ -17,6 +17,7 @@ class Track(Base):
     release_date = Column(Date, nullable=True)
     file_url = Column(String, nullable=True)
     file_hash = Column(String, nullable=True)
+    cover_image_url = Column(String, nullable=True)
     visibility = Column(String, server_default="public")
     processing_status = Column(String, server_default="finished")
     play_count = Column(Integer, server_default="0")

@@ -29,6 +29,7 @@ def create_track(
     release_date: date | None = Form(None),
     visibility: str = Form("public"),
     file: UploadFile = File(...),
+    cover_image: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
@@ -42,6 +43,7 @@ def create_track(
         tags,
         release_date,
         visibility,
+        cover_image,
     )
 
 
