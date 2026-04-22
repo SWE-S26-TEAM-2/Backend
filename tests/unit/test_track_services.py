@@ -51,6 +51,7 @@ class FakeTrack:
         duration_seconds=None,
         waveform_peaks=None,
         file_hash=None,
+        cover_image_url=None,
     ):
         self.track_id = track_id
         self.user_id = user_id
@@ -66,6 +67,7 @@ class FakeTrack:
         self.duration_seconds = duration_seconds
         self.waveform_peaks = waveform_peaks
         self.file_hash = file_hash
+        self.cover_image_url = cover_image_url
 
 
 class FakeTrackUpdate:
@@ -153,7 +155,8 @@ def test_create_track(monkeypatch):
     assert result["success"] is True
     assert result["message"] == "Track uploaded successfully."
     assert result["data"]["title"] == "My Song"
-    assert "file_url" in result["data"]
+    assert "file_url" not in result["data"]
+    assert result["data"]["stream_url"].startswith("/api/tracks/")
     assert len(created_tracks) == 1
     assert created_tracks[0].user_id == user.user_id
     assert created_tracks[0].file_hash is not None
@@ -161,6 +164,81 @@ def test_create_track(monkeypatch):
     assert created_tracks[0].tags == ["demo", "test"]
     assert created_tracks[0].visibility == "private"
     assert created_tracks[0].processing_status == "finished"
+
+
+def test_create_track_with_cover_image(monkeypatch):
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    audio = FakeUploadFile()
+    cover = FakeUploadFile(
+        filename="cover.png",
+        content_type="image/png",
+        content=b"fake image content",
+    )
+    upload_dir = Path("tmp") / "test-track-service-cover" / str(uuid4())
+    created_tracks = []
+
+    from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setattr(
+        TrackRepository,
+        "get_by_user_id_and_file_hash",
+        lambda db_arg, uid, file_hash: None,
+    )
+
+    def fake_create(db_arg, track):
+        created_tracks.append(track)
+        if getattr(track, "track_id", None) is None:
+            track.track_id = uuid4()
+
+    monkeypatch.setattr(TrackRepository, "create", fake_create)
+
+    result = TrackService.create_track(
+        db,
+        user,
+        "Song With Cover",
+        "Track artwork test",
+        audio,
+        visibility="private",
+        cover_image=cover,
+    )
+
+    assert result["success"] is True
+    assert len(created_tracks) == 1
+    assert result["data"]["cover_image_url"] == created_tracks[0].cover_image_url
+    assert result["data"]["cover_image_url"].startswith("/api/uploads/")
+    assert result["data"]["cover_image_url"].endswith(".png")
+
+    saved_cover = upload_dir / Path(created_tracks[0].cover_image_url).name
+    saved_audio = upload_dir / Path(created_tracks[0].file_url).name
+    assert saved_cover.read_bytes() == b"fake image content"
+    assert saved_audio.read_bytes() == b"fake mp3 content"
+
+
+def test_create_track_rejects_invalid_cover_image_type():
+    db = FakeDB()
+    user = FakeUser(uuid4())
+    audio = FakeUploadFile()
+    cover = FakeUploadFile(
+        filename="cover.txt",
+        content_type="text/plain",
+        content=b"not an image",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.create_track(
+            db,
+            user,
+            "Song",
+            "Desc",
+            audio,
+            cover_image=cover,
+        )
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Cover image must be JPEG, PNG, WebP, or GIF"
 
 
 def test_create_track_rejects_invalid_visibility():

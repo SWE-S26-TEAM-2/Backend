@@ -22,6 +22,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
 PUBLIC_UPLOAD_BASE_URL = os.environ.get("PUBLIC_UPLOAD_BASE_URL", "/api/uploads")
 TRACK_MAX_SIZE = 100 * 1024 * 1024  # 100 MB
+COVER_IMAGE_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_VISIBILITIES = {"public", "private"}
 
 
@@ -134,7 +136,7 @@ class TrackService:
             "release_date": (
                 track.release_date.isoformat() if track.release_date else None
             ),
-            "file_url": track.file_url,
+            "cover_image_url": track.cover_image_url,
             "stream_url": TrackService._get_audio_stream_url(track),
             "user_id": str(track.user_id),
             "visibility": track.visibility,
@@ -208,6 +210,7 @@ class TrackService:
         tags: str | None = None,
         release_date: date | None = None,
         visibility: str = "public",
+        cover_image: UploadFile | None = None,
     ):
         if not file.filename:
             raise HTTPException(
@@ -233,6 +236,39 @@ class TrackService:
                 detail="File size must not exceed 100 MB",
             )
 
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        # Validate cover image if provided
+        cover_image_url = None
+        if cover_image and cover_image.filename:
+            if (
+                not cover_image.content_type
+                or cover_image.content_type not in ALLOWED_IMAGE_TYPES
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cover image must be JPEG, PNG, WebP, or GIF",
+                )
+
+            cover_image.file.seek(0, os.SEEK_END)
+            image_size = cover_image.file.tell()
+            cover_image.file.seek(0)
+
+            if image_size > COVER_IMAGE_MAX_SIZE:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cover image must not exceed 10 MB",
+                )
+
+            img_extension = os.path.splitext(cover_image.filename)[1] or ".jpg"
+            unique_img_name = f"{uuid4()}{img_extension}"
+            img_path = os.path.join(UPLOAD_DIR, unique_img_name)
+
+            with open(img_path, "wb") as img_buffer:
+                img_buffer.write(cover_image.file.read())
+
+            cover_image_url = TrackService._get_upload_url(unique_img_name)
+
         file_hash = TrackService._calculate_file_hash(file.file)
         existing_track = TrackRepository.get_by_user_id_and_file_hash(
             db,
@@ -249,7 +285,6 @@ class TrackService:
         file_extension = os.path.splitext(file.filename)[1] or ".mp3"
         unique_filename = f"{uuid4()}{file_extension}"
 
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
         with open(file_path, "wb") as buffer:
@@ -266,6 +301,7 @@ class TrackService:
             release_date=release_date,
             file_url=file_url,
             file_hash=file_hash,
+            cover_image_url=cover_image_url,
             visibility=visibility,
             processing_status="finished",
         )
@@ -296,7 +332,7 @@ class TrackService:
                 "release_date": (
                     track.release_date.isoformat() if track.release_date else None
                 ),
-                "file_url": track.file_url,
+                "cover_image_url": track.cover_image_url,
                 "stream_url": TrackService._get_audio_stream_url(track),
                 "visibility": track.visibility,
                 "processing_status": track.processing_status,
@@ -553,7 +589,7 @@ class TrackService:
                 "track_id": str(track.track_id),
                 "title": track.title,
                 "description": track.description,
-                "file_url": track.file_url,
+                "cover_image_url": track.cover_image_url,
                 "stream_url": TrackService._get_audio_stream_url(track),
                 "duration_seconds": track.duration_seconds,
                 "play_count": int(track.play_count or 0),
@@ -573,6 +609,7 @@ class TrackService:
                 "title": track.title,
                 "description": track.description,
                 "stream_url": TrackService._get_audio_stream_url(track),
+                "cover_image_url": track.cover_image_url,
                 "expires_in": None,
                 "content_type": TrackService._get_content_type(track),
                 "play_count": int(track.play_count or 0),

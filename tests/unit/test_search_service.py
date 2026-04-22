@@ -296,8 +296,10 @@ def test_search_tracks_success_with_results(monkeypatch):
     # Verify first track data
     assert result["data"]["tracks"][0]["title"] == "Love Song"
     assert result["data"]["tracks"][0]["description"] == "A beautiful love song"
+    assert "file_url" not in result["data"]["tracks"][0]
     assert (
-        result["data"]["tracks"][0]["file_url"] == "https://example.com/love_song.mp3"
+        result["data"]["tracks"][0]["stream_url"]
+        == f"/api/tracks/{track1.track_id}/audio"
     )
 
     # Verify second track data
@@ -585,4 +587,5 @@ def test_search_response_structure_for_tracks(monkeypatch):
     assert "track_id" in track_obj
     assert "title" in track_obj
     assert "description" in track_obj
-    assert "file_url" in track_obj
+    assert "file_url" not in track_obj
+    assert "stream_url" in track_obj

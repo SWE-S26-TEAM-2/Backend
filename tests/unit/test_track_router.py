@@ -189,6 +189,7 @@ def test_create_track_success(monkeypatch):
         tags=None,
         release_date=None,
         visibility="public",
+        cover_image=None,
     ):
         return {
             "success": True,
@@ -223,6 +224,62 @@ def test_create_track_success(monkeypatch):
     assert body["message"] == "Track uploaded successfully."
     assert body["data"]["track_id"] == str(track_id)
     assert body["data"]["title"] == "My New Track"
+
+    app.dependency_overrides.clear()
+
+
+def test_create_track_with_cover_image(monkeypatch):
+    user_id = uuid4()
+    track_id = uuid4()
+
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id)
+    app.dependency_overrides[get_db] = override_get_db
+
+    def fake_create_track(
+        db,
+        user,
+        title,
+        description,
+        file,
+        genre=None,
+        tags=None,
+        release_date=None,
+        visibility="public",
+        cover_image=None,
+    ):
+        assert cover_image is not None
+        assert cover_image.filename == "cover.png"
+        assert cover_image.content_type == "image/png"
+        return {
+            "success": True,
+            "message": "Track uploaded successfully.",
+            "data": {
+                "track_id": str(track_id),
+                "title": title,
+                "file_url": "/api/uploads/song.mp3",
+                "cover_image_url": "/api/uploads/cover.png",
+            },
+        }
+
+    monkeypatch.setattr(TrackService, "create_track", fake_create_track)
+
+    response = client.post(
+        "/tracks/",
+        data={
+            "title": "Cover Track",
+            "description": "Testing cover upload",
+        },
+        files={
+            "file": ("song.mp3", b"fake mp3 content", "audio/mpeg"),
+            "cover_image": ("cover.png", b"fake png content", "image/png"),
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["track_id"] == str(track_id)
+    assert body["data"]["cover_image_url"] == "/api/uploads/cover.png"
 
     app.dependency_overrides.clear()
 
