@@ -83,3 +83,33 @@ class FollowRepository:
         """
         db.delete(follow)
         db.commit()
+
+    @staticmethod
+    def get_followers_of_user(db: Session, user_id) -> list:
+        """
+        Get all follow records where following_id == user_id.
+        These are the people who follow the given user.
+
+        Args:
+            db (Session): The database session.
+            user_id: UUID of the user whose followers we want.
+
+        Returns:
+            list[Follow]: All follow records pointing to this user.
+        """
+        return db.query(Follow).filter(Follow.following_id == user_id).all()
+
+    @staticmethod
+    def get_following_of_user(db: Session, user_id) -> list:
+        """
+        Get all follow records where follower_id == user_id.
+        These are the people the given user follows.
+
+        Args:
+            db (Session): The database session.
+            user_id: UUID of the user whose following list we want.
+
+        Returns:
+            list[Follow]: All follow records from this user.
+        """
+        return db.query(Follow).filter(Follow.follower_id == user_id).all()

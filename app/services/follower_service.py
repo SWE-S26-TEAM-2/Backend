@@ -136,3 +136,107 @@ class FollowerService:
             )
 
         return {"success": True, "message": "Successfully unfollowed."}
+
+    @staticmethod
+    def get_my_followers(db: Session, current_user: User) -> dict:
+        """
+        Get all followers of the authenticated user.
+
+        Resolves each follower's profile so the response
+        includes display_name and profile_picture.
+
+        Args:
+            db (Session): The database session.
+            current_user (User): The authenticated requesting user.
+
+        Returns:
+            dict: List of follower profiles with count.
+        """
+        follow_records = FollowRepository.get_followers_of_user(
+            db, current_user.user_id
+        )
+
+        followers = []
+        for record in follow_records:
+            user = UserRepository.get_by_id(db, record.follower_id)
+            if user:
+                followers.append(
+                    {
+                        "user_id": str(user.user_id),
+                        "display_name": user.display_name,
+                        "profile_picture": user.profile_picture,
+                        "followed_at": record.created_at,
+                    }
+                )
+
+        return {
+            "success": True,
+            "data": {
+                "count": len(followers),
+                "followers": followers,
+            },
+        }
+
+    @staticmethod
+    def get_user_followers_by_username(db: Session, display_name: str) -> dict:
+        """
+        Get all followers of any user by their display_name.
+
+        Business rules:
+        - Target user must exist.
+        - If profile is private, returns empty followers list
+          with a privacy notice instead of 403, so the count
+          is visible but profiles are hidden.
+
+        Args:
+            db (Session): The database session.
+            display_name (str): display_name of the target user.
+
+        Returns:
+            dict: List of follower profiles with count.
+
+        Raises:
+            HTTPException 404: If user with that display_name
+                               does not exist.
+        """
+        target_user = UserRepository.get_by_display_name(db, display_name)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        # Private profiles hide their followers list
+        if target_user.is_private:
+            return {
+                "success": True,
+                "data": {
+                    "count": target_user.follower_count,
+                    "followers": [],
+                    "private": True,
+                },
+            }
+
+        follow_records = FollowRepository.get_followers_of_user(db, target_user.user_id)
+
+        followers = []
+        for record in follow_records:
+            user = UserRepository.get_by_id(db, record.follower_id)
+            if user:
+                followers.append(
+                    {
+                        "user_id": str(user.user_id),
+                        "display_name": user.display_name,
+                        "profile_picture": user.profile_picture,
+                        "followed_at": record.created_at,
+                    }
+                )
+
+        return {
+            "success": True,
+            "data": {
+                "count": len(followers),
+                "followers": followers,
+                "private": False,
+            },
+        }
