@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.like import Like  # type: ignore
+from app.models.track import Track  # type: ignore
 
 
 class LikeRepository:
@@ -25,3 +26,17 @@ class LikeRepository:
     def delete(db: Session, like: Like) -> None:
         db.delete(like)
         db.commit()
+
+    @staticmethod
+    def get_liked_tracks_by_user(db: Session, user_id, include_private: bool = False):
+        query = (
+            db.query(Track)
+            .join(Like, Like.track_id == Track.track_id)
+            .filter(Like.user_id == user_id)
+            .order_by(Like.created_at.desc())
+        )
+
+        if not include_private:
+            query = query.filter(Track.visibility == "public")
+
+        return query.all()

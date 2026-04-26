@@ -13,6 +13,7 @@ from pydub import AudioSegment  # type: ignore
 from app.models.track import Track
 from app.models.listening_history import ListeningHistory
 from app.repositories.follow_repo import FollowRepository
+from app.repositories.like_repo import LikeRepository
 from app.repositories.listening_history_repo import ListeningHistoryRepository
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.track_repo import TrackRepository
@@ -373,6 +374,32 @@ class TrackService:
         }
 
     @staticmethod
+    def get_liked_tracks_by_user(db: Session, user_id: UUID, current_user=None):
+        user = UserRepository.get_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        include_private = (
+            current_user is not None and str(current_user.user_id) == str(user_id)
+        )
+        tracks = LikeRepository.get_liked_tracks_by_user(
+            db,
+            user_id,
+            include_private=include_private,
+        )
+
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(user_id),
+                "tracks": [TrackService._serialize_track(track) for track in tracks],
+            },
+        }
+
+    @staticmethod
     def delete_track(db, user, track_id):
         track = TrackRepository.get_by_id(db, track_id)
 
@@ -610,7 +637,9 @@ class TrackService:
     def _serialize_history_item(history, track):
         return {
             "history_id": str(history.history_id),
-            "played_at": (history.played_at.isoformat() if history.played_at else None),
+            "played_at": (
+                history.played_at.isoformat() if history.played_at else None
+            ),
             "duration_listened_seconds": history.duration_listened_seconds,
             "track": {
                 "track_id": str(track.track_id),
