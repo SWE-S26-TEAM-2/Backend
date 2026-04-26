@@ -17,10 +17,11 @@ import io
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_optional_current_user
 from app.database.database import get_db
 from app.services.user_service import UserService
 from app.services.social_link_service import SocialLinkService
+from app.services.track_service import TrackService
 
 client = TestClient(app)
 
@@ -201,6 +202,87 @@ def test_get_user_profile_endpoint_invalid_id(monkeypatch):
     response = client.get("/users/invalid-uuid")
 
     assert response.status_code >= 400
+
+
+def test_get_user_tracks_endpoint_success(monkeypatch):
+    """Test GET /users/{user_id}/tracks returns a track list."""
+    user_id = uuid.uuid4()
+    track_id = uuid.uuid4()
+
+    monkeypatch.setattr(
+        TrackService,
+        "get_tracks_by_user",
+        lambda db, uid, current_user=None: {
+            "success": True,
+            "data": {
+                "user_id": str(user_id),
+                "tracks": [
+                    {
+                        "track_id": str(track_id),
+                        "title": "Profile Track",
+                        "description": "From user profile",
+                        "stream_url": f"/api/tracks/{track_id}/audio",
+                        "visibility": "public",
+                    }
+                ],
+            },
+        },
+    )
+
+    response = client.get(f"/users/{user_id}/tracks")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["user_id"] == str(user_id)
+    assert body["data"]["tracks"][0]["title"] == "Profile Track"
+
+
+def test_get_user_tracks_endpoint_passes_authenticated_user(monkeypatch):
+    """Test GET /users/{user_id}/tracks forwards optional auth context."""
+    user_id = uuid.uuid4()
+    seen_user_ids = []
+
+    app.dependency_overrides[get_optional_current_user] = lambda: FakeUser(user_id=user_id)
+
+    def fake_get_tracks(db, uid, current_user=None):
+        seen_user_ids.append(current_user.user_id if current_user else None)
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(uid),
+                "tracks": [],
+            },
+        }
+
+    monkeypatch.setattr(TrackService, "get_tracks_by_user", fake_get_tracks)
+
+    response = client.get(f"/users/{user_id}/tracks")
+
+    assert response.status_code == 200
+    assert seen_user_ids == [user_id]
+
+    app.dependency_overrides.pop(get_optional_current_user, None)
+
+
+def test_get_user_tracks_endpoint_not_found(monkeypatch):
+    """Test GET /users/{user_id}/tracks returns 404 for missing user."""
+    user_id = uuid.uuid4()
+
+    from fastapi import HTTPException, status
+
+    def fake_get_tracks(db, uid, current_user=None):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    monkeypatch.setattr(TrackService, "get_tracks_by_user", fake_get_tracks)
+
+    response = client.get(f"/users/{user_id}/tracks")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "User not found"
 
 
 # ────────────────────────────────────────────────────────

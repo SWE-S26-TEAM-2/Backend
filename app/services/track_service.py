@@ -17,6 +17,7 @@ from app.repositories.listening_history_repo import ListeningHistoryRepository
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.track_repo import TrackRepository
 from app.repositories.playlist_repo import PlaylistRepository
+from app.repositories.user_repo import UserRepository
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
@@ -344,6 +345,32 @@ class TrackService:
         track = TrackService._get_track_or_404(db, track_id)
         TrackService._ensure_track_access(track, user)
         return {"success": True, "data": TrackService._serialize_track(track)}
+
+    @staticmethod
+    def get_tracks_by_user(db: Session, user_id: UUID, current_user=None):
+        user = UserRepository.get_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        include_private = (
+            current_user is not None and str(current_user.user_id) == str(user_id)
+        )
+        tracks = TrackRepository.get_by_user_id(
+            db,
+            user_id,
+            include_private=include_private,
+        )
+
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(user_id),
+                "tracks": [TrackService._serialize_track(track) for track in tracks],
+            },
+        }
 
     @staticmethod
     def delete_track(db, user, track_id):
