@@ -157,3 +157,50 @@ def get_user_followers_by_username(
         dict: count, followers list, and private flag.
     """
     return FollowerService.get_user_followers_by_username(db, display_name)
+
+
+@router.get("/me/following", status_code=status.HTTP_200_OK)
+def get_my_following(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all users the authenticated user is following.
+
+    Returns each following user's user_id, display_name,
+    profile_picture, and the date they were followed.
+
+    Args:
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: count and list of following profiles.
+    """
+    return FollowerService.get_my_following(db, current_user)
+
+
+@router.get(
+    "/{display_name}/following",
+    status_code=status.HTTP_200_OK,
+)
+def get_user_following_by_username(
+    display_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all users that a given user is following by display_name.
+
+    Private profiles return an empty following list
+    with private=True in the response.
+
+    Args:
+        display_name (str): The target user's display_name.
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: count, following list, and private flag.
+    """
+    return FollowerService.get_user_following_by_username(db, display_name)

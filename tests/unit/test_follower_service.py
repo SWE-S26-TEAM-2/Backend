@@ -823,3 +823,311 @@ class TestGetUserFollowersByUsername:
         assert "display_name" in entry
         assert "profile_picture" in entry
         assert "followed_at" in entry
+
+
+# ══════════════════════════════════════════════════════
+# GET FOLLOWING TESTS
+# ══════════════════════════════════════════════════════
+
+
+class TestGetMyFollowing:
+    """Tests for FollowerService.get_my_following()"""
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_my_following_success(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Authenticated user is following one person.
+        Expect success=True and a list with one entry.
+        """
+        # SETUP
+        following_user = MagicMock()
+        following_user.user_id = uuid.uuid4()
+        following_user.display_name = "DJ Khaled"
+        following_user.profile_picture = None
+
+        follow_record = MagicMock()
+        follow_record.following_id = following_user.user_id
+        follow_record.created_at = None
+
+        mock_follow_repo.get_following_of_user.return_value = [follow_record]
+        mock_user_repo.get_by_id.return_value = following_user
+
+        # CALL
+        result = FollowerService.get_my_following(mock_db, verified_user)
+
+        # CHECK
+        assert result["success"] is True
+        assert result["data"]["count"] == 1
+        assert len(result["data"]["following"]) == 1
+        assert result["data"]["following"][0]["display_name"] == "DJ Khaled"
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_my_following_empty(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Authenticated user is not following anyone.
+        Expect success=True, count=0, and empty list.
+        """
+        # SETUP
+        mock_follow_repo.get_following_of_user.return_value = []
+
+        # CALL
+        result = FollowerService.get_my_following(mock_db, verified_user)
+
+        # CHECK
+        assert result["success"] is True
+        assert result["data"]["count"] == 0
+        assert result["data"]["following"] == []
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_my_following_has_required_fields(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Each following entry must have user_id, display_name,
+        profile_picture, and followed_at.
+        """
+        # SETUP
+        following_user = MagicMock()
+        following_user.user_id = uuid.uuid4()
+        following_user.display_name = "DJ Khaled"
+        following_user.profile_picture = None
+
+        follow_record = MagicMock()
+        follow_record.following_id = following_user.user_id
+        follow_record.created_at = None
+
+        mock_follow_repo.get_following_of_user.return_value = [follow_record]
+        mock_user_repo.get_by_id.return_value = following_user
+
+        # CALL
+        result = FollowerService.get_my_following(mock_db, verified_user)
+
+        # CHECK
+        entry = result["data"]["following"][0]
+        assert "user_id" in entry
+        assert "display_name" in entry
+        assert "profile_picture" in entry
+        assert "followed_at" in entry
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_my_following_calls_correct_repo_method(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Must call get_following_of_user with the current user's ID.
+        """
+        # SETUP
+        mock_follow_repo.get_following_of_user.return_value = []
+
+        # CALL
+        FollowerService.get_my_following(mock_db, verified_user)
+
+        # CHECK
+        mock_follow_repo.get_following_of_user.assert_called_once_with(
+            mock_db, verified_user.user_id
+        )
+
+
+class TestGetUserFollowingByUsername:
+    """Tests for FollowerService.get_user_following_by_username()"""
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_by_username_success(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Public user is following one person.
+        Expect success=True, count=1, and private=False.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = False
+        target_user.following_count = 1
+
+        following_user = MagicMock()
+        following_user.user_id = uuid.uuid4()
+        following_user.display_name = "Artist X"
+        following_user.profile_picture = None
+
+        follow_record = MagicMock()
+        follow_record.following_id = following_user.user_id
+        follow_record.created_at = None
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_follow_repo.get_following_of_user.return_value = [follow_record]
+        mock_user_repo.get_by_id.return_value = following_user
+
+        # CALL
+        result = FollowerService.get_user_following_by_username(mock_db, "DJ Khaled")
+
+        # CHECK
+        assert result["success"] is True
+        assert result["data"]["count"] == 1
+        assert result["data"]["private"] is False
+        assert len(result["data"]["following"]) == 1
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_nonexistent_user_returns_404(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        display_name does not match any user.
+        Expect 404 Not Found.
+        """
+        # SETUP
+        mock_user_repo.get_by_display_name.return_value = None
+
+        # CALL + CHECK
+        with pytest.raises(HTTPException) as exc_info:
+            FollowerService.get_user_following_by_username(mock_db, "UnknownUser")
+
+        assert exc_info.value.status_code == 404
+        assert "not found" in exc_info.value.detail.lower()
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_private_user_returns_empty_list(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Target user has a private profile.
+        Expect success=True with empty following list
+        and private=True in the response.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = True
+        target_user.following_count = 30
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+
+        # CALL
+        result = FollowerService.get_user_following_by_username(mock_db, "Private User")
+
+        # CHECK
+        assert result["success"] is True
+        assert result["data"]["private"] is True
+        assert result["data"]["following"] == []
+        assert result["data"]["count"] == 30
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_private_user_does_not_query_follows(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        For private profiles, the follow repo must never be queried.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = True
+        target_user.following_count = 30
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+
+        # CALL
+        FollowerService.get_user_following_by_username(mock_db, "Private User")
+
+        # CHECK
+        mock_follow_repo.get_following_of_user.assert_not_called()
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_empty_for_public_user(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Public user exists but follows nobody.
+        Expect count=0, empty list, and private=False.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = False
+        target_user.following_count = 0
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_follow_repo.get_following_of_user.return_value = []
+
+        # CALL
+        result = FollowerService.get_user_following_by_username(mock_db, "PublicUser")
+
+        # CHECK
+        assert result["success"] is True
+        assert result["data"]["count"] == 0
+        assert result["data"]["following"] == []
+        assert result["data"]["private"] is False
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_calls_get_by_display_name(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Service must call get_by_display_name with the exact string.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = False
+        target_user.following_count = 0
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_follow_repo.get_following_of_user.return_value = []
+
+        # CALL
+        FollowerService.get_user_following_by_username(mock_db, "DJ Khaled")
+
+        # CHECK
+        mock_user_repo.get_by_display_name.assert_called_once_with(mock_db, "DJ Khaled")
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_following_entry_has_required_fields(
+        self, mock_user_repo, mock_follow_repo, mock_db, verified_user
+    ):
+        """
+        Each following entry must have user_id, display_name,
+        profile_picture, and followed_at.
+        """
+        # SETUP
+        target_user = MagicMock()
+        target_user.user_id = uuid.uuid4()
+        target_user.is_private = False
+        target_user.following_count = 1
+
+        following_user = MagicMock()
+        following_user.user_id = uuid.uuid4()
+        following_user.display_name = "Artist X"
+        following_user.profile_picture = None
+
+        follow_record = MagicMock()
+        follow_record.following_id = following_user.user_id
+        follow_record.created_at = None
+
+        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_follow_repo.get_following_of_user.return_value = [follow_record]
+        mock_user_repo.get_by_id.return_value = following_user
+
+        # CALL
+        result = FollowerService.get_user_following_by_username(mock_db, "DJ Khaled")
+
+        # CHECK
+        entry = result["data"]["following"][0]
+        assert "user_id" in entry
+        assert "display_name" in entry
+        assert "profile_picture" in entry
+        assert "followed_at" in entry
