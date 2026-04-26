@@ -23,7 +23,8 @@ class RegisterRequest(BaseModel):
     def validate_username(cls, value: str) -> str:
         if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
             raise ValueError(
-                "Username can only contain letters, numbers, underscores, dots, and hyphens."
+                "Username may only contain letters, numbers, "
+                "underscores, dots, and hyphens."
             )
         return value.lower()
 

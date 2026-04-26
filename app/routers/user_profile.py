@@ -5,7 +5,7 @@ All endpoints that require authentication use the
 get_current_user dependency to extract the user from JWT.
 """
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status  # type: ignore
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import (  # type: ignore
@@ -23,6 +23,7 @@ from app.schemas.user_schema import (  # type: ignore
 )
 from app.services.social_link_service import SocialLinkService  # type: ignore
 from app.services.track_service import TrackService  # type: ignore
+from app.repositories.user_repo import UserRepository  # type: ignore
 from app.services.user_service import UserService  # type: ignore
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -61,8 +62,6 @@ def get_user_tracks(
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    from app.repositories.user_repo import UserRepository  # type: ignore
-    from fastapi import HTTPException  # type: ignore
     user = UserRepository.get_by_username(db, username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
