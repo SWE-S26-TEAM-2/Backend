@@ -68,13 +68,16 @@ def get_user_tracks(
     return TrackService.get_tracks_by_user(db, user.user_id, current_user)
 
 
-@router.get("/{user_id}/liked-tracks", status_code=status.HTTP_200_OK)
+@router.get("/{username}/liked-tracks", status_code=status.HTTP_200_OK)
 def get_user_liked_tracks(
-    user_id: UUID,
+    username: str,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_liked_tracks_by_user(db, user_id, current_user)
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return TrackService.get_liked_tracks_by_user(db, user.user_id, current_user)
 
 
 @router.patch("/me", status_code=status.HTTP_200_OK)
