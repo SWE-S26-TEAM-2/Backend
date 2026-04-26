@@ -10,7 +10,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
-from app.core.dependencies import get_current_user, get_optional_current_user  # type: ignore
+from app.core.dependencies import (  # type: ignore
+    get_current_user,
+    get_optional_current_user,
+)
 from app.database.database import get_db  # type: ignore
 from app.models.user import User  # type: ignore
 from app.schemas.social_link_schema import (  # type: ignore
