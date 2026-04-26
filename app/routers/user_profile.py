@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, Query, UploadFile, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
-from app.core.dependencies import get_current_user  # type: ignore
+from app.core.dependencies import get_current_user, get_optional_current_user  # type: ignore
 from app.database.database import get_db  # type: ignore
 from app.models.user import User  # type: ignore
 from app.schemas.social_link_schema import (  # type: ignore
@@ -62,6 +62,15 @@ def get_user_profile(
         dict: Public profile data (limited if private).
     """
     return UserService.get_profile_by_id(db, user_id)
+
+
+@router.get("/{user_id}/tracks", status_code=status.HTTP_200_OK)
+def get_user_tracks(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    return TrackService.get_tracks_by_user(db, user_id, current_user)
 
 
 @router.patch("/me", status_code=status.HTTP_200_OK)

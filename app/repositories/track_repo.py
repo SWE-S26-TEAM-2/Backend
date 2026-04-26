@@ -28,6 +28,15 @@ class TrackRepository:
         )
 
     @staticmethod
+    def get_by_user_id(db: Session, user_id, include_private: bool = False):
+        query = db.query(Track).filter(Track.user_id == user_id)
+
+        if not include_private:
+            query = query.filter(Track.visibility == "public")
+
+        return query.all()
+
+    @staticmethod
     def search_by_title(db: Session, keyword: str):
         return (
             db.query(Track)
