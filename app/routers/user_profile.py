@@ -5,7 +5,9 @@ All endpoints that require authentication use the
 get_current_user dependency to extract the user from JWT.
 """
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status  # type: ignore
+from fastapi import (  # type: ignore
+    APIRouter, Depends, File, HTTPException, Query, UploadFile, status,
+)
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import (  # type: ignore
