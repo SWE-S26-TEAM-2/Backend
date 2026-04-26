@@ -40,6 +40,7 @@ class FakeUser:
     ):
         self.user_id = user_id or uuid.uuid4()
         self.email = email
+        self.username = "testuser"
         self.display_name = display_name
         self.account_type = "listener"
         self.is_verified = True
@@ -129,14 +130,15 @@ def test_get_my_profile_endpoint_without_auth(monkeypatch):
 
 
 def test_get_user_profile_endpoint_success(monkeypatch):
-    """Test GET /users/{user_id} returns 200 with public profile."""
+    """Test GET /users/{username} returns 200 with public profile."""
     user_id = uuid.uuid4()
 
-    def fake_get_profile(db, uid):
+    def fake_get_profile(db, username):
         return {
             "success": True,
             "data": {
                 "user_id": str(user_id),
+                "username": username,
                 "display_name": "Public User",
                 "account_type": "artist",
                 "bio": "Artist bio",
@@ -144,9 +146,9 @@ def test_get_user_profile_endpoint_success(monkeypatch):
             },
         }
 
-    monkeypatch.setattr(UserService, "get_profile_by_id", fake_get_profile)
+    monkeypatch.setattr(UserService, "get_profile_by_username", fake_get_profile)
 
-    response = client.get(f"/users/{user_id}")
+    response = client.get("/users/publicuser")
 
     assert response.status_code == 200
     body = response.json()
@@ -155,23 +157,24 @@ def test_get_user_profile_endpoint_success(monkeypatch):
 
 
 def test_get_user_profile_endpoint_private(monkeypatch):
-    """Test GET /users/{user_id} returns limited data for private profile."""
+    """Test GET /users/{username} returns limited data for private profile."""
     user_id = uuid.uuid4()
 
-    def fake_get_profile(db, uid):
+    def fake_get_profile(db, username):
         return {
             "success": True,
             "data": {
                 "user_id": str(user_id),
+                "username": username,
                 "display_name": "Private User",
                 "profile_picture": None,
                 "follower_count": 50,
             },
         }
 
-    monkeypatch.setattr(UserService, "get_profile_by_id", fake_get_profile)
+    monkeypatch.setattr(UserService, "get_profile_by_username", fake_get_profile)
 
-    response = client.get(f"/users/{user_id}")
+    response = client.get("/users/privateuser")
 
     assert response.status_code == 200
     body = response.json()
@@ -179,36 +182,44 @@ def test_get_user_profile_endpoint_private(monkeypatch):
 
 
 def test_get_user_profile_endpoint_not_found(monkeypatch):
-    """Test GET /users/{user_id} returns 404 for non-existent user."""
-    user_id = uuid.uuid4()
-
+    """Test GET /users/{username} returns 404 for non-existent user."""
     from fastapi import HTTPException, status
 
-    def fake_get_profile(db, uid):
+    def fake_get_profile(db, username):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
 
-    monkeypatch.setattr(UserService, "get_profile_by_id", fake_get_profile)
+    monkeypatch.setattr(UserService, "get_profile_by_username", fake_get_profile)
 
-    response = client.get(f"/users/{user_id}")
+    response = client.get("/users/nobody")
 
     assert response.status_code == 404
 
 
 def test_get_user_profile_endpoint_invalid_id(monkeypatch):
-    """Test GET /users/{invalid_id} returns 400 for invalid UUID."""
-    response = client.get("/users/invalid-uuid")
+    """Test GET /users/me still works (not treated as username)."""
+    app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
-    assert response.status_code >= 400
+    def fake_get_profile(user):
+        return {"success": True, "data": {"display_name": "Test User"}}
+
+    monkeypatch.setattr(UserService, "get_my_profile", fake_get_profile)
+
+    response = client.get("/users/me")
+
+    assert response.status_code == 200
 
 
 def test_get_user_tracks_endpoint_success(monkeypatch):
-    """Test GET /users/{user_id}/tracks returns a track list."""
+    """Test GET /users/{username}/tracks returns a track list."""
     user_id = uuid.uuid4()
     track_id = uuid.uuid4()
+    fake_user = FakeUser(user_id=user_id)
 
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: fake_user)
     monkeypatch.setattr(
         TrackService,
         "get_tracks_by_user",
@@ -229,37 +240,32 @@ def test_get_user_tracks_endpoint_success(monkeypatch):
         },
     )
 
-    response = client.get(f"/users/{user_id}/tracks")
+    response = client.get("/users/testuser/tracks")
 
     assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert body["data"]["user_id"] == str(user_id)
     assert body["data"]["tracks"][0]["title"] == "Profile Track"
 
 
 def test_get_user_tracks_endpoint_passes_authenticated_user(monkeypatch):
-    """Test GET /users/{user_id}/tracks forwards optional auth context."""
+    """Test GET /users/{username}/tracks forwards optional auth context."""
     user_id = uuid.uuid4()
     seen_user_ids = []
+    fake_user = FakeUser(user_id=user_id)
 
-    app.dependency_overrides[get_optional_current_user] = lambda: FakeUser(
-        user_id=user_id
-    )
+    app.dependency_overrides[get_optional_current_user] = lambda: fake_user
+
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: fake_user)
 
     def fake_get_tracks(db, uid, current_user=None):
         seen_user_ids.append(current_user.user_id if current_user else None)
-        return {
-            "success": True,
-            "data": {
-                "user_id": str(uid),
-                "tracks": [],
-            },
-        }
+        return {"success": True, "data": {"user_id": str(uid), "tracks": []}}
 
     monkeypatch.setattr(TrackService, "get_tracks_by_user", fake_get_tracks)
 
-    response = client.get(f"/users/{user_id}/tracks")
+    response = client.get("/users/testuser/tracks")
 
     assert response.status_code == 200
     assert seen_user_ids == [user_id]
@@ -268,30 +274,24 @@ def test_get_user_tracks_endpoint_passes_authenticated_user(monkeypatch):
 
 
 def test_get_user_tracks_endpoint_not_found(monkeypatch):
-    """Test GET /users/{user_id}/tracks returns 404 for missing user."""
-    user_id = uuid.uuid4()
+    """Test GET /users/{username}/tracks returns 404 for missing user."""
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: None)
 
-    from fastapi import HTTPException, status
-
-    def fake_get_tracks(db, uid, current_user=None):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    monkeypatch.setattr(TrackService, "get_tracks_by_user", fake_get_tracks)
-
-    response = client.get(f"/users/{user_id}/tracks")
+    response = client.get("/users/nobody/tracks")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "User not found"
 
 
 def test_get_user_liked_tracks_endpoint_success(monkeypatch):
-    """Test GET /users/{user_id}/liked-tracks returns a track list."""
+    """Test GET /users/{username}/liked-tracks returns a track list."""
     user_id = uuid.uuid4()
     track_id = uuid.uuid4()
+    fake_user = FakeUser(user_id=user_id)
 
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: fake_user)
     monkeypatch.setattr(
         TrackService,
         "get_liked_tracks_by_user",
@@ -312,41 +312,32 @@ def test_get_user_liked_tracks_endpoint_success(monkeypatch):
         },
     )
 
-    response = client.get(f"/users/{user_id}/liked-tracks")
+    response = client.get("/users/testuser/liked-tracks")
 
     assert response.status_code == 200
     body = response.json()
     assert body["success"] is True
-    assert body["data"]["user_id"] == str(user_id)
     assert body["data"]["tracks"][0]["title"] == "Liked Track"
 
 
 def test_get_user_liked_tracks_endpoint_passes_authenticated_user(monkeypatch):
-    """Test GET /users/{user_id}/liked-tracks forwards optional auth context."""
+    """Test GET /users/{username}/liked-tracks forwards optional auth context."""
     user_id = uuid.uuid4()
     seen_user_ids = []
+    fake_user = FakeUser(user_id=user_id)
 
-    app.dependency_overrides[get_optional_current_user] = lambda: FakeUser(
-        user_id=user_id
-    )
+    app.dependency_overrides[get_optional_current_user] = lambda: fake_user
+
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: fake_user)
 
     def fake_get_liked_tracks(db, uid, current_user=None):
         seen_user_ids.append(current_user.user_id if current_user else None)
-        return {
-            "success": True,
-            "data": {
-                "user_id": str(uid),
-                "tracks": [],
-            },
-        }
+        return {"success": True, "data": {"user_id": str(uid), "tracks": []}}
 
-    monkeypatch.setattr(
-        TrackService,
-        "get_liked_tracks_by_user",
-        fake_get_liked_tracks,
-    )
+    monkeypatch.setattr(TrackService, "get_liked_tracks_by_user", fake_get_liked_tracks)
 
-    response = client.get(f"/users/{user_id}/liked-tracks")
+    response = client.get("/users/testuser/liked-tracks")
 
     assert response.status_code == 200
     assert seen_user_ids == [user_id]
@@ -355,24 +346,11 @@ def test_get_user_liked_tracks_endpoint_passes_authenticated_user(monkeypatch):
 
 
 def test_get_user_liked_tracks_endpoint_not_found(monkeypatch):
-    """Test GET /users/{user_id}/liked-tracks returns 404 for missing user."""
-    user_id = uuid.uuid4()
+    """Test GET /users/{username}/liked-tracks returns 404 for missing user."""
+    from app.repositories.user_repo import UserRepository
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db, u: None)
 
-    from fastapi import HTTPException, status
-
-    def fake_get_liked_tracks(db, uid, current_user=None):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-
-    monkeypatch.setattr(
-        TrackService,
-        "get_liked_tracks_by_user",
-        fake_get_liked_tracks,
-    )
-
-    response = client.get(f"/users/{user_id}/liked-tracks")
+    response = client.get("/users/nobody/liked-tracks")
 
     assert response.status_code == 404
     assert response.json()["detail"] == "User not found"

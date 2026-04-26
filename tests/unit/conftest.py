@@ -23,6 +23,7 @@ def make_fake_user(**overrides):
     defaults = {
         "user_id": uuid.uuid4(),
         "email": "test@example.com",
+        "username": "testuser",
         "password_hash": "$2b$12$hashedpasswordplaceholder",
         "display_name": "TestUser",
         "account_type": "listener",

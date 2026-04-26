@@ -18,39 +18,20 @@ from app.repositories.user_repo import UserRepository  # type: ignore
 class BlockService:
 
     @staticmethod
-    def block_user(db: Session, current_user: User, target_id) -> dict:
-        """
-        Block a user by their UUID.
-
-        Business rules:
-        - Cannot block yourself.
-        - Cannot block someone already blocked.
-        - Automatically removes any follow relationship
-          in either direction between the two users.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            target_id: UUID of the user to block.
-
-        Returns:
-            dict: Success message.
-
-        Raises:
-            HTTPException 400: If blocking yourself or already blocked.
-            HTTPException 404: If target user does not exist.
-        """
-        if current_user.user_id == target_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot block yourself.",
-            )
-
-        target_user = UserRepository.get_by_id(db, target_id)
+    def block_user(db: Session, current_user: User, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
         if not target_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
+            )
+
+        target_id = target_user.user_id
+
+        if current_user.user_id == target_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You cannot block yourself.",
             )
 
         existing = BlockRepository.get_block(db, current_user.user_id, target_id)
@@ -94,21 +75,15 @@ class BlockService:
         return {"success": True, "message": "User blocked successfully."}
 
     @staticmethod
-    def unblock_user(db: Session, current_user: User, target_id) -> dict:
-        """
-        Unblock a previously blocked user.
+    def unblock_user(db: Session, current_user: User, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
 
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            target_id: UUID of the user to unblock.
-
-        Returns:
-            dict: Success message.
-
-        Raises:
-            HTTPException 404: If no block record exists.
-        """
+        target_id = target_user.user_id
         block = BlockRepository.get_block(db, current_user.user_id, target_id)
         if not block:
             raise HTTPException(

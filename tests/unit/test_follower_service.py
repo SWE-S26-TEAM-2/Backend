@@ -42,11 +42,11 @@ class TestFollowUser:
         target.follower_count = 0
         verified_user.following_count = 0
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = None  # not following yet
 
         # CALL
-        result = FollowerService.follow_user(mock_db, verified_user, target.user_id)
+        result = FollowerService.follow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         assert result["success"] is True
@@ -62,9 +62,11 @@ class TestFollowUser:
         User tries to follow themselves.
         Expect 400 Bad Request with 'yourself' in the detail.
         """
+        mock_user_repo.get_by_username.return_value = verified_user
+
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            FollowerService.follow_user(mock_db, verified_user, verified_user.user_id)
+            FollowerService.follow_user(mock_db, verified_user, "myself")
 
         assert exc_info.value.status_code == 400
         assert "yourself" in exc_info.value.detail.lower()
@@ -79,11 +81,11 @@ class TestFollowUser:
         Expect 404 Not Found.
         """
         # SETUP — repo returns None, meaning user not found
-        mock_user_repo.get_by_id.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            FollowerService.follow_user(mock_db, verified_user, uuid.uuid4())
+            FollowerService.follow_user(mock_db, verified_user, "unknown")
 
         assert exc_info.value.status_code == 404
 
@@ -101,13 +103,13 @@ class TestFollowUser:
         target.user_id = uuid.uuid4()
         target.display_name = "DJ Khaled"
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         # An existing follow record is found
         mock_follow_repo.get_follow.return_value = MagicMock()
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            FollowerService.follow_user(mock_db, verified_user, target.user_id)
+            FollowerService.follow_user(mock_db, verified_user, "djkhaled")
 
         assert exc_info.value.status_code == 400
         assert "already following" in exc_info.value.detail.lower()
@@ -128,11 +130,11 @@ class TestFollowUser:
         target.follower_count = 5
         verified_user.following_count = 3
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = None
 
         # CALL
-        FollowerService.follow_user(mock_db, verified_user, target.user_id)
+        FollowerService.follow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK — update_fields called twice (current_user + target)
         assert mock_user_repo.update_fields.call_count == 2
@@ -153,11 +155,11 @@ class TestFollowUser:
         target.follower_count = 0
         verified_user.following_count = 0
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = None
 
         # CALL
-        FollowerService.follow_user(mock_db, verified_user, target.user_id)
+        FollowerService.follow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         mock_follow_repo.create_follow.assert_called_once_with(
@@ -189,11 +191,11 @@ class TestUnfollowUser:
         verified_user.following_count = 1
 
         existing_follow = MagicMock()
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = existing_follow
-        mock_user_repo.get_by_id.return_value = target
 
         # CALL
-        result = FollowerService.unfollow_user(mock_db, verified_user, target.user_id)
+        result = FollowerService.unfollow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         assert result["success"] is True
@@ -207,12 +209,14 @@ class TestUnfollowUser:
         User tries to unfollow someone they never followed.
         Expect 404 Not Found with 'not following' in the detail.
         """
-        # SETUP — no follow record found
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            FollowerService.unfollow_user(mock_db, verified_user, uuid.uuid4())
+            FollowerService.unfollow_user(mock_db, verified_user, "unknown")
 
         assert exc_info.value.status_code == 404
         assert "not following" in exc_info.value.detail.lower()
@@ -232,11 +236,11 @@ class TestUnfollowUser:
         verified_user.following_count = 1
 
         follow_record = MagicMock()
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = follow_record
-        mock_user_repo.get_by_id.return_value = target
 
         # CALL
-        FollowerService.unfollow_user(mock_db, verified_user, target.user_id)
+        FollowerService.unfollow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         mock_follow_repo.delete_follow.assert_called_once_with(mock_db, follow_record)
@@ -256,11 +260,11 @@ class TestUnfollowUser:
         target.follower_count = 2
         verified_user.following_count = 2
 
+        mock_user_repo.get_by_username.return_value = target
         mock_follow_repo.get_follow.return_value = MagicMock()
-        mock_user_repo.get_by_id.return_value = target
 
         # CALL
-        FollowerService.unfollow_user(mock_db, verified_user, target.user_id)
+        FollowerService.unfollow_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         assert mock_user_repo.update_fields.call_count == 2
@@ -288,12 +292,12 @@ class TestBlockUser:
         target = MagicMock()
         target.user_id = uuid.uuid4()
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = None
         mock_follow_repo.get_follow.return_value = None
 
         # CALL
-        result = BlockService.block_user(mock_db, verified_user, target.user_id)
+        result = BlockService.block_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         assert result["success"] is True
@@ -310,9 +314,11 @@ class TestBlockUser:
         User tries to block themselves.
         Expect 400 Bad Request with 'yourself' in the detail.
         """
+        mock_user_repo.get_by_username.return_value = verified_user
+
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            BlockService.block_user(mock_db, verified_user, verified_user.user_id)
+            BlockService.block_user(mock_db, verified_user, "myself")
 
         assert exc_info.value.status_code == 400
         assert "yourself" in exc_info.value.detail.lower()
@@ -328,11 +334,11 @@ class TestBlockUser:
         Expect 404 Not Found.
         """
         # SETUP
-        mock_user_repo.get_by_id.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            BlockService.block_user(mock_db, verified_user, uuid.uuid4())
+            BlockService.block_user(mock_db, verified_user, "unknown")
 
         assert exc_info.value.status_code == 404
 
@@ -350,12 +356,12 @@ class TestBlockUser:
         target = MagicMock()
         target.user_id = uuid.uuid4()
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = MagicMock()
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            BlockService.block_user(mock_db, verified_user, target.user_id)
+            BlockService.block_user(mock_db, verified_user, "djkhaled")
 
         assert exc_info.value.status_code == 400
         assert "already blocked" in exc_info.value.detail.lower()
@@ -376,7 +382,7 @@ class TestBlockUser:
         target.follower_count = 1
         verified_user.following_count = 1
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = None
 
         existing_follow = MagicMock()
@@ -386,7 +392,7 @@ class TestBlockUser:
         ]
 
         # CALL
-        BlockService.block_user(mock_db, verified_user, target.user_id)
+        BlockService.block_user(mock_db, verified_user, "djkhaled")
 
         # CHECK — the follow was deleted
         mock_follow_repo.delete_follow.assert_called_with(mock_db, existing_follow)
@@ -407,7 +413,7 @@ class TestBlockUser:
         target.following_count = 1
         verified_user.follower_count = 1
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = None
 
         reverse_follow = MagicMock()
@@ -417,7 +423,7 @@ class TestBlockUser:
         ]
 
         # CALL
-        BlockService.block_user(mock_db, verified_user, target.user_id)
+        BlockService.block_user(mock_db, verified_user, "djkhaled")
 
         # CHECK — the reverse follow was deleted
         mock_follow_repo.delete_follow.assert_called_with(mock_db, reverse_follow)
@@ -436,12 +442,12 @@ class TestBlockUser:
         target = MagicMock()
         target.user_id = uuid.uuid4()
 
-        mock_user_repo.get_by_id.return_value = target
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = None
         mock_follow_repo.get_follow.return_value = None
 
         # CALL
-        BlockService.block_user(mock_db, verified_user, target.user_id)
+        BlockService.block_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         mock_block_repo.create_block.assert_called_once_with(
@@ -457,56 +463,64 @@ class TestBlockUser:
 class TestUnblockUser:
     """Tests for BlockService.unblock_user()"""
 
+    @patch("app.services.block_service.UserRepository")
     @patch("app.services.block_service.BlockRepository")
-    def test_unblock_success(self, mock_block_repo, mock_db, verified_user):
+    def test_unblock_success(self, mock_block_repo, mock_user_repo, mock_db, verified_user):
         """
         User unblocks someone they previously blocked.
         Expect success=True and message containing 'unblocked'.
         """
         # SETUP
-        target_id = uuid.uuid4()
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        mock_user_repo.get_by_username.return_value = target
         existing_block = MagicMock()
         mock_block_repo.get_block.return_value = existing_block
 
         # CALL
-        result = BlockService.unblock_user(mock_db, verified_user, target_id)
+        result = BlockService.unblock_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         assert result["success"] is True
         assert "unblocked" in result["message"].lower()
 
+    @patch("app.services.block_service.UserRepository")
     @patch("app.services.block_service.BlockRepository")
     def test_unblock_not_blocked_returns_404(
-        self, mock_block_repo, mock_db, verified_user
+        self, mock_block_repo, mock_user_repo, mock_db, verified_user
     ):
         """
         User tries to unblock someone they never blocked.
         Expect 404 Not Found with 'not blocked' in the detail.
         """
-        # SETUP — no block record found
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        mock_user_repo.get_by_username.return_value = target
         mock_block_repo.get_block.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
-            BlockService.unblock_user(mock_db, verified_user, uuid.uuid4())
+            BlockService.unblock_user(mock_db, verified_user, "djkhaled")
 
         assert exc_info.value.status_code == 404
         assert "not blocked" in exc_info.value.detail.lower()
 
+    @patch("app.services.block_service.UserRepository")
     @patch("app.services.block_service.BlockRepository")
     def test_unblock_deletes_block_record(
-        self, mock_block_repo, mock_db, verified_user
+        self, mock_block_repo, mock_user_repo, mock_db, verified_user
     ):
         """
         Unblock must call delete_block with the correct block record.
         """
-        # SETUP
-        target_id = uuid.uuid4()
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        mock_user_repo.get_by_username.return_value = target
         block_record = MagicMock()
         mock_block_repo.get_block.return_value = block_record
 
         # CALL
-        BlockService.unblock_user(mock_db, verified_user, target_id)
+        BlockService.unblock_user(mock_db, verified_user, "djkhaled")
 
         # CHECK
         mock_block_repo.delete_block.assert_called_once_with(mock_db, block_record)
@@ -651,7 +665,7 @@ class TestGetUserFollowersByUsername:
         follow_record.follower_id = follower_user.user_id
         follow_record.created_at = None
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_followers_of_user.return_value = [follow_record]
         mock_user_repo.get_by_id.return_value = follower_user
 
@@ -674,7 +688,7 @@ class TestGetUserFollowersByUsername:
         Expect 404 Not Found.
         """
         # SETUP
-        mock_user_repo.get_by_display_name.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -700,7 +714,7 @@ class TestGetUserFollowersByUsername:
         target_user.is_private = True
         target_user.follower_count = 50
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
 
         # CALL
         result = FollowerService.get_user_followers_by_username(mock_db, "Private User")
@@ -727,7 +741,7 @@ class TestGetUserFollowersByUsername:
         target_user.is_private = True
         target_user.follower_count = 50
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
 
         # CALL
         FollowerService.get_user_followers_by_username(mock_db, "Private User")
@@ -750,7 +764,7 @@ class TestGetUserFollowersByUsername:
         target_user.is_private = False
         target_user.follower_count = 0
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_followers_of_user.return_value = []
 
         # CALL
@@ -764,12 +778,12 @@ class TestGetUserFollowersByUsername:
 
     @patch("app.services.follower_service.FollowRepository")
     @patch("app.services.follower_service.UserRepository")
-    def test_get_followers_calls_get_by_display_name(
+    def test_get_followers_calls_get_by_username(
         self, mock_user_repo, mock_follow_repo, mock_db, verified_user
     ):
         """
-        Service must call get_by_display_name with the exact
-        display_name string passed in.
+        Service must call get_by_username with the exact
+        username string passed in.
         """
         # SETUP
         target_user = MagicMock()
@@ -777,14 +791,14 @@ class TestGetUserFollowersByUsername:
         target_user.is_private = False
         target_user.follower_count = 0
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_followers_of_user.return_value = []
 
         # CALL
         FollowerService.get_user_followers_by_username(mock_db, "DJ Khaled")
 
         # CHECK
-        mock_user_repo.get_by_display_name.assert_called_once_with(mock_db, "DJ Khaled")
+        mock_user_repo.get_by_username.assert_called_once_with(mock_db, "DJ Khaled")
 
     @patch("app.services.follower_service.FollowRepository")
     @patch("app.services.follower_service.UserRepository")
@@ -810,7 +824,7 @@ class TestGetUserFollowersByUsername:
         follow_record.follower_id = follower_user.user_id
         follow_record.created_at = None
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_followers_of_user.return_value = [follow_record]
         mock_user_repo.get_by_id.return_value = follower_user
 
@@ -963,7 +977,7 @@ class TestGetUserFollowingByUsername:
         follow_record.following_id = following_user.user_id
         follow_record.created_at = None
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_following_of_user.return_value = [follow_record]
         mock_user_repo.get_by_id.return_value = following_user
 
@@ -986,7 +1000,7 @@ class TestGetUserFollowingByUsername:
         Expect 404 Not Found.
         """
         # SETUP
-        mock_user_repo.get_by_display_name.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -1011,7 +1025,7 @@ class TestGetUserFollowingByUsername:
         target_user.is_private = True
         target_user.following_count = 30
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
 
         # CALL
         result = FollowerService.get_user_following_by_username(mock_db, "Private User")
@@ -1036,7 +1050,7 @@ class TestGetUserFollowingByUsername:
         target_user.is_private = True
         target_user.following_count = 30
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
 
         # CALL
         FollowerService.get_user_following_by_username(mock_db, "Private User")
@@ -1059,7 +1073,7 @@ class TestGetUserFollowingByUsername:
         target_user.is_private = False
         target_user.following_count = 0
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_following_of_user.return_value = []
 
         # CALL
@@ -1073,11 +1087,11 @@ class TestGetUserFollowingByUsername:
 
     @patch("app.services.follower_service.FollowRepository")
     @patch("app.services.follower_service.UserRepository")
-    def test_get_following_calls_get_by_display_name(
+    def test_get_following_calls_get_by_username(
         self, mock_user_repo, mock_follow_repo, mock_db, verified_user
     ):
         """
-        Service must call get_by_display_name with the exact string.
+        Service must call get_by_username with the exact string.
         """
         # SETUP
         target_user = MagicMock()
@@ -1085,14 +1099,14 @@ class TestGetUserFollowingByUsername:
         target_user.is_private = False
         target_user.following_count = 0
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_following_of_user.return_value = []
 
         # CALL
         FollowerService.get_user_following_by_username(mock_db, "DJ Khaled")
 
         # CHECK
-        mock_user_repo.get_by_display_name.assert_called_once_with(mock_db, "DJ Khaled")
+        mock_user_repo.get_by_username.assert_called_once_with(mock_db, "DJ Khaled")
 
     @patch("app.services.follower_service.FollowRepository")
     @patch("app.services.follower_service.UserRepository")
@@ -1118,7 +1132,7 @@ class TestGetUserFollowingByUsername:
         follow_record.following_id = following_user.user_id
         follow_record.created_at = None
 
-        mock_user_repo.get_by_display_name.return_value = target_user
+        mock_user_repo.get_by_username.return_value = target_user
         mock_follow_repo.get_following_of_user.return_value = [follow_record]
         mock_user_repo.get_by_id.return_value = following_user
 

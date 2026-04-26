@@ -44,6 +44,10 @@ class UserRepository:
         return db.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
+    def get_by_username(db: Session, username: str):
+        return db.query(User).filter(User.username == username.lower()).first()
+
+    @staticmethod
     def get_by_display_name(db: Session, display_name: str):
         """
         Find a user by their display name (exact match).

@@ -18,6 +18,7 @@ ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 COVER_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_PROFILE_FIELDS = [
+    "username",
     "display_name",
     "bio",
     "location",
@@ -46,6 +47,7 @@ class UserService:
             "data": {
                 "user_id": str(current_user.user_id),
                 "email": current_user.email,
+                "username": current_user.username,
                 "display_name": current_user.display_name,
                 "account_type": current_user.account_type,
                 "is_verified": current_user.is_verified,
@@ -64,23 +66,8 @@ class UserService:
         }
 
     @staticmethod
-    def get_profile_by_id(db: Session, user_id) -> dict:
-        """
-        Return the public profile of any user by their UUID.
-
-        Private profiles return limited data.
-
-        Args:
-            db (Session): The database session.
-            user_id: The UUID of the target user.
-
-        Returns:
-            dict: Public (or limited) profile data.
-
-        Raises:
-            HTTPException: 404 if the user is not found.
-        """
-        user = UserRepository.get_by_id(db, user_id)
+    def get_profile_by_username(db: Session, username: str) -> dict:
+        user = UserRepository.get_by_username(db, username)
 
         if not user:
             raise HTTPException(
@@ -93,6 +80,7 @@ class UserService:
                 "success": True,
                 "data": {
                     "user_id": str(user.user_id),
+                    "username": user.username,
                     "display_name": user.display_name,
                     "profile_picture": user.profile_picture,
                     "follower_count": user.follower_count,
@@ -103,6 +91,7 @@ class UserService:
             "success": True,
             "data": {
                 "user_id": str(user.user_id),
+                "username": user.username,
                 "display_name": user.display_name,
                 "bio": user.bio,
                 "location": user.location,
@@ -133,6 +122,14 @@ class UserService:
         update_data = data.model_dump(exclude_unset=True)
         filtered = {k: v for k, v in update_data.items() if k in ALLOWED_PROFILE_FIELDS}
 
+        if "username" in filtered:
+            existing = UserRepository.get_by_username(db, filtered["username"])
+            if existing and str(existing.user_id) != str(current_user.user_id):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Username already taken",
+                )
+
         UserRepository.update_fields(db, current_user, filtered)
 
         return {
@@ -140,6 +137,7 @@ class UserService:
             "message": "Profile updated successfully.",
             "data": {
                 "user_id": str(current_user.user_id),
+                "username": current_user.username,
                 "display_name": current_user.display_name,
                 "bio": current_user.bio,
                 "location": current_user.location,
@@ -199,6 +197,7 @@ class UserService:
             "data": {
                 "user_id": str(current_user.user_id),
                 "email": current_user.email,
+                "username": current_user.username,
                 "display_name": current_user.display_name,
                 "account_type": current_user.account_type,
                 "is_verified": current_user.is_verified,
@@ -244,6 +243,7 @@ class UserService:
             "data": {
                 "user_id": str(current_user.user_id),
                 "email": current_user.email,
+                "username": current_user.username,
                 "display_name": current_user.display_name,
                 "account_type": current_user.account_type,
                 "is_verified": current_user.is_verified,

@@ -5,28 +5,30 @@ Defines the data contracts for profile retrieval, updates,
 and privacy toggle endpoints.
 """
 
+import re
 from typing import Optional
 
-from pydantic import BaseModel, Field  # type: ignore
+from pydantic import BaseModel, Field, field_validator  # type: ignore
 
 
 class UpdateProfileRequest(BaseModel):
-    """
-    Schema for partial profile update.
-
-    All fields are optional — only provided fields are updated.
-
-    Args:
-        display_name (str, optional): New display name.
-        bio (str, optional): Profile bio. Max 500 characters.
-        location (str, optional): Location string.
-        account_type (str, optional): 'artist' or 'listener'.
-    """
-
+    username: Optional[str] = Field(None, min_length=3, max_length=20)
     display_name: Optional[str] = None
     bio: Optional[str] = Field(None, max_length=500)
     location: Optional[str] = None
     account_type: Optional[str] = None
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        if value is None:
+            return value
+        if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
+            raise ValueError(
+                "Username may only contain letters, numbers, "
+                "underscores, dots, and hyphens."
+            )
+        return value.lower()
 
 
 class UpdatePrivacyRequest(BaseModel):

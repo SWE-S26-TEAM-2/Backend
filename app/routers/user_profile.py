@@ -5,9 +5,9 @@ All endpoints that require authentication use the
 get_current_user dependency to extract the user from JWT.
 """
 
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status  # type: ignore
+from fastapi import (  # type: ignore
+    APIRouter, Depends, File, HTTPException, Query, UploadFile, status,
+)
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import (  # type: ignore
@@ -25,6 +25,7 @@ from app.schemas.user_schema import (  # type: ignore
 )
 from app.services.social_link_service import SocialLinkService  # type: ignore
 from app.services.track_service import TrackService  # type: ignore
+from app.repositories.user_repo import UserRepository  # type: ignore
 from app.services.user_service import UserService  # type: ignore
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -49,40 +50,36 @@ def get_my_profile(
     return UserService.get_my_profile(current_user)
 
 
-@router.get("/{user_id}", status_code=status.HTTP_200_OK)
+@router.get("/{username}", status_code=status.HTTP_200_OK)
 def get_user_profile(
-    user_id: UUID,
+    username: str,
     db: Session = Depends(get_db),
 ):
-    """
-    Get any user's public profile by their UUID.
-
-    Args:
-        user_id (UUID): The target user's UUID from the URL path.
-        db (Session): Database session injected by FastAPI.
-
-    Returns:
-        dict: Public profile data (limited if private).
-    """
-    return UserService.get_profile_by_id(db, user_id)
+    return UserService.get_profile_by_username(db, username)
 
 
-@router.get("/{user_id}/tracks", status_code=status.HTTP_200_OK)
+@router.get("/{username}/tracks", status_code=status.HTTP_200_OK)
 def get_user_tracks(
-    user_id: UUID,
+    username: str,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_tracks_by_user(db, user_id, current_user)
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return TrackService.get_tracks_by_user(db, user.user_id, current_user)
 
 
-@router.get("/{user_id}/liked-tracks", status_code=status.HTTP_200_OK)
+@router.get("/{username}/liked-tracks", status_code=status.HTTP_200_OK)
 def get_user_liked_tracks(
-    user_id: UUID,
+    username: str,
     db: Session = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    return TrackService.get_liked_tracks_by_user(db, user_id, current_user)
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return TrackService.get_liked_tracks_by_user(db, user.user_id, current_user)
 
 
 @router.patch("/me", status_code=status.HTTP_200_OK)

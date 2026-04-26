@@ -97,6 +97,7 @@ class TestRegisterUser:
     def test_success(self, mock_hash, mock_user_repo, mock_token_repo, mock_db):
         """Registering with a fresh email should succeed and return user data."""
         mock_user_repo.get_by_email.return_value = None
+        mock_user_repo.get_by_username.return_value = None
         created_user = make_fake_user(email="new@example.com")
         mock_user_repo.create.return_value = created_user
 
@@ -265,6 +266,7 @@ class TestLoginUser:
     def test_unknown_email_raises_401(self, mock_user_repo, mock_db):
         """Email not found should raise 401 (same as wrong password)."""
         mock_user_repo.get_by_email.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         with pytest.raises(HTTPException) as exc:
             AuthService.login_user(mock_db, _login_data())
