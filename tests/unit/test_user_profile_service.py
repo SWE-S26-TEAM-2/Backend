@@ -50,6 +50,7 @@ class FakeUser:
         self,
         user_id=None,
         email="test@example.com",
+        username="testuser",
         display_name="Test User",
         account_type="listener",
         is_verified=True,
@@ -68,6 +69,7 @@ class FakeUser:
     ):
         self.user_id = user_id or uuid.uuid4()
         self.email = email
+        self.username = username
         self.display_name = display_name
         self.account_type = account_type
         self.is_verified = is_verified
@@ -208,6 +210,7 @@ def test_get_user_profile_public_success(monkeypatch):
     user_id = uuid.uuid4()
     user = FakeUser(
         user_id=user_id,
+        username="publicuser",
         display_name="Public User",
         account_type="artist",
         bio="My bio",
@@ -222,9 +225,9 @@ def test_get_user_profile_public_success(monkeypatch):
 
     from app.repositories.user_repo import UserRepository
 
-    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: user)
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: user)
 
-    result = UserService.get_profile_by_id(db, user_id)
+    result = UserService.get_profile_by_username(db, "publicuser")
 
     assert result["success"] is True
     assert result["data"]["user_id"] == str(user_id)
@@ -239,6 +242,7 @@ def test_get_user_profile_private_limited_data(monkeypatch):
     user_id = uuid.uuid4()
     user = FakeUser(
         user_id=user_id,
+        username="privateuser",
         display_name="Private User",
         bio="Secret bio",
         is_private=True,
@@ -248,17 +252,15 @@ def test_get_user_profile_private_limited_data(monkeypatch):
 
     from app.repositories.user_repo import UserRepository
 
-    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: user)
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: user)
 
-    result = UserService.get_profile_by_id(db, user_id)
+    result = UserService.get_profile_by_username(db, "privateuser")
 
     assert result["success"] is True
-    # Limited data returned for private profile
     assert result["data"]["user_id"] == str(user_id)
     assert result["data"]["display_name"] == "Private User"
     assert result["data"]["profile_picture"] == "https://example.com/pic.jpg"
     assert result["data"]["follower_count"] == 50
-    # These should NOT be in the response for private profiles
     assert "bio" not in result["data"]
     assert "location" not in result["data"]
 
@@ -266,14 +268,13 @@ def test_get_user_profile_private_limited_data(monkeypatch):
 def test_get_user_profile_not_found(monkeypatch):
     """Test getting profile of non-existent user raises 404."""
     db = FakeDB()
-    user_id = uuid.uuid4()
 
     from app.repositories.user_repo import UserRepository
 
-    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: None)
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: None)
 
     with pytest.raises(HTTPException) as exc_info:
-        UserService.get_profile_by_id(db, user_id)
+        UserService.get_profile_by_username(db, "nobody")
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "User not found"
