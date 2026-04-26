@@ -106,3 +106,54 @@ def unblock_user(
         dict: Success message.
     """
     return BlockService.unblock_user(db, current_user, user_id)
+
+
+# ── Followers Retrieval Endpoints ──────────────────────
+
+
+@router.get("/me/followers", status_code=status.HTTP_200_OK)
+def get_my_followers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all followers of the authenticated user.
+
+    Returns each follower's user_id, display_name,
+    profile_picture, and the date they followed.
+
+    Args:
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: count and list of follower profiles.
+    """
+    return FollowerService.get_my_followers(db, current_user)
+
+
+@router.get(
+    "/{display_name}/followers",
+    status_code=status.HTTP_200_OK,
+)
+def get_user_followers_by_username(
+    display_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all followers of any user by their display_name.
+
+    Private profiles return an empty followers list
+    with private=True in the response.
+
+    Args:
+        display_name (str): The target user's display_name
+                            from the URL path.
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: count, followers list, and private flag.
+    """
+    return FollowerService.get_user_followers_by_username(db, display_name)
