@@ -69,10 +69,18 @@ class AuthService:
                 detail="Email already registered",
             )
 
+        existing_username = UserRepository.get_by_username(db, data.username)
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+
         hashed = hash_password(data.password)
 
         new_user = User(
             email=data.email,
+            username=data.username.lower(),
             password_hash=hashed,
             display_name=data.display_name,
             account_type=data.account_type or "listener",
@@ -95,6 +103,7 @@ class AuthService:
             "data": {
                 "user_id": str(new_user.user_id),
                 "email": new_user.email,
+                "username": new_user.username,
                 "display_name": new_user.display_name,
                 "is_verified": new_user.is_verified,
             },
@@ -218,7 +227,9 @@ class AuthService:
             HTTPException: 403 if the account is not verified.
             HTTPException: 403 if the account is suspended.
         """
-        user = UserRepository.get_by_email(db, data.email)
+        user = UserRepository.get_by_email(db, data.identifier)
+        if not user:
+            user = UserRepository.get_by_username(db, data.identifier)
 
         if not user or not verify_password(data.password, user.password_hash):
             raise HTTPException(
@@ -252,6 +263,7 @@ class AuthService:
                 "expires_in": 900,
                 "user": {
                     "user_id": str(user.user_id),
+                    "username": user.username,
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,

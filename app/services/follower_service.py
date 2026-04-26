@@ -17,44 +17,22 @@ from app.repositories.user_repo import UserRepository  # type: ignore
 class FollowerService:
 
     @staticmethod
-    def follow_user(db: Session, current_user: User, target_id) -> dict:
-        """
-        Follow a user by their UUID.
-
-        Business rules enforced here:
-        - Cannot follow yourself.
-        - Cannot follow someone you already follow.
-        - Target user must exist.
-        - Increments follower_count and following_count atomically.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            target_id: UUID of the user to follow.
-
-        Returns:
-            dict: Success message with the followed user's name.
-
-        Raises:
-            HTTPException 400: If following yourself or already following.
-            HTTPException 404: If target user does not exist.
-        """
-        # Rule 1: Cannot follow yourself
-        if current_user.user_id == target_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot follow yourself.",
-            )
-
-        # Rule 2: Target must exist
-        target_user = UserRepository.get_by_id(db, target_id)
+    def follow_user(db: Session, current_user: User, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
         if not target_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found.",
             )
 
-        # Rule 3: Cannot follow someone already followed
+        if current_user.user_id == target_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You cannot follow yourself.",
+            )
+
+        target_id = target_user.user_id
+
         existing = FollowRepository.get_follow(db, current_user.user_id, target_id)
         if existing:
             raise HTTPException(
@@ -62,7 +40,6 @@ class FollowerService:
                 detail=f"You are already following {target_user.display_name}.",
             )
 
-        # Create the follow record
         FollowRepository.create_follow(db, current_user.user_id, target_id)
 
         # Notify the followed user
@@ -92,33 +69,21 @@ class FollowerService:
         }
 
     @staticmethod
-    def unfollow_user(db: Session, current_user: User, target_id) -> dict:
-        """
-        Unfollow a user by their UUID.
+    def unfollow_user(db: Session, current_user: User, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
 
-        Business rules:
-        - Must currently be following the target.
-        - Decrements counters, never goes below 0.
-
-        Args:
-            db (Session): The database session.
-            current_user (User): The authenticated requesting user.
-            target_id: UUID of the user to unfollow.
-
-        Returns:
-            dict: Success message.
-
-        Raises:
-            HTTPException 404: If not currently following the target.
-        """
+        target_id = target_user.user_id
         follow = FollowRepository.get_follow(db, current_user.user_id, target_id)
         if not follow:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="You are not following this user.",
             )
-
-        target_user = UserRepository.get_by_id(db, target_id)
 
         FollowRepository.delete_follow(db, follow)
 
@@ -178,28 +143,8 @@ class FollowerService:
         }
 
     @staticmethod
-    def get_user_followers_by_username(db: Session, display_name: str) -> dict:
-        """
-        Get all followers of any user by their display_name.
-
-        Business rules:
-        - Target user must exist.
-        - If profile is private, returns empty followers list
-          with a privacy notice instead of 403, so the count
-          is visible but profiles are hidden.
-
-        Args:
-            db (Session): The database session.
-            display_name (str): display_name of the target user.
-
-        Returns:
-            dict: List of follower profiles with count.
-
-        Raises:
-            HTTPException 404: If user with that display_name
-                               does not exist.
-        """
-        target_user = UserRepository.get_by_display_name(db, display_name)
+    def get_user_followers_by_username(db: Session, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
         if not target_user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
