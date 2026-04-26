@@ -185,3 +185,75 @@ class FollowerService:
                 "private": False,
             },
         }
+
+    @staticmethod
+    def get_my_following(db: Session, current_user: User) -> dict:
+        follow_records = FollowRepository.get_following_of_user(
+            db, current_user.user_id
+        )
+
+        following = []
+        for record in follow_records:
+            user = UserRepository.get_by_id(db, record.following_id)
+            if user:
+                following.append(
+                    {
+                        "user_id": str(user.user_id),
+                        "username": user.username,
+                        "display_name": user.display_name,
+                        "profile_picture": user.profile_picture,
+                        "followed_at": record.created_at,
+                    }
+                )
+
+        return {
+            "success": True,
+            "data": {
+                "count": len(following),
+                "following": following,
+            },
+        }
+
+    @staticmethod
+    def get_user_following_by_username(db: Session, username: str) -> dict:
+        target_user = UserRepository.get_by_username(db, username)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        if target_user.is_private:
+            return {
+                "success": True,
+                "data": {
+                    "count": target_user.following_count,
+                    "following": [],
+                    "private": True,
+                },
+            }
+
+        follow_records = FollowRepository.get_following_of_user(db, target_user.user_id)
+
+        following = []
+        for record in follow_records:
+            user = UserRepository.get_by_id(db, record.following_id)
+            if user:
+                following.append(
+                    {
+                        "user_id": str(user.user_id),
+                        "username": user.username,
+                        "display_name": user.display_name,
+                        "profile_picture": user.profile_picture,
+                        "followed_at": record.created_at,
+                    }
+                )
+
+        return {
+            "success": True,
+            "data": {
+                "count": len(following),
+                "following": following,
+                "private": False,
+            },
+        }
