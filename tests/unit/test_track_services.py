@@ -429,6 +429,91 @@ def test_get_tracks_by_user_not_found(monkeypatch):
     assert exc.value.detail == "User not found"
 
 
+def test_get_liked_tracks_by_user_returns_public_tracks_for_non_owner(monkeypatch):
+    db = FakeDB()
+    user_id = uuid4()
+    viewer = FakeUser(uuid4())
+    public_track = FakeTrack(track_id=uuid4(), user_id=uuid4(), visibility="public")
+    repo_calls = []
+
+    from app.repositories.like_repo import LikeRepository
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: FakeUser(uid))
+
+    def fake_get_liked_tracks(db_arg, uid, include_private=False):
+        repo_calls.append(
+            {
+                "user_id": uid,
+                "include_private": include_private,
+            }
+        )
+        return [public_track]
+
+    monkeypatch.setattr(
+        LikeRepository,
+        "get_liked_tracks_by_user",
+        fake_get_liked_tracks,
+    )
+
+    result = TrackService.get_liked_tracks_by_user(db, user_id, viewer)
+
+    assert result["success"] is True
+    assert result["data"]["user_id"] == str(user_id)
+    assert len(result["data"]["tracks"]) == 1
+    assert result["data"]["tracks"][0]["track_id"] == str(public_track.track_id)
+    assert repo_calls == [{"user_id": user_id, "include_private": False}]
+
+
+def test_get_liked_tracks_by_user_returns_private_tracks_for_owner(monkeypatch):
+    db = FakeDB()
+    user_id = uuid4()
+    owner = FakeUser(user_id)
+    private_track = FakeTrack(track_id=uuid4(), user_id=uuid4(), visibility="private")
+    repo_calls = []
+
+    from app.repositories.like_repo import LikeRepository
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: FakeUser(uid))
+
+    def fake_get_liked_tracks(db_arg, uid, include_private=False):
+        repo_calls.append(
+            {
+                "user_id": uid,
+                "include_private": include_private,
+            }
+        )
+        return [private_track]
+
+    monkeypatch.setattr(
+        LikeRepository,
+        "get_liked_tracks_by_user",
+        fake_get_liked_tracks,
+    )
+
+    result = TrackService.get_liked_tracks_by_user(db, user_id, owner)
+
+    assert result["success"] is True
+    assert result["data"]["tracks"][0]["visibility"] == "private"
+    assert repo_calls == [{"user_id": user_id, "include_private": True}]
+
+
+def test_get_liked_tracks_by_user_not_found(monkeypatch):
+    db = FakeDB()
+    user_id = uuid4()
+
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_id", lambda db_arg, uid: None)
+
+    with pytest.raises(HTTPException) as exc:
+        TrackService.get_liked_tracks_by_user(db, user_id)
+
+    assert exc.value.status_code == 404
+    assert exc.value.detail == "User not found"
+
+
 def test_update_track_success(monkeypatch):
     db = FakeDB()
     owner_id = uuid4()
