@@ -15,12 +15,21 @@ from app.core.dependencies import get_current_user, get_optional_current_user
 from app.database.database import get_db
 from app.models.user import User
 from app.schemas.track_schema import RecordPlayRequest, TrackUpdate
+from app.schemas.responses import (  # type: ignore
+    MessageResponse,
+    TrackCreateResponse,
+    TrackResponse,
+    WaveformResponse,
+    StreamResponse,
+    PlayResponse,
+    PlaybackResponse,
+)
 from app.services.track_service import TrackService
 
 router = APIRouter(prefix="/tracks", tags=["Tracks"])
 
 
-@router.post("/")
+@router.post("/", response_model=TrackCreateResponse)
 def create_track(
     title: str = Form(...),
     description: str = Form(...),
@@ -47,7 +56,7 @@ def create_track(
     )
 
 
-@router.delete("/{track_id}")
+@router.delete("/{track_id}", response_model=MessageResponse)
 def delete_track(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -56,7 +65,7 @@ def delete_track(
     return TrackService.delete_track(db, user, track_id)
 
 
-@router.get("/{track_id}")
+@router.get("/{track_id}", response_model=TrackResponse)
 def get_track(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -65,7 +74,7 @@ def get_track(
     return TrackService.get_track_details(db, track_id, current_user)
 
 
-@router.put("/{track_id}")
+@router.put("/{track_id}", response_model=TrackResponse)
 def update_track(
     track_id: UUID,
     track_data: TrackUpdate,
@@ -81,10 +90,10 @@ def update_track(
             status_code=403, detail="Not Authorized to update this track"
         )
 
-    return {"success": True, "data": result}
+    return {"success": True, "data": TrackService._serialize_track(result)}
 
 
-@router.get("/{track_id}/waveform")
+@router.get("/{track_id}/waveform", response_model=WaveformResponse)
 def get_track_waveform(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -93,7 +102,7 @@ def get_track_waveform(
     return TrackService.get_waveform(db, track_id, current_user)
 
 
-@router.get("/{track_id}/stream")
+@router.get("/{track_id}/stream", response_model=StreamResponse)
 def get_track_stream(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -112,7 +121,7 @@ def stream_track_audio(
     return TrackService.stream_audio(db, track_id, request, current_user)
 
 
-@router.post("/{track_id}/plays")
+@router.post("/{track_id}/plays", response_model=PlayResponse)
 def record_track_play(
     track_id: UUID,
     data: RecordPlayRequest | None = None,
@@ -123,7 +132,7 @@ def record_track_play(
     return TrackService.record_play(db, track_id, current_user, duration)
 
 
-@router.get("/{track_id}/playback")
+@router.get("/{track_id}/playback", response_model=PlaybackResponse)
 def get_track_playback(
     track_id: UUID,
     db: Session = Depends(get_db),
