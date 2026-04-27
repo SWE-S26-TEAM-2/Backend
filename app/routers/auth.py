@@ -23,12 +23,19 @@ from app.schemas.auth_schema import (  # type: ignore
 )
 from app.core.dependencies import get_current_user  # type: ignore
 from app.models.user import User  # type: ignore
+from app.schemas.responses import (  # type: ignore
+    MessageResponse,
+    RegisterResponse,
+    LoginResponse,
+    SocialLoginResponse,
+    RefreshResponse,
+)
 from app.services.auth_service import AuthService  # type: ignore
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register")
+@router.post("/register", response_model=RegisterResponse)
 def register_user(
     request: RegisterRequest,
     db: Session = Depends(get_db),
@@ -46,7 +53,7 @@ def register_user(
     return AuthService.register_user(db, request)
 
 
-@router.post("/verify-email")
+@router.post("/verify-email", response_model=MessageResponse)
 def verify_email(
     request: VerifyEmailRequest,
     db: Session = Depends(get_db),
@@ -64,7 +71,7 @@ def verify_email(
     return AuthService.verify_email(db, request)
 
 
-@router.post("/resend-verification")
+@router.post("/resend-verification", response_model=MessageResponse)
 def resend_verification(
     request: ResendVerificationRequest,
     db: Session = Depends(get_db),
@@ -82,7 +89,7 @@ def resend_verification(
     return AuthService.resend_verification(db, request)
 
 
-@router.post("/login")
+@router.post("/login", response_model=LoginResponse)
 def login_user(
     request: LoginRequest,
     db: Session = Depends(get_db),
@@ -100,7 +107,7 @@ def login_user(
     return AuthService.login_user(db, request)
 
 
-@router.post("/google")
+@router.post("/google", response_model=SocialLoginResponse)
 def google_login(
     request: GoogleLoginRequest,
     db: Session = Depends(get_db),
@@ -118,7 +125,7 @@ def google_login(
     return AuthService.google_login(db, request)
 
 
-@router.post("/facebook")
+@router.post("/facebook", response_model=SocialLoginResponse)
 def facebook_login(
     request: FacebookLoginRequest,
     db: Session = Depends(get_db),
@@ -136,7 +143,7 @@ def facebook_login(
     return AuthService.facebook_login(db, request)
 
 
-@router.post("/refresh")
+@router.post("/refresh", response_model=RefreshResponse)
 def refresh_token(
     request: RefreshTokenRequest,
     db: Session = Depends(get_db),
@@ -154,7 +161,7 @@ def refresh_token(
     return AuthService.refresh_access_token(db, request)
 
 
-@router.post("/logout")
+@router.post("/logout", response_model=MessageResponse)
 def logout(
     request: LogoutRequest,
     db: Session = Depends(get_db),
@@ -174,7 +181,7 @@ def logout(
     return AuthService.logout(db, request, current_user)
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(
     request: ForgotPasswordRequest,
     db: Session = Depends(get_db),
@@ -195,7 +202,7 @@ def forgot_password(
     return AuthService.forgot_password(db, request)
 
 
-@router.post("/reset-password")
+@router.post("/reset-password", response_model=MessageResponse)
 def reset_password(
     request: ResetPasswordRequest,
     db: Session = Depends(get_db),

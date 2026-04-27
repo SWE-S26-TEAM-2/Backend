@@ -26,6 +26,16 @@ from app.schemas.conversation_schema import (  # type: ignore
     SendMessageRequest,
 )
 from app.services.messaging_service import MessagingService  # type: ignore
+from app.schemas.responses import (  # type: ignore
+    MessageResponse,
+    ConversationResponse,
+    ConversationsListResponse,
+    MessagesListResponse,
+    SendMessageResponse,
+    MessageReadResponse,
+    UnreadMessageCountResponse,
+    MarkAllReadResponse,
+)
 
 router = APIRouter(prefix="/conversations", tags=["Messaging"])
 
@@ -33,7 +43,9 @@ router = APIRouter(prefix="/conversations", tags=["Messaging"])
 # ── Conversation Endpoints ─────────────────────────────
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "", status_code=status.HTTP_201_CREATED, response_model=ConversationResponse
+)
 def create_or_get_conversation(
     data: CreateConversationRequest,
     db: Session = Depends(get_db),
@@ -56,7 +68,9 @@ def create_or_get_conversation(
     return MessagingService.create_or_get_conversation(db, current_user, data)
 
 
-@router.get("", status_code=status.HTTP_200_OK)
+@router.get(
+    "", status_code=status.HTTP_200_OK, response_model=ConversationsListResponse
+)
 def get_user_conversations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -83,7 +97,11 @@ def get_user_conversations(
 # so Starlette matches the literal segment first.
 
 
-@router.get("/unread-count", status_code=status.HTTP_200_OK)
+@router.get(
+    "/unread-count",
+    status_code=status.HTTP_200_OK,
+    response_model=UnreadMessageCountResponse,
+)
 def get_unread_message_count(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -100,6 +118,7 @@ def get_unread_message_count(
 @router.delete(
     "/{conversation_id}",
     status_code=status.HTTP_200_OK,
+    response_model=MessageResponse,
 )
 def delete_conversation(
     conversation_id: UUID,
@@ -131,6 +150,7 @@ def delete_conversation(
 @router.patch(
     "/{conversation_id}/messages/read-all",
     status_code=status.HTTP_200_OK,
+    response_model=MarkAllReadResponse,
 )
 def mark_all_messages_as_read(
     conversation_id: UUID,
@@ -146,6 +166,7 @@ def mark_all_messages_as_read(
 @router.get(
     "/{conversation_id}/messages",
     status_code=status.HTTP_200_OK,
+    response_model=MessagesListResponse,
 )
 def get_messages(
     conversation_id: UUID,
@@ -171,6 +192,7 @@ def get_messages(
 @router.post(
     "/{conversation_id}/messages",
     status_code=status.HTTP_201_CREATED,
+    response_model=SendMessageResponse,
 )
 def send_message(
     conversation_id: UUID,
@@ -199,6 +221,7 @@ def send_message(
 @router.patch(
     "/{conversation_id}/messages/{message_id}/read",
     status_code=status.HTTP_200_OK,
+    response_model=MessageReadResponse,
 )
 def mark_message_as_read(
     conversation_id: UUID,

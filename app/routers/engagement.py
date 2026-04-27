@@ -8,6 +8,13 @@ from app.database.database import get_db
 from app.models.user import User  # type: ignore
 from app.schemas.engagement_schema import AddCommentRequest
 from app.services.engagement_service import EngagementService
+from app.schemas.responses import (  # type: ignore
+    MessageResponse,
+    LikeResponse,
+    RepostResponse,
+    CommentsListResponse,
+    AddCommentResponse,
+)
 
 router = APIRouter(tags=["Engagement"])
 
@@ -15,7 +22,7 @@ router = APIRouter(tags=["Engagement"])
 # ── Likes ─────────────────────────────────────────────────
 
 
-@router.post("/likes/tracks/{track_id}")
+@router.post("/likes/tracks/{track_id}", response_model=LikeResponse)
 def like_track(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -24,7 +31,7 @@ def like_track(
     return EngagementService.like_track(db, current_user, track_id)
 
 
-@router.delete("/likes/tracks/{track_id}")
+@router.delete("/likes/tracks/{track_id}", response_model=MessageResponse)
 def unlike_track(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -36,7 +43,7 @@ def unlike_track(
 # ── Reposts ───────────────────────────────────────────────
 
 
-@router.post("/reposts/tracks/{track_id}")
+@router.post("/reposts/tracks/{track_id}", response_model=RepostResponse)
 def repost_track(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -45,7 +52,7 @@ def repost_track(
     return EngagementService.repost_track(db, current_user, track_id)
 
 
-@router.delete("/reposts/tracks/{track_id}")
+@router.delete("/reposts/tracks/{track_id}", response_model=MessageResponse)
 def remove_repost(
     track_id: UUID,
     db: Session = Depends(get_db),
@@ -57,7 +64,7 @@ def remove_repost(
 # ── Comments ──────────────────────────────────────────────
 
 
-@router.get("/tracks/{track_id}/comments")
+@router.get("/tracks/{track_id}/comments", response_model=CommentsListResponse)
 def get_track_comments(
     track_id: UUID,
     limit: int = Query(50, ge=1, le=100),
@@ -69,7 +76,7 @@ def get_track_comments(
     )
 
 
-@router.post("/tracks/{track_id}/comments")
+@router.post("/tracks/{track_id}/comments", response_model=AddCommentResponse)
 def add_comment(
     track_id: UUID,
     data: AddCommentRequest,

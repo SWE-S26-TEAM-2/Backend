@@ -34,6 +34,18 @@ from app.services.social_link_service import SocialLinkService  # type: ignore
 from app.services.track_service import TrackService  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 from app.services.user_service import UserService  # type: ignore
+from app.schemas.responses import (  # type: ignore
+    UserProfileResponse,
+    PublicUserProfileResponse,
+    UpdateProfileResponse,
+    UsernameResponse,
+    PrivacyResponse,
+    AvatarResponse,
+    CoverResponse,
+    SocialLinksResponse,
+    ListeningHistoryResponse,
+    UserTracksResponse,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -41,7 +53,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 # ── Profile Retrieval & Update ─────────────────────────
 
 
-@router.get("/me", status_code=status.HTTP_200_OK)
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=UserProfileResponse)
 def get_my_profile(
     current_user: User = Depends(get_current_user),
 ):
@@ -57,7 +69,11 @@ def get_my_profile(
     return UserService.get_my_profile(current_user)
 
 
-@router.get("/me/recently-played", status_code=status.HTTP_200_OK)
+@router.get(
+    "/me/recently-played",
+    status_code=status.HTTP_200_OK,
+    response_model=ListeningHistoryResponse,
+)
 def get_recently_played(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -66,7 +82,11 @@ def get_recently_played(
     return TrackService.get_listening_history(db, current_user, limit)
 
 
-@router.get("/me/listening-history", status_code=status.HTTP_200_OK)
+@router.get(
+    "/me/listening-history",
+    status_code=status.HTTP_200_OK,
+    response_model=ListeningHistoryResponse,
+)
 def get_listening_history(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -78,7 +98,11 @@ def get_listening_history(
 # ── External Social Links ─────────────────────────────
 
 
-@router.get("/me/social-links", status_code=status.HTTP_200_OK)
+@router.get(
+    "/me/social-links",
+    status_code=status.HTTP_200_OK,
+    response_model=SocialLinksResponse,
+)
 def get_social_links(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -96,7 +120,11 @@ def get_social_links(
     return SocialLinkService.get_social_links(db, current_user)
 
 
-@router.put("/me/social-links", status_code=status.HTTP_200_OK)
+@router.put(
+    "/me/social-links",
+    status_code=status.HTTP_200_OK,
+    response_model=SocialLinksResponse,
+)
 def update_social_links(
     data: UpdateSocialLinksRequest,
     db: Session = Depends(get_db),
@@ -116,7 +144,9 @@ def update_social_links(
     return SocialLinkService.update_social_links(db, current_user, data)
 
 
-@router.patch("/me", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/me", status_code=status.HTTP_200_OK, response_model=UpdateProfileResponse
+)
 def update_my_profile(
     data: UpdateProfileRequest,
     db: Session = Depends(get_db),
@@ -136,7 +166,9 @@ def update_my_profile(
     return UserService.update_profile(db, current_user, data)
 
 
-@router.patch("/me/username", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/me/username", status_code=status.HTTP_200_OK, response_model=UsernameResponse
+)
 def change_username(
     data: ChangeUsernameRequest,
     db: Session = Depends(get_db),
@@ -145,7 +177,9 @@ def change_username(
     return UserService.change_username(db, current_user, data)
 
 
-@router.patch("/me/privacy", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/me/privacy", status_code=status.HTTP_200_OK, response_model=PrivacyResponse
+)
 def update_privacy(
     data: UpdatePrivacyRequest,
     db: Session = Depends(get_db),
@@ -168,7 +202,7 @@ def update_privacy(
 # ── Media Asset Uploads ────────────────────────────────
 
 
-@router.put("/me/avatar", status_code=status.HTTP_200_OK)
+@router.put("/me/avatar", status_code=status.HTTP_200_OK, response_model=AvatarResponse)
 def upload_avatar(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -188,7 +222,7 @@ def upload_avatar(
     return UserService.upload_avatar(db, current_user, file)
 
 
-@router.put("/me/cover", status_code=status.HTTP_200_OK)
+@router.put("/me/cover", status_code=status.HTTP_200_OK, response_model=CoverResponse)
 def upload_cover(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -211,7 +245,11 @@ def upload_cover(
 # ── Public user lookup ────────────────────────────────
 
 
-@router.get("/{username}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{username}",
+    status_code=status.HTTP_200_OK,
+    response_model=PublicUserProfileResponse,
+)
 def get_user_profile(
     username: str,
     db: Session = Depends(get_db),
@@ -219,7 +257,11 @@ def get_user_profile(
     return UserService.get_profile_by_username(db, username)
 
 
-@router.get("/{username}/tracks", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{username}/tracks",
+    status_code=status.HTTP_200_OK,
+    response_model=UserTracksResponse,
+)
 def get_user_tracks(
     username: str,
     db: Session = Depends(get_db),
@@ -231,7 +273,11 @@ def get_user_tracks(
     return TrackService.get_tracks_by_user(db, user.user_id, current_user)
 
 
-@router.get("/{username}/liked-tracks", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{username}/liked-tracks",
+    status_code=status.HTTP_200_OK,
+    response_model=UserTracksResponse,
+)
 def get_user_liked_tracks(
     username: str,
     db: Session = Depends(get_db),

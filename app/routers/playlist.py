@@ -11,11 +11,20 @@ from app.schemas.playlist_schema import (
     UpdatePlaylistRequest,
     PlaylistTrackRequest,
 )
+from app.schemas.responses import (  # type: ignore
+    MessageResponse,
+    PlaylistResponse,
+    PlaylistListResponse,
+    PlaylistDetailResponse,
+    PlaylistUpdateResponse,
+    PlaylistLikeResponse,
+    PlaylistCoverResponse,
+)
 
 router = APIRouter(prefix="/playlists", tags=["Playlists"])
 
 
-@router.post("/")
+@router.post("/", response_model=PlaylistResponse)
 def create_playlist(
     data: CreatePlaylistRequest,
     db: Session = Depends(get_db),
@@ -24,7 +33,7 @@ def create_playlist(
     return PlaylistService.create_playlist(db, user, data)
 
 
-@router.get("/liked")
+@router.get("/liked", response_model=PlaylistListResponse)
 def get_liked_playlists(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -32,7 +41,7 @@ def get_liked_playlists(
     return PlaylistService.get_liked_playlists(db, user)
 
 
-@router.get("/{playlist_id}")
+@router.get("/{playlist_id}", response_model=PlaylistDetailResponse)
 def get_playlist(
     playlist_id: UUID,
     db: Session = Depends(get_db),
@@ -40,7 +49,7 @@ def get_playlist(
     return PlaylistService.get_playlist(db, playlist_id)
 
 
-@router.patch("/{playlist_id}")
+@router.patch("/{playlist_id}", response_model=PlaylistUpdateResponse)
 def update_playlist(
     playlist_id: UUID,
     data: UpdatePlaylistRequest,
@@ -50,7 +59,7 @@ def update_playlist(
     return PlaylistService.update_playlist(db, user, playlist_id, data)
 
 
-@router.delete("/{playlist_id}")
+@router.delete("/{playlist_id}", response_model=MessageResponse)
 def delete_playlist(
     playlist_id: UUID,
     db: Session = Depends(get_db),
@@ -59,7 +68,7 @@ def delete_playlist(
     return PlaylistService.delete_playlist(db, user, playlist_id)
 
 
-@router.post("/{playlist_id}/like")
+@router.post("/{playlist_id}/like", response_model=PlaylistLikeResponse)
 def like_playlist(
     playlist_id: UUID,
     db: Session = Depends(get_db),
@@ -68,7 +77,7 @@ def like_playlist(
     return PlaylistService.like_playlist(db, user, playlist_id)
 
 
-@router.delete("/{playlist_id}/like")
+@router.delete("/{playlist_id}/like", response_model=MessageResponse)
 def unlike_playlist(
     playlist_id: UUID,
     db: Session = Depends(get_db),
@@ -77,7 +86,7 @@ def unlike_playlist(
     return PlaylistService.unlike_playlist(db, user, playlist_id)
 
 
-@router.post("/{playlist_id}/cover")
+@router.post("/{playlist_id}/cover", response_model=PlaylistCoverResponse)
 def upload_cover_photo(
     playlist_id: UUID,
     file: UploadFile = File(...),
@@ -87,7 +96,7 @@ def upload_cover_photo(
     return PlaylistService.upload_cover_photo(db, user, playlist_id, file)
 
 
-@router.post("/{playlist_id}/tracks")
+@router.post("/{playlist_id}/tracks", response_model=MessageResponse)
 def add_track_to_playlist(
     playlist_id: UUID,
     data: PlaylistTrackRequest,
@@ -97,7 +106,7 @@ def add_track_to_playlist(
     return PlaylistService.add_track_to_playlist(db, user, playlist_id, data)
 
 
-@router.delete("/{playlist_id}/tracks/{track_id}")
+@router.delete("/{playlist_id}/tracks/{track_id}", response_model=MessageResponse)
 def remove_track_from_playlist(
     playlist_id: UUID,
     track_id: UUID,

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m venv --version)",
+      "Bash(ls .venv/Scripts/)",
+      "Bash(ls venv/Scripts/)",
+      "Bash(venv/Scripts/python -c \"from app.main import app; print\\('OK - app imported successfully'\\)\")"
+    ]
+  }
+}
