@@ -715,3 +715,78 @@ def test_update_social_links_endpoint_without_auth(monkeypatch):
     assert response.status_code in [401, 403]
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
+
+
+# ────────────────────────────────────────────────────────
+# CHANGE USERNAME ENDPOINT TESTS
+# ────────────────────────────────────────────────────────
+
+
+def test_change_username_endpoint_success(monkeypatch):
+    """Test PATCH /users/me/username returns 200 with new username."""
+    user_id = uuid.uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id)
+
+    def fake_change_username(db, user, data):
+        return {"success": True, "data": {"username": data.username}}
+
+    monkeypatch.setattr(UserService, "change_username", fake_change_username)
+
+    response = client.patch("/users/me/username", json={"username": "newname"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["data"]["username"] == "newname"
+
+
+def test_change_username_endpoint_taken(monkeypatch):
+    """Test PATCH /users/me/username returns 409 when username is already taken."""
+    user_id = uuid.uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id)
+
+    from fastapi import HTTPException, status
+
+    def fake_change_username(db, user, data):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Username already taken.",
+        )
+
+    monkeypatch.setattr(UserService, "change_username", fake_change_username)
+
+    response = client.patch("/users/me/username", json={"username": "takenname"})
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Username already taken."
+
+
+def test_change_username_endpoint_invalid_format(monkeypatch):
+    """Test PATCH /users/me/username returns 422 for username with invalid characters."""
+    user_id = uuid.uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id)
+
+    response = client.patch("/users/me/username", json={"username": "invalid name!"})
+
+    assert response.status_code == 422
+
+
+def test_change_username_endpoint_too_short(monkeypatch):
+    """Test PATCH /users/me/username returns 422 when username is under 3 characters."""
+    user_id = uuid.uuid4()
+    app.dependency_overrides[get_current_user] = lambda: FakeUser(user_id=user_id)
+
+    response = client.patch("/users/me/username", json={"username": "ab"})
+
+    assert response.status_code == 422
+
+
+def test_change_username_endpoint_without_auth(monkeypatch):
+    """Test PATCH /users/me/username without authentication returns 401."""
+    app.dependency_overrides.pop(get_current_user, None)
+
+    response = client.patch("/users/me/username", json={"username": "newname"})
+
+    assert response.status_code in [401, 403]
+
+    app.dependency_overrides[get_current_user] = lambda: FakeUser()

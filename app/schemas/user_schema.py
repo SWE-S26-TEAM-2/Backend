@@ -31,6 +31,20 @@ class UpdateProfileRequest(BaseModel):
         return value.lower()
 
 
+class ChangeUsernameRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=20)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
+            raise ValueError(
+                "Username may only contain letters, numbers, "
+                "underscores, dots, and hyphens."
+            )
+        return value.lower()
+
+
 class UpdatePrivacyRequest(BaseModel):
     """
     Schema for toggling profile visibility.

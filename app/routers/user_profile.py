@@ -20,6 +20,7 @@ from app.schemas.social_link_schema import (  # type: ignore
     UpdateSocialLinksRequest,
 )
 from app.schemas.user_schema import (  # type: ignore
+    ChangeUsernameRequest,
     UpdatePrivacyRequest,
     UpdateProfileRequest,
 )
@@ -50,36 +51,63 @@ def get_my_profile(
     return UserService.get_my_profile(current_user)
 
 
-@router.get("/{username}", status_code=status.HTTP_200_OK)
-def get_user_profile(
-    username: str,
+@router.get("/me/recently-played", status_code=status.HTTP_200_OK)
+def get_recently_played(
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return UserService.get_profile_by_username(db, username)
+    return TrackService.get_listening_history(db, current_user, limit)
 
 
-@router.get("/{username}/tracks", status_code=status.HTTP_200_OK)
-def get_user_tracks(
-    username: str,
+@router.get("/me/listening-history", status_code=status.HTTP_200_OK)
+def get_listening_history(
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    user = UserRepository.get_by_username(db, username)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return TrackService.get_tracks_by_user(db, user.user_id, current_user)
+    return TrackService.get_listening_history(db, current_user, limit)
 
 
-@router.get("/{username}/liked-tracks", status_code=status.HTTP_200_OK)
-def get_user_liked_tracks(
-    username: str,
+# ── External Social Links ─────────────────────────────
+
+
+@router.get("/me/social-links", status_code=status.HTTP_200_OK)
+def get_social_links(
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    user = UserRepository.get_by_username(db, username)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return TrackService.get_liked_tracks_by_user(db, user.user_id, current_user)
+    """
+    Get all external social profile links for the authenticated user.
+
+    Args:
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: List of social link objects.
+    """
+    return SocialLinkService.get_social_links(db, current_user)
+
+
+@router.put("/me/social-links", status_code=status.HTTP_200_OK)
+def update_social_links(
+    data: UpdateSocialLinksRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Replace all social links for the authenticated user.
+
+    Args:
+        data (UpdateSocialLinksRequest): Full list of social links.
+        db (Session): Database session injected by FastAPI.
+        current_user (User): Injected by JWT dependency.
+
+    Returns:
+        dict: Updated list of social links.
+    """
+    return SocialLinkService.update_social_links(db, current_user, data)
 
 
 @router.patch("/me", status_code=status.HTTP_200_OK)
@@ -102,6 +130,15 @@ def update_my_profile(
     return UserService.update_profile(db, current_user, data)
 
 
+@router.patch("/me/username", status_code=status.HTTP_200_OK)
+def change_username(
+    data: ChangeUsernameRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return UserService.change_username(db, current_user, data)
+
+
 @router.patch("/me/privacy", status_code=status.HTTP_200_OK)
 def update_privacy(
     data: UpdatePrivacyRequest,
@@ -120,24 +157,6 @@ def update_privacy(
         dict: Updated privacy status.
     """
     return UserService.update_privacy(db, current_user, data)
-
-
-@router.get("/me/recently-played", status_code=status.HTTP_200_OK)
-def get_recently_played(
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return TrackService.get_listening_history(db, current_user, limit)
-
-
-@router.get("/me/listening-history", status_code=status.HTTP_200_OK)
-def get_listening_history(
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    return TrackService.get_listening_history(db, current_user, limit)
 
 
 # ── Media Asset Uploads ────────────────────────────────
@@ -183,42 +202,36 @@ def upload_cover(
     return UserService.upload_cover(db, current_user, file)
 
 
-# ── External Social Links ─────────────────────────────
+# ── Public user lookup ────────────────────────────────
 
 
-@router.get("/me/social-links", status_code=status.HTTP_200_OK)
-def get_social_links(
+@router.get("/{username}", status_code=status.HTTP_200_OK)
+def get_user_profile(
+    username: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
-    """
-    Get all external social profile links for the authenticated user.
-
-    Args:
-        db (Session): Database session injected by FastAPI.
-        current_user (User): Injected by JWT dependency.
-
-    Returns:
-        dict: List of social link objects.
-    """
-    return SocialLinkService.get_social_links(db, current_user)
+    return UserService.get_profile_by_username(db, username)
 
 
-@router.put("/me/social-links", status_code=status.HTTP_200_OK)
-def update_social_links(
-    data: UpdateSocialLinksRequest,
+@router.get("/{username}/tracks", status_code=status.HTTP_200_OK)
+def get_user_tracks(
+    username: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
-    """
-    Replace all social links for the authenticated user.
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return TrackService.get_tracks_by_user(db, user.user_id, current_user)
 
-    Args:
-        data (UpdateSocialLinksRequest): Full list of social links.
-        db (Session): Database session injected by FastAPI.
-        current_user (User): Injected by JWT dependency.
 
-    Returns:
-        dict: Updated list of social links.
-    """
-    return SocialLinkService.update_social_links(db, current_user, data)
+@router.get("/{username}/liked-tracks", status_code=status.HTTP_200_OK)
+def get_user_liked_tracks(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return TrackService.get_liked_tracks_by_user(db, user.user_id, current_user)

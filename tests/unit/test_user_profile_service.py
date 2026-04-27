@@ -722,3 +722,71 @@ def test_update_social_links_single_link(monkeypatch):
 
     assert result["success"] is True
     assert len(result["data"]["social_links"]) == 1
+
+
+# ────────────────────────────────────────────────────────
+# CHANGE USERNAME TESTS
+# ────────────────────────────────────────────────────────
+
+
+class ChangeUsernameRequest:
+    """Mock change username request."""
+
+    def __init__(self, username):
+        self.username = username
+
+
+def test_change_username_success(monkeypatch):
+    """Test successfully changing to a free username."""
+    db = FakeDB()
+    user = FakeUser(username="oldname")
+    data = ChangeUsernameRequest(username="newname")
+
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: None)
+
+    def fake_update(db_arg, user_arg, fields):
+        for key, value in fields.items():
+            setattr(user_arg, key, value)
+
+    monkeypatch.setattr(UserRepository, "update_fields", fake_update)
+
+    result = UserService.change_username(db, user, data)
+
+    assert result["success"] is True
+    assert result["data"]["username"] == "newname"
+
+
+def test_change_username_taken_raises_409(monkeypatch):
+    """Test that changing to a username owned by another user raises 409."""
+    db = FakeDB()
+    user = FakeUser(user_id=uuid.uuid4(), username="myname")
+    other_user = FakeUser(user_id=uuid.uuid4(), username="takenname")
+    data = ChangeUsernameRequest(username="takenname")
+
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: other_user)
+
+    with pytest.raises(HTTPException) as exc_info:
+        UserService.change_username(db, user, data)
+
+    assert exc_info.value.status_code == 409
+
+
+def test_change_username_same_user_no_conflict(monkeypatch):
+    """Test that re-setting the same username doesn't raise a conflict."""
+    db = FakeDB()
+    user_id = uuid.uuid4()
+    user = FakeUser(user_id=user_id, username="myname")
+    data = ChangeUsernameRequest(username="myname")
+
+    from app.repositories.user_repo import UserRepository
+
+    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: user)
+    monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
+
+    result = UserService.change_username(db, user, data)
+
+    assert result["success"] is True
