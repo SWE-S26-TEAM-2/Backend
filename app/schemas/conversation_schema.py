@@ -16,10 +16,10 @@ class CreateConversationRequest(BaseModel):
     Schema for creating or retrieving a 1-to-1 conversation.
 
     Args:
-        participant_id (str): UUID string of the other user.
+        username (str): Username of the other user.
     """
 
-    display_name: str
+    username: str
 
 
 class SendMessageRequest(BaseModel):

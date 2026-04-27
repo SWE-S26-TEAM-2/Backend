@@ -58,15 +58,15 @@ class MessagingService:
             HTTPException 400: Invalid display_name, self-messaging, or
                                participant not found.
         """
-        # Validate that display_name is not empty
-        if not data.display_name or not data.display_name.strip():
+        # Validate that username is not empty
+        if not data.username or not data.username.strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid display_name — must not be empty.",
+                detail="Invalid username — must not be empty.",
             )
 
         # Participant must be a real user
-        participant = UserRepository.get_by_display_name(db, data.display_name)
+        participant = UserRepository.get_by_username(db, data.username)
         if not participant:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
