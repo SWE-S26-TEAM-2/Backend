@@ -15,7 +15,9 @@ from app.schemas.responses import (  # type: ignore
 router = APIRouter(prefix="/users", tags=["Followers & Blocks"])
 
 
-@router.post("/{username}/follow", status_code=status.HTTP_200_OK, response_model=MessageResponse)
+@router.post(
+    "/{username}/follow", status_code=status.HTTP_200_OK, response_model=MessageResponse
+)
 def follow_user(
     username: str,
     db: Session = Depends(get_db),
@@ -24,7 +26,9 @@ def follow_user(
     return FollowerService.follow_user(db, current_user, username)
 
 
-@router.delete("/{username}/follow", status_code=status.HTTP_200_OK, response_model=MessageResponse)
+@router.delete(
+    "/{username}/follow", status_code=status.HTTP_200_OK, response_model=MessageResponse
+)
 def unfollow_user(
     username: str,
     db: Session = Depends(get_db),
@@ -33,7 +37,9 @@ def unfollow_user(
     return FollowerService.unfollow_user(db, current_user, username)
 
 
-@router.post("/{username}/block", status_code=status.HTTP_200_OK, response_model=MessageResponse)
+@router.post(
+    "/{username}/block", status_code=status.HTTP_200_OK, response_model=MessageResponse
+)
 def block_user(
     username: str,
     db: Session = Depends(get_db),
@@ -42,7 +48,9 @@ def block_user(
     return BlockService.block_user(db, current_user, username)
 
 
-@router.delete("/{username}/block", status_code=status.HTTP_200_OK, response_model=MessageResponse)
+@router.delete(
+    "/{username}/block", status_code=status.HTTP_200_OK, response_model=MessageResponse
+)
 def unblock_user(
     username: str,
     db: Session = Depends(get_db),
@@ -51,7 +59,9 @@ def unblock_user(
     return BlockService.unblock_user(db, current_user, username)
 
 
-@router.get("/me/followers", status_code=status.HTTP_200_OK, response_model=FollowerListResponse)
+@router.get(
+    "/me/followers", status_code=status.HTTP_200_OK, response_model=FollowerListResponse
+)
 def get_my_followers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -59,7 +69,11 @@ def get_my_followers(
     return FollowerService.get_my_followers(db, current_user)
 
 
-@router.get("/me/following", status_code=status.HTTP_200_OK, response_model=FollowingListResponse)
+@router.get(
+    "/me/following",
+    status_code=status.HTTP_200_OK,
+    response_model=FollowingListResponse,
+)
 def get_my_following(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -67,7 +81,11 @@ def get_my_following(
     return FollowerService.get_my_following(db, current_user)
 
 
-@router.get("/{username}/followers", status_code=status.HTTP_200_OK, response_model=FollowerListResponse)
+@router.get(
+    "/{username}/followers",
+    status_code=status.HTTP_200_OK,
+    response_model=FollowerListResponse,
+)
 def get_user_followers(
     username: str,
     db: Session = Depends(get_db),
@@ -76,7 +94,11 @@ def get_user_followers(
     return FollowerService.get_user_followers_by_username(db, username)
 
 
-@router.get("/{username}/following", status_code=status.HTTP_200_OK, response_model=FollowingListResponse)
+@router.get(
+    "/{username}/following",
+    status_code=status.HTTP_200_OK,
+    response_model=FollowingListResponse,
+)
 def get_user_following(
     username: str,
     db: Session = Depends(get_db),

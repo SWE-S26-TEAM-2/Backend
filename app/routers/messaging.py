@@ -43,7 +43,9 @@ router = APIRouter(prefix="/conversations", tags=["Messaging"])
 # ── Conversation Endpoints ─────────────────────────────
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=ConversationResponse)
+@router.post(
+    "", status_code=status.HTTP_201_CREATED, response_model=ConversationResponse
+)
 def create_or_get_conversation(
     data: CreateConversationRequest,
     db: Session = Depends(get_db),
@@ -66,7 +68,9 @@ def create_or_get_conversation(
     return MessagingService.create_or_get_conversation(db, current_user, data)
 
 
-@router.get("", status_code=status.HTTP_200_OK, response_model=ConversationsListResponse)
+@router.get(
+    "", status_code=status.HTTP_200_OK, response_model=ConversationsListResponse
+)
 def get_user_conversations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -93,7 +97,11 @@ def get_user_conversations(
 # so Starlette matches the literal segment first.
 
 
-@router.get("/unread-count", status_code=status.HTTP_200_OK, response_model=UnreadMessageCountResponse)
+@router.get(
+    "/unread-count",
+    status_code=status.HTTP_200_OK,
+    response_model=UnreadMessageCountResponse,
+)
 def get_unread_message_count(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),

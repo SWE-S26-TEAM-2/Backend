@@ -3,8 +3,8 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
-
 # ── Shared ─────────────────────────────────────────────────────────────────────
+
 
 class MessageResponse(BaseModel):
     success: bool
@@ -13,6 +13,7 @@ class MessageResponse(BaseModel):
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
 
+
 class RegisterData(BaseModel):
     user_id: str
     email: str
@@ -20,10 +21,12 @@ class RegisterData(BaseModel):
     display_name: str
     is_verified: bool
 
+
 class RegisterResponse(BaseModel):
     success: bool
     message: str
     data: RegisterData
+
 
 class UserInfo(BaseModel):
     user_id: str
@@ -32,6 +35,7 @@ class UserInfo(BaseModel):
     account_type: str
     is_premium: bool
 
+
 class LoginData(BaseModel):
     access_token: str
     refresh_token: str
@@ -39,9 +43,11 @@ class LoginData(BaseModel):
     expires_in: int
     user: UserInfo
 
+
 class LoginResponse(BaseModel):
     success: bool
     data: LoginData
+
 
 class SocialLoginData(BaseModel):
     access_token: str
@@ -51,9 +57,11 @@ class SocialLoginData(BaseModel):
     is_new_user: bool
     user: UserInfo
 
+
 class SocialLoginResponse(BaseModel):
     success: bool
     data: SocialLoginData
+
 
 class RefreshData(BaseModel):
     access_token: str
@@ -61,12 +69,14 @@ class RefreshData(BaseModel):
     token_type: str
     expires_in: int
 
+
 class RefreshResponse(BaseModel):
     success: bool
     data: RefreshData
 
 
 # ── User Profile ───────────────────────────────────────────────────────────────
+
 
 class UserProfileData(BaseModel):
     user_id: str
@@ -87,9 +97,11 @@ class UserProfileData(BaseModel):
     track_count: int
     created_at: Optional[datetime] = None
 
+
 class UserProfileResponse(BaseModel):
     success: bool
     data: UserProfileData
+
 
 class PublicUserProfileData(BaseModel):
     user_id: str
@@ -105,51 +117,64 @@ class PublicUserProfileData(BaseModel):
     track_count: Optional[int] = None
     is_private: Optional[bool] = None
 
+
 class PublicUserProfileResponse(BaseModel):
     success: bool
     data: PublicUserProfileData
 
+
 class AvatarData(BaseModel):
     profile_picture: str
+
 
 class AvatarResponse(BaseModel):
     success: bool
     message: str
     data: AvatarData
 
+
 class CoverData(BaseModel):
     cover_photo: str
+
 
 class CoverResponse(BaseModel):
     success: bool
     message: str
     data: CoverData
 
+
 class UsernameData(BaseModel):
     username: str
+
 
 class UsernameResponse(BaseModel):
     success: bool
     data: UsernameData
 
+
 class PrivacyData(BaseModel):
     is_private: bool
+
 
 class PrivacyResponse(BaseModel):
     success: bool
     message: str
     data: PrivacyData
 
+
 class SocialLinkItem(BaseModel):
     platform: str
     url: str
 
+
 class SocialLinksData(BaseModel):
     social_links: List[SocialLinkItem]
+
 
 class SocialLinksResponse(BaseModel):
     success: bool
     data: SocialLinksData
+
 
 class HistoryTrackData(BaseModel):
     track_id: str
@@ -160,14 +185,17 @@ class HistoryTrackData(BaseModel):
     duration_seconds: Optional[int] = None
     play_count: int
 
+
 class HistoryItem(BaseModel):
     history_id: str
     played_at: Optional[datetime] = None
     duration_listened_seconds: Optional[int] = None
     track: HistoryTrackData
 
+
 class ListeningHistoryData(BaseModel):
     items: List[HistoryItem]
+
 
 class ListeningHistoryResponse(BaseModel):
     success: bool
@@ -175,6 +203,7 @@ class ListeningHistoryResponse(BaseModel):
 
 
 # ── Tracks ─────────────────────────────────────────────────────────────────────
+
 
 class TrackData(BaseModel):
     track_id: str
@@ -191,21 +220,26 @@ class TrackData(BaseModel):
     play_count: int
     duration_seconds: Optional[int] = None
 
+
 class TrackResponse(BaseModel):
     success: bool
     data: TrackData
+
 
 class TrackListResponse(BaseModel):
     success: bool
     data: List[TrackData]
 
+
 class UserTracksData(BaseModel):
     user_id: str
     tracks: List[TrackData]
 
+
 class UserTracksResponse(BaseModel):
     success: bool
     data: UserTracksData
+
 
 class UpdateProfileData(BaseModel):
     user_id: str
@@ -216,10 +250,12 @@ class UpdateProfileData(BaseModel):
     account_type: str
     updated_at: Optional[datetime] = None
 
+
 class UpdateProfileResponse(BaseModel):
     success: bool
     message: str
     data: UpdateProfileData
+
 
 class TrackCreateData(BaseModel):
     track_id: str
@@ -232,10 +268,12 @@ class TrackCreateData(BaseModel):
     visibility: str
     processing_status: str
 
+
 class TrackCreateResponse(BaseModel):
     success: bool
     message: str
     data: TrackCreateData
+
 
 class WaveformData(BaseModel):
     track_id: str
@@ -243,9 +281,11 @@ class WaveformData(BaseModel):
     sample_count: int
     peaks: List[float]
 
+
 class WaveformResponse(BaseModel):
     success: bool
     data: WaveformData
+
 
 class StreamData(BaseModel):
     track_id: str
@@ -255,22 +295,27 @@ class StreamData(BaseModel):
     play_count: int
     processing_status: str
 
+
 class StreamResponse(BaseModel):
     success: bool
     data: StreamData
 
+
 class PlayData(BaseModel):
     track_id: str
     play_count: int
+
 
 class PlayResponse(BaseModel):
     success: bool
     message: str
     data: PlayData
 
+
 class PlaybackWaveform(BaseModel):
     sample_count: int
     peaks: List[float]
+
 
 class PlaybackData(BaseModel):
     track_id: str
@@ -288,6 +333,7 @@ class PlaybackData(BaseModel):
     duration_seconds: Optional[int] = None
     waveform: PlaybackWaveform
 
+
 class PlaybackResponse(BaseModel):
     success: bool
     data: PlaybackData
@@ -295,16 +341,19 @@ class PlaybackResponse(BaseModel):
 
 # ── Playlists ──────────────────────────────────────────────────────────────────
 
+
 class PlaylistData(BaseModel):
     playlist_id: str
     name: str
     description: Optional[str] = None
     cover_photo_url: Optional[str] = None
 
+
 class PlaylistResponse(BaseModel):
     success: bool
     message: str
     data: PlaylistData
+
 
 class PlaylistUserData(BaseModel):
     playlist_id: str
@@ -313,9 +362,11 @@ class PlaylistUserData(BaseModel):
     description: Optional[str] = None
     cover_photo_url: Optional[str] = None
 
+
 class PlaylistListResponse(BaseModel):
     success: bool
     data: List[PlaylistUserData]
+
 
 class PlaylistTrackData(BaseModel):
     track_id: str
@@ -331,6 +382,7 @@ class PlaylistTrackData(BaseModel):
     play_count: Optional[int] = None
     duration_seconds: Optional[int] = None
 
+
 class PlaylistDetailData(BaseModel):
     playlist_id: str
     user_id: str
@@ -339,32 +391,39 @@ class PlaylistDetailData(BaseModel):
     cover_photo_url: Optional[str] = None
     tracks: List[PlaylistTrackData]
 
+
 class PlaylistDetailResponse(BaseModel):
     success: bool
     data: PlaylistDetailData
+
 
 class PlaylistUpdateData(BaseModel):
     playlist_id: str
     name: str
     description: Optional[str] = None
 
+
 class PlaylistUpdateResponse(BaseModel):
     success: bool
     message: str
     data: PlaylistUpdateData
 
+
 class PlaylistLikeData(BaseModel):
     playlist_like_id: str
     playlist_id: str
+
 
 class PlaylistLikeResponse(BaseModel):
     success: bool
     message: str
     data: PlaylistLikeData
 
+
 class PlaylistCoverData(BaseModel):
     playlist_id: str
     cover_photo_url: str
+
 
 class PlaylistCoverResponse(BaseModel):
     success: bool
@@ -374,19 +433,23 @@ class PlaylistCoverResponse(BaseModel):
 
 # ── Followers / Social Graph ───────────────────────────────────────────────────
 
+
 class FollowerItem(BaseModel):
     user_id: str
     display_name: str
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
+
 class FollowerListData(BaseModel):
     count: int
     followers: List[FollowerItem]
 
+
 class FollowerListResponse(BaseModel):
     success: bool
     data: FollowerListData
+
 
 class FollowingItem(BaseModel):
     user_id: str
@@ -394,9 +457,11 @@ class FollowingItem(BaseModel):
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
+
 class FollowingListData(BaseModel):
     count: int
     following: List[FollowingItem]
+
 
 class FollowingListResponse(BaseModel):
     success: bool
@@ -405,23 +470,28 @@ class FollowingListResponse(BaseModel):
 
 # ── Engagement ─────────────────────────────────────────────────────────────────
 
+
 class LikeData(BaseModel):
     like_id: str
     track_id: str
+
 
 class LikeResponse(BaseModel):
     success: bool
     message: str
     data: LikeData
 
+
 class RepostData(BaseModel):
     repost_id: str
     track_id: str
+
 
 class RepostResponse(BaseModel):
     success: bool
     message: str
     data: RepostData
+
 
 class CommentItem(BaseModel):
     comment_id: str
@@ -431,12 +501,15 @@ class CommentItem(BaseModel):
     parent_comment_id: Optional[str] = None
     created_at: Optional[datetime] = None
 
+
 class CommentsData(BaseModel):
     comments: List[CommentItem]
+
 
 class CommentsListResponse(BaseModel):
     success: bool
     data: CommentsData
+
 
 class AddCommentData(BaseModel):
     comment_id: str
@@ -446,6 +519,7 @@ class AddCommentData(BaseModel):
     parent_comment_id: Optional[str] = None
     created_at: Optional[datetime] = None
 
+
 class AddCommentResponse(BaseModel):
     success: bool
     message: str
@@ -453,6 +527,7 @@ class AddCommentResponse(BaseModel):
 
 
 # ── Search ─────────────────────────────────────────────────────────────────────
+
 
 class SearchUserItem(BaseModel):
     user_id: str
@@ -462,12 +537,15 @@ class SearchUserItem(BaseModel):
     follower_count: int
     is_verified: bool
 
+
 class SearchUsersData(BaseModel):
     users: List[SearchUserItem]
+
 
 class SearchUsersResponse(BaseModel):
     success: bool
     data: SearchUsersData
+
 
 class SearchTrackItem(BaseModel):
     track_id: str
@@ -481,12 +559,15 @@ class SearchTrackItem(BaseModel):
     visibility: str
     processing_status: str
 
+
 class SearchTracksData(BaseModel):
     tracks: List[SearchTrackItem]
+
 
 class SearchTracksResponse(BaseModel):
     success: bool
     data: SearchTracksData
+
 
 class SearchPlaylistItem(BaseModel):
     playlist_id: str
@@ -496,8 +577,10 @@ class SearchPlaylistItem(BaseModel):
     cover_photo_url: Optional[str] = None
     tracks: List[PlaylistTrackData]
 
+
 class SearchPlaylistsData(BaseModel):
     playlists: List[SearchPlaylistItem]
+
 
 class SearchPlaylistsResponse(BaseModel):
     success: bool
@@ -505,6 +588,7 @@ class SearchPlaylistsResponse(BaseModel):
 
 
 # ── Notifications ──────────────────────────────────────────────────────────────
+
 
 class NotificationItem(BaseModel):
     notification_id: str
@@ -515,31 +599,39 @@ class NotificationItem(BaseModel):
     is_read: bool
     created_at: Optional[datetime] = None
 
+
 class NotificationsData(BaseModel):
     notifications: List[NotificationItem]
+
 
 class NotificationsResponse(BaseModel):
     success: bool
     data: NotificationsData
 
+
 class UnreadCountData(BaseModel):
     unread_count: int
+
 
 class UnreadCountResponse(BaseModel):
     success: bool
     data: UnreadCountData
 
+
 class MarkReadData(BaseModel):
     notification_id: str
     is_read: bool
+
 
 class MarkReadResponse(BaseModel):
     success: bool
     message: str
     data: MarkReadData
 
+
 class MarkAllReadData(BaseModel):
     marked_read: int
+
 
 class MarkAllReadResponse(BaseModel):
     success: bool
@@ -549,12 +641,15 @@ class MarkAllReadResponse(BaseModel):
 
 # ── Messaging ──────────────────────────────────────────────────────────────────
 
+
 class ConversationData(BaseModel):
     conversation_id: str
+
 
 class ConversationResponse(BaseModel):
     success: bool
     data: ConversationData
+
 
 class LastMessageData(BaseModel):
     content: Optional[str] = None
@@ -562,10 +657,12 @@ class LastMessageData(BaseModel):
     created_at: Optional[datetime] = None
     is_read: bool
 
+
 class ParticipantData(BaseModel):
     user_id: str
     display_name: str
     profile_picture: Optional[str] = None
+
 
 class ConversationItem(BaseModel):
     conversation_id: str
@@ -573,9 +670,11 @@ class ConversationItem(BaseModel):
     participants: List[ParticipantData]
     last_message: Optional[LastMessageData] = None
 
+
 class ConversationsListResponse(BaseModel):
     success: bool
     data: List[ConversationItem]
+
 
 class MessageItem(BaseModel):
     id: str
@@ -587,22 +686,27 @@ class MessageItem(BaseModel):
     is_read: bool
     created_at: Optional[datetime] = None
 
+
 class MessagesListResponse(BaseModel):
     success: bool
     data: List[MessageItem]
+
 
 class SendMessageResponse(BaseModel):
     success: bool
     data: MessageItem
 
+
 class MessageReadData(BaseModel):
     message_id: str
     is_read: bool
+
 
 class MessageReadResponse(BaseModel):
     success: bool
     message: str
     data: MessageReadData
+
 
 class UnreadMessageCountResponse(BaseModel):
     success: bool
