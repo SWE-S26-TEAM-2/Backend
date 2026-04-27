@@ -6,6 +6,7 @@ verification logic. Delegates database operations to repositories
 and token operations to the security module.
 """
 
+import re
 import secrets
 from datetime import datetime, timezone
 
@@ -40,6 +41,17 @@ from app.core.email import (  # type: ignore
     send_verification_email,
     send_password_reset_email,
 )
+
+
+def _generate_unique_username(db: Session, name: str) -> str:
+    """Generate a unique username from a display name."""
+    base = re.sub(r"[^a-z0-9]", "", name.lower())[:18] or "user"
+    username = base
+    i = 1
+    while UserRepository.get_by_username(db, username):
+        username = f"{base}{i}"
+        i += 1
+    return username
 
 
 class AuthService:
@@ -355,6 +367,7 @@ class AuthService:
 
             new_user = User(
                 email=google_email,
+                username=_generate_unique_username(db, google_name),
                 password_hash=unusable_hash,
                 display_name=google_name,
                 account_type="listener",
@@ -482,6 +495,7 @@ class AuthService:
 
             new_user = User(
                 email=facebook_email,
+                username=_generate_unique_username(db, facebook_name),
                 password_hash=unusable_hash,
                 display_name=facebook_name,
                 account_type="listener",

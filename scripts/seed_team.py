@@ -12,6 +12,7 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from sqlalchemy import text  # noqa: E402
 from app.database.database import SessionLocal  # noqa: E402
 from app.models.user import User  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
@@ -91,10 +92,10 @@ TEAM_ACCOUNTS = [
 def run():
     db = SessionLocal()
     try:
-        print("Deleting all existing users...")
-        deleted = db.query(User).delete()
+        print("Deleting all existing users and related data...")
+        db.execute(text("TRUNCATE TABLE users CASCADE"))
         db.commit()
-        print(f"  Deleted {deleted} user(s).")
+        print("  Done.")
 
         print("\nCreating team accounts...")
         hashed = hash_password(DEFAULT_PASSWORD)
