@@ -1171,3 +1171,131 @@ class TestMarkMessageAsRead:
             )
 
         assert exc_info.value.status_code == 403
+
+
+# ══════════════════════════════════════════════════════
+# MARK ALL MESSAGES AS READ TESTS
+# ══════════════════════════════════════════════════════
+
+
+class TestMarkAllMessagesAsRead:
+    """Tests for MessagingService.mark_all_messages_as_read()"""
+
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_mark_all_read_success(
+        self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+    ):
+        """
+        Participant marks all their unread messages as read.
+        Expect success=True and the count of marked messages.
+        """
+        conv = MagicMock()
+        conv.user1_id = str(verified_user.user_id)
+        conv.user2_id = str(uuid.uuid4())
+        mock_conv_repo.get_by_id.return_value = conv
+        mock_msg_repo.mark_all_read_in_conversation.return_value = 3
+
+        result = MessagingService.mark_all_messages_as_read(
+            mock_db, verified_user, conv.conversation_id
+        )
+
+        assert result["success"] is True
+        assert result["data"]["marked_read"] == 3
+        mock_msg_repo.mark_all_read_in_conversation.assert_called_once_with(
+            mock_db, conv.conversation_id, verified_user.user_id
+        )
+
+    @patch("app.services.messaging_service.MessageRepository")
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_mark_all_read_zero_when_already_read(
+        self, mock_conv_repo, mock_msg_repo, mock_db, verified_user
+    ):
+        """
+        All messages are already read — count should be 0.
+        """
+        conv = MagicMock()
+        conv.user1_id = str(verified_user.user_id)
+        conv.user2_id = str(uuid.uuid4())
+        mock_conv_repo.get_by_id.return_value = conv
+        mock_msg_repo.mark_all_read_in_conversation.return_value = 0
+
+        result = MessagingService.mark_all_messages_as_read(
+            mock_db, verified_user, conv.conversation_id
+        )
+
+        assert result["success"] is True
+        assert result["data"]["marked_read"] == 0
+
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_mark_all_read_conversation_not_found_returns_404(
+        self, mock_conv_repo, mock_db, verified_user
+    ):
+        """
+        Conversation does not exist.
+        Expect 404 Not Found.
+        """
+        mock_conv_repo.get_by_id.return_value = None
+
+        with pytest.raises(HTTPException) as exc_info:
+            MessagingService.mark_all_messages_as_read(
+                mock_db, verified_user, uuid.uuid4()
+            )
+
+        assert exc_info.value.status_code == 404
+
+    @patch("app.services.messaging_service.ConversationRepository")
+    def test_mark_all_read_non_participant_returns_403(
+        self, mock_conv_repo, mock_db, verified_user
+    ):
+        """
+        User is not a participant in the conversation.
+        Expect 403 Forbidden.
+        """
+        conv = MagicMock()
+        conv.user1_id = str(uuid.uuid4())
+        conv.user2_id = str(uuid.uuid4())
+        mock_conv_repo.get_by_id.return_value = conv
+
+        with pytest.raises(HTTPException) as exc_info:
+            MessagingService.mark_all_messages_as_read(
+                mock_db, verified_user, conv.conversation_id
+            )
+
+        assert exc_info.value.status_code == 403
+
+
+# ══════════════════════════════════════════════════════
+# GET UNREAD MESSAGE COUNT TESTS
+# ══════════════════════════════════════════════════════
+
+
+class TestGetUnreadMessageCount:
+    """Tests for MessagingService.get_unread_message_count()"""
+
+    @patch("app.services.messaging_service.MessageRepository")
+    def test_returns_unread_count(self, mock_msg_repo, mock_db, verified_user):
+        """
+        Service returns the count of unread messages for the user.
+        """
+        mock_msg_repo.get_unread_count_for_user.return_value = 5
+
+        result = MessagingService.get_unread_message_count(mock_db, verified_user)
+
+        assert result["success"] is True
+        assert result["data"]["unread_count"] == 5
+        mock_msg_repo.get_unread_count_for_user.assert_called_once_with(
+            mock_db, verified_user.user_id
+        )
+
+    @patch("app.services.messaging_service.MessageRepository")
+    def test_returns_zero_when_no_unread(self, mock_msg_repo, mock_db, verified_user):
+        """
+        When all messages are read, count should be 0.
+        """
+        mock_msg_repo.get_unread_count_for_user.return_value = 0
+
+        result = MessagingService.get_unread_message_count(mock_db, verified_user)
+
+        assert result["success"] is True
+        assert result["data"]["unread_count"] == 0
