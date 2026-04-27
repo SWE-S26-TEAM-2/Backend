@@ -6,7 +6,13 @@ get_current_user dependency to extract the user from JWT.
 """
 
 from fastapi import (  # type: ignore
-    APIRouter, Depends, File, HTTPException, Query, UploadFile, status,
+    APIRouter,
+    Depends,
+    File,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
 )
 from sqlalchemy.orm import Session  # type: ignore
 

@@ -465,7 +465,9 @@ class TestUnblockUser:
 
     @patch("app.services.block_service.UserRepository")
     @patch("app.services.block_service.BlockRepository")
-    def test_unblock_success(self, mock_block_repo, mock_user_repo, mock_db, verified_user):
+    def test_unblock_success(
+        self, mock_block_repo, mock_user_repo, mock_db, verified_user
+    ):
         """
         User unblocks someone they previously blocked.
         Expect success=True and message containing 'unblocked'.
