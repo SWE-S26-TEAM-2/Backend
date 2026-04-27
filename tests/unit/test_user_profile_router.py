@@ -184,7 +184,9 @@ def test_get_user_profile_endpoint_private(monkeypatch):
 
     assert response.status_code == 200
     body = response.json()
-    assert len(body["data"]) < 7  # Limited data
+    assert body["data"]["display_name"] == "Private User"
+    assert body["data"]["following_count"] is None
+    assert body["data"]["track_count"] is None
 
 
 def test_get_user_profile_endpoint_not_found(monkeypatch):
