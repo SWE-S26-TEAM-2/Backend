@@ -96,10 +96,16 @@ def test_get_my_profile_endpoint_success(monkeypatch):
             "data": {
                 "user_id": str(user_id),
                 "email": "user@example.com",
+                "username": "testuser",
                 "display_name": "Test User",
                 "account_type": "listener",
                 "is_verified": True,
+                "is_suspended": False,
+                "is_premium": False,
+                "is_private": False,
                 "follower_count": 0,
+                "following_count": 0,
+                "track_count": 0,
             },
         }
 
@@ -203,7 +209,23 @@ def test_get_user_profile_endpoint_invalid_id(monkeypatch):
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
     def fake_get_profile(user):
-        return {"success": True, "data": {"display_name": "Test User"}}
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(uuid.uuid4()),
+                "email": "test@example.com",
+                "username": "testuser",
+                "display_name": "Test User",
+                "account_type": "listener",
+                "is_verified": True,
+                "is_suspended": False,
+                "is_premium": False,
+                "is_private": False,
+                "follower_count": 0,
+                "following_count": 0,
+                "track_count": 0,
+            },
+        }
 
     monkeypatch.setattr(UserService, "get_my_profile", fake_get_profile)
 
@@ -234,7 +256,10 @@ def test_get_user_tracks_endpoint_success(monkeypatch):
                         "title": "Profile Track",
                         "description": "From user profile",
                         "stream_url": f"/api/tracks/{track_id}/audio",
+                        "user_id": str(user_id),
                         "visibility": "public",
+                        "processing_status": "finished",
+                        "play_count": 0,
                     }
                 ],
             },
@@ -309,7 +334,10 @@ def test_get_user_liked_tracks_endpoint_success(monkeypatch):
                         "title": "Liked Track",
                         "description": "From likes",
                         "stream_url": f"/api/tracks/{track_id}/audio",
+                        "user_id": str(user_id),
                         "visibility": "public",
+                        "processing_status": "finished",
+                        "play_count": 0,
                     }
                 ],
             },
@@ -379,8 +407,10 @@ def test_update_profile_endpoint_success(monkeypatch):
             "message": "Profile updated successfully.",
             "data": {
                 "user_id": str(user_id),
+                "username": "testuser",
                 "display_name": "Updated Name",
                 "bio": "Updated bio",
+                "account_type": "listener",
             },
         }
 
@@ -406,7 +436,12 @@ def test_update_profile_endpoint_partial(monkeypatch):
         return {
             "success": True,
             "message": "Profile updated successfully.",
-            "data": {"user_id": str(user_id), "display_name": "New Name"},
+            "data": {
+                "user_id": str(user_id),
+                "username": "testuser",
+                "display_name": "New Name",
+                "account_type": "listener",
+            },
         }
 
     monkeypatch.setattr(UserService, "update_profile", fake_update)

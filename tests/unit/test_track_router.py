@@ -55,9 +55,11 @@ def test_get_track_success(monkeypatch):
                 "track_id": str(fake_track.track_id),
                 "title": fake_track.title,
                 "description": fake_track.description,
-                "file_url": fake_track.file_url,
+                "stream_url": f"/api/tracks/{fake_track.track_id}/audio",
                 "user_id": str(fake_track.user_id),
                 "visibility": fake_track.visibility,
+                "processing_status": "finished",
+                "play_count": 0,
             },
         },
     )
@@ -197,7 +199,9 @@ def test_create_track_success(monkeypatch):
             "data": {
                 "track_id": str(track_id),
                 "title": title,
-                "file_url": "http://127.0.0.1:8000/uploads/test.mp3",
+                "stream_url": f"/api/tracks/{track_id}/audio",
+                "visibility": "public",
+                "processing_status": "finished",
             },
         }
 
@@ -256,8 +260,10 @@ def test_create_track_with_cover_image(monkeypatch):
             "data": {
                 "track_id": str(track_id),
                 "title": title,
-                "file_url": "/api/uploads/song.mp3",
+                "stream_url": f"/api/tracks/{track_id}/audio",
                 "cover_image_url": "/api/uploads/cover.png",
+                "visibility": "public",
+                "processing_status": "finished",
             },
         }
 
@@ -410,6 +416,7 @@ def test_get_track_stream_success(monkeypatch):
                 "expires_in": None,
                 "content_type": "audio/mpeg",
                 "play_count": 5,
+                "processing_status": "finished",
             },
         },
     )
@@ -496,7 +503,7 @@ def test_get_recently_played_success(monkeypatch):
                         "track": {
                             "track_id": str(uuid4()),
                             "title": "Recent Song",
-                            "file_url": "test.mp3",
+                            "stream_url": "/api/tracks/recent/audio",
                             "duration_seconds": 100,
                             "play_count": 3,
                         },
@@ -549,8 +556,10 @@ def test_get_track_playback_success(monkeypatch):
                 "track_id": str(track_id),
                 "title": "Player Song",
                 "stream_url": "http://127.0.0.1:8000/api/uploads/test.mp3",
+                "content_type": "audio/mpeg",
                 "play_count": 1,
                 "duration_seconds": 10,
+                "processing_status": "finished",
                 "waveform": {
                     "sample_count": 2,
                     "peaks": [0.2, 0.4],

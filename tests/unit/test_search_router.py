@@ -244,13 +244,17 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "track_id": "723e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock Anthem",
                         "description": "Epic rock song",
-                        "file_url": "https://example.com/rock_anthem.mp3",
+                        "stream_url": "/api/tracks/723e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     },
                     {
                         "track_id": "823e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll",
                         "description": "Classic rock",
-                        "file_url": "https://example.com/rock_roll.mp3",
+                        "stream_url": "/api/tracks/823e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     },
                 ]
             },
@@ -306,7 +310,9 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
                         "track_id": "923e4567-e89b-12d3-a456-426614174000",
                         "title": "Bohemian Rhapsody",
                         "description": "Classic track from Queen",
-                        "file_url": "https://example.com/bohemian_rhapsody.mp3",
+                        "stream_url": "/api/tracks/923e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     }
                 ]
             },
@@ -334,13 +340,17 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "track_id": "a23e4567-e89b-12d3-a456-426614174000",
                         "title": "Heartbeat",
                         "description": "Song about heartbeat",
-                        "file_url": "https://example.com/heartbeat.mp3",
+                        "stream_url": "/api/tracks/a23e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     },
                     {
                         "track_id": "b23e4567-e89b-12d3-a456-426614174000",
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
-                        "file_url": "https://example.com/off_beat.mp3",
+                        "stream_url": "/api/tracks/b23e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     },
                 ]
             },
@@ -367,7 +377,9 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
                         "track_id": "c23e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll Revival",
                         "description": "Mix of rock and roll",
-                        "file_url": "https://example.com/rock_roll.mp3",
+                        "stream_url": "/api/tracks/c23e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     }
                 ]
             },
@@ -395,7 +407,9 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
                         "track_id": "d23e4567-e89b-12d3-a456-426614174000",
                         "title": "Love Song",
                         "description": "Beautiful love song",
-                        "file_url": "https://example.com/love_song.mp3",
+                        "stream_url": "/api/tracks/d23e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     }
                 ]
             },
@@ -422,7 +436,9 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
                         "track_id": "e23e4567-e89b-12d3-a456-426614174000",
                         "title": "Jazz Piano",
                         "description": "Smooth jazz",
-                        "file_url": "https://example.com/jazz.mp3",
+                        "stream_url": "/api/tracks/e23e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     }
                 ]
             },
@@ -445,7 +461,9 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
                 "track_id": f"{i:03d}3e4567-e89b-12d3-a456-426614174000",
                 "title": f"Track {i}",
                 "description": f"Description {i}",
-                "file_url": f"https://example.com/track{i}.mp3",
+                "stream_url": f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000/audio",
+                "visibility": "public",
+                "processing_status": "finished",
             }
             for i in range(10)
         ]
@@ -497,7 +515,9 @@ def test_search_users_and_tracks_separately(monkeypatch):
                         "track_id": "023e4567-e89b-12d3-a456-426614174000",
                         "title": "Track",
                         "description": "Desc",
-                        "file_url": "https://example.com/track.mp3",
+                        "stream_url": "/api/tracks/023e4567-e89b-12d3-a456-426614174000/audio",
+                        "visibility": "public",
+                        "processing_status": "finished",
                     }
                 ]
             },
