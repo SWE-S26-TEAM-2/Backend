@@ -6,7 +6,7 @@ No real database needed.
 
 Changes from previous version:
 - create_or_get_conversation now uses display_name instead of participant_id
-  and calls UserRepository.get_by_display_name
+  and calls UserRepository.get_by_username
 - send_message now also calls BlockRepository and NotificationRepository
 - get_user_conversations now also calls MessageRepository.get_last_by_conversation
 
@@ -33,7 +33,7 @@ class TestCreateOrGetConversation:
     Tests for MessagingService.create_or_get_conversation()
 
     The service now looks up the participant by display_name
-    using UserRepository.get_by_display_name, not by UUID.
+    using UserRepository.get_by_username, not by UUID.
     """
 
     @patch("app.services.messaging_service.ConversationRepository")
@@ -51,8 +51,8 @@ class TestCreateOrGetConversation:
         participant.user_id = uuid.uuid4()
         participant.display_name = "DJ Khaled"
 
-        # Service calls get_by_display_name now
-        mock_user_repo.get_by_display_name.return_value = participant
+        # Service calls get_by_username now
+        mock_user_repo.get_by_username.return_value = participant
         mock_conv_repo.get_by_participants.return_value = None
 
         new_conv = MagicMock()
@@ -60,7 +60,7 @@ class TestCreateOrGetConversation:
         mock_conv_repo.create.return_value = new_conv
 
         data = MagicMock()
-        data.display_name = "DJ Khaled"
+        data.username = "DJ Khaled"
 
         # CALL
         result = MessagingService.create_or_get_conversation(
@@ -85,14 +85,14 @@ class TestCreateOrGetConversation:
         participant = MagicMock()
         participant.user_id = uuid.uuid4()
 
-        mock_user_repo.get_by_display_name.return_value = participant
+        mock_user_repo.get_by_username.return_value = participant
 
         existing_conv = MagicMock()
         existing_conv.conversation_id = uuid.uuid4()
         mock_conv_repo.get_by_participants.return_value = existing_conv
 
         data = MagicMock()
-        data.display_name = "DJ Khaled"
+        data.username = "DJ Khaled"
 
         # CALL
         result = MessagingService.create_or_get_conversation(
@@ -113,11 +113,11 @@ class TestCreateOrGetConversation:
         The display_name belongs to the current user themselves.
         Expect 400 Bad Request with 'yourself' in the detail.
         """
-        # SETUP — get_by_display_name returns verified_user themselves
-        mock_user_repo.get_by_display_name.return_value = verified_user
+        # SETUP — get_by_username returns verified_user themselves
+        mock_user_repo.get_by_username.return_value = verified_user
 
         data = MagicMock()
-        data.display_name = verified_user.display_name
+        data.username = verified_user.display_name
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -137,7 +137,7 @@ class TestCreateOrGetConversation:
         """
         # SETUP
         data = MagicMock()
-        data.display_name = "   "  # whitespace only
+        data.username = "   "  # whitespace only
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -156,10 +156,10 @@ class TestCreateOrGetConversation:
         Expect 400 Bad Request with 'does not exist' in the detail.
         """
         # SETUP — no user found with this display name
-        mock_user_repo.get_by_display_name.return_value = None
+        mock_user_repo.get_by_username.return_value = None
 
         data = MagicMock()
-        data.display_name = "UnknownUser"
+        data.username = "UnknownUser"
 
         # CALL + CHECK
         with pytest.raises(HTTPException) as exc_info:
@@ -170,17 +170,17 @@ class TestCreateOrGetConversation:
 
     @patch("app.services.messaging_service.ConversationRepository")
     @patch("app.services.messaging_service.UserRepository")
-    def test_uses_get_by_display_name_not_get_by_id(
+    def test_uses_get_by_username_not_get_by_id(
         self, mock_user_repo, mock_conv_repo, mock_db, verified_user
     ):
         """
-        Service must call get_by_display_name, never get_by_id,
+        Service must call get_by_username, never get_by_id,
         when creating a conversation.
         """
         # SETUP
         participant = MagicMock()
         participant.user_id = uuid.uuid4()
-        mock_user_repo.get_by_display_name.return_value = participant
+        mock_user_repo.get_by_username.return_value = participant
         mock_conv_repo.get_by_participants.return_value = None
 
         new_conv = MagicMock()
@@ -188,13 +188,13 @@ class TestCreateOrGetConversation:
         mock_conv_repo.create.return_value = new_conv
 
         data = MagicMock()
-        data.display_name = "DJ Khaled"
+        data.username = "DJ Khaled"
 
         # CALL
         MessagingService.create_or_get_conversation(mock_db, verified_user, data)
 
         # CHECK
-        mock_user_repo.get_by_display_name.assert_called_once_with(mock_db, "DJ Khaled")
+        mock_user_repo.get_by_username.assert_called_once_with(mock_db, "DJ Khaled")
         mock_user_repo.get_by_id.assert_not_called()
 
 
