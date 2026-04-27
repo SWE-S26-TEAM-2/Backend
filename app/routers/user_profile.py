@@ -30,6 +30,7 @@ from app.schemas.user_schema import (  # type: ignore
     UpdatePrivacyRequest,
     UpdateProfileRequest,
 )
+from app.services.playlist_service import PlaylistService  # type: ignore
 from app.services.social_link_service import SocialLinkService  # type: ignore
 from app.services.track_service import TrackService  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
@@ -45,6 +46,7 @@ from app.schemas.responses import (  # type: ignore
     SocialLinksResponse,
     ListeningHistoryResponse,
     UserTracksResponse,
+    PlaylistListResponse,
 )
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -271,6 +273,21 @@ def get_user_tracks(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return TrackService.get_tracks_by_user(db, user.user_id, current_user)
+
+
+@router.get(
+    "/{username}/playlists",
+    status_code=status.HTTP_200_OK,
+    response_model=PlaylistListResponse,
+)
+def get_user_playlists(
+    username: str,
+    db: Session = Depends(get_db),
+):
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return PlaylistService.get_playlists_by_user(db, user.user_id)
 
 
 @router.get(

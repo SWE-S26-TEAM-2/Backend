@@ -40,6 +40,24 @@ class PlaylistService:
         }
 
     @staticmethod
+    def get_playlists_by_user(db, user_id):
+        playlists = PlaylistRepository.get_by_user_id(db, user_id)
+
+        return {
+            "success": True,
+            "data": [
+                {
+                    "playlist_id": str(playlist.playlist_id),
+                    "user_id": str(playlist.user_id),
+                    "name": playlist.name,
+                    "description": playlist.description,
+                    "cover_photo_url": playlist.cover_photo_url,
+                }
+                for playlist in playlists
+            ],
+        }
+
+    @staticmethod
     def get_liked_playlists(db, user):
         playlists = PlaylistRepository.get_liked_playlists(db, user.user_id)
 
