@@ -214,7 +214,10 @@ class TrackService:
                 detail="No file uploaded",
             )
 
-        if not file.content_type or not file.content_type.startswith("audio/"):
+        if not file.content_type or not (
+            file.content_type.startswith("audio/")
+            or file.content_type.startswith("video/")
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Only audio files are allowed",
