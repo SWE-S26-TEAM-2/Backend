@@ -12,7 +12,7 @@ class User(Base):
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, nullable=False)
-    username = Column(String, unique=True, nullable=True)
+    username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
     account_type = Column(String, server_default="listener")
