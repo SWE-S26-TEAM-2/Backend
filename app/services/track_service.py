@@ -356,8 +356,8 @@ class TrackService:
                 detail="User not found",
             )
 
-        include_private = (
-            current_user is not None and str(current_user.user_id) == str(user_id)
+        include_private = current_user is not None and str(current_user.user_id) == str(
+            user_id
         )
         tracks = TrackRepository.get_by_user_id(
             db,
@@ -382,8 +382,8 @@ class TrackService:
                 detail="User not found",
             )
 
-        include_private = (
-            current_user is not None and str(current_user.user_id) == str(user_id)
+        include_private = current_user is not None and str(current_user.user_id) == str(
+            user_id
         )
         tracks = LikeRepository.get_liked_tracks_by_user(
             db,
@@ -637,9 +637,7 @@ class TrackService:
     def _serialize_history_item(history, track):
         return {
             "history_id": str(history.history_id),
-            "played_at": (
-                history.played_at.isoformat() if history.played_at else None
-            ),
+            "played_at": (history.played_at.isoformat() if history.played_at else None),
             "duration_listened_seconds": history.duration_listened_seconds,
             "track": {
                 "track_id": str(track.track_id),

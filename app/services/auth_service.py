@@ -400,6 +400,7 @@ class AuthService:
                 "is_new_user": is_new_user,
                 "user": {
                     "user_id": str(user.user_id),
+                    "username": user.username,
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,
@@ -529,6 +530,7 @@ class AuthService:
                 "user": {
                     "user_id": str(user.user_id),
                     "email": user.email,
+                    "username": user.username,
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,

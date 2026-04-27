@@ -29,6 +29,7 @@ from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.messaging import router as messaging_router
 from app.routers.follower import router as follower_router
+from app.routers.notification import router as notification_router
 from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
 from app.routers.track import router as track_router
@@ -64,6 +65,7 @@ def startup():
 app.include_router(auth_router)
 app.include_router(user_router)
 app.include_router(messaging_router)
+app.include_router(notification_router)
 app.include_router(follower_router)
 app.include_router(playlist_router)
 app.include_router(search_router)

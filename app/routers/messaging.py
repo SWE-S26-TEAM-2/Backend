@@ -78,6 +78,25 @@ def get_user_conversations(
     return MessagingService.get_user_conversations(db, current_user)
 
 
+# ── Static routes before parametric ones ──────────────
+# GET /unread-count must be registered before DELETE /{conversation_id}
+# so Starlette matches the literal segment first.
+
+
+@router.get("/unread-count", status_code=status.HTTP_200_OK)
+def get_unread_message_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Return the total number of unread messages across all conversations.
+    """
+    return MessagingService.get_unread_message_count(db, current_user)
+
+
+# ── Parametric conversation routes ─────────────────────
+
+
 @router.delete(
     "/{conversation_id}",
     status_code=status.HTTP_200_OK,
@@ -105,6 +124,23 @@ def delete_conversation(
 
 
 # ── Message Endpoints ──────────────────────────────────
+# PATCH /read-all must come before PATCH /{message_id}/read so the
+# literal segment "read-all" is matched before the UUID parameter.
+
+
+@router.patch(
+    "/{conversation_id}/messages/read-all",
+    status_code=status.HTTP_200_OK,
+)
+def mark_all_messages_as_read(
+    conversation_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Mark all unread messages in a conversation as read for the current user.
+    """
+    return MessagingService.mark_all_messages_as_read(db, current_user, conversation_id)
 
 
 @router.get(
@@ -179,29 +215,3 @@ def mark_message_as_read(
     return MessagingService.mark_message_as_read(
         db, current_user, conversation_id, message_id
     )
-
-
-@router.patch(
-    "/{conversation_id}/messages/read-all",
-    status_code=status.HTTP_200_OK,
-)
-def mark_all_messages_as_read(
-    conversation_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Mark all unread messages in a conversation as read for the current user.
-    """
-    return MessagingService.mark_all_messages_as_read(db, current_user, conversation_id)
-
-
-@router.get("/unread-count", status_code=status.HTTP_200_OK)
-def get_unread_message_count(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Return the total number of unread messages across all conversations.
-    """
-    return MessagingService.get_unread_message_count(db, current_user)

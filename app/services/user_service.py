@@ -147,6 +147,17 @@ class UserService:
         }
 
     @staticmethod
+    def change_username(db: Session, current_user: User, data) -> dict:
+        existing = UserRepository.get_by_username(db, data.username)
+        if existing and str(existing.user_id) != str(current_user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken.",
+            )
+        UserRepository.update_fields(db, current_user, {"username": data.username})
+        return {"success": True, "data": {"username": current_user.username}}
+
+    @staticmethod
     def update_privacy(db: Session, current_user: User, data) -> dict:
         """
         Toggle profile visibility between public and private.
