@@ -18,3 +18,4 @@ SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY", "")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "")
 ADMIN_BOOTSTRAP_SECRET = os.environ.get("ADMIN_BOOTSTRAP_SECRET", "")
 AUTO_CREATE_TABLES = os.environ.get("AUTO_CREATE_TABLES", "").lower() == "true"
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
