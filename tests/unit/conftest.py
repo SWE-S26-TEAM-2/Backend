@@ -27,6 +27,7 @@ def make_fake_user(**overrides):
         "password_hash": "$2b$12$hashedpasswordplaceholder",
         "display_name": "TestUser",
         "account_type": "listener",
+        "role": "user",
         "is_verified": True,
         "is_suspended": False,
         "CAPTCHA_verified": False,

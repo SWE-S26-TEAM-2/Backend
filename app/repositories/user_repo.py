@@ -44,6 +44,16 @@ class UserRepository:
         return db.query(User).filter(User.user_id == user_id).first()
 
     @staticmethod
+    def get_by_ids(db: Session, user_ids):
+        if not user_ids:
+            return []
+        return db.query(User).filter(User.user_id.in_(user_ids)).all()
+
+    @staticmethod
+    def count_by_role(db: Session, role: str) -> int:
+        return int(db.query(User).filter(User.role == role).count())
+
+    @staticmethod
     def get_by_username(db: Session, username: str):
         return db.query(User).filter(User.username == username.lower()).first()
 

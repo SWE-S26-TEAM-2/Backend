@@ -14,16 +14,30 @@ from app.schemas.engagement_schema import AddCommentRequest
 
 class EngagementService:
 
-    # ── Likes ─────────────────────────────────────────────
-
     @staticmethod
-    def like_track(db: Session, current_user: User, track_id: UUID) -> dict:
+    def _get_track_or_404(db: Session, track_id: UUID):
         track = TrackRepository.get_by_id(db, track_id)
         if not track:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Track not found.",
             )
+        return track
+
+    @staticmethod
+    def _ensure_track_access(track, current_user: User | None = None) -> None:
+        if track.visibility == "private" and (
+            current_user is None or str(track.user_id) != str(current_user.user_id)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Track is private.",
+            )
+
+    @staticmethod
+    def like_track(db: Session, current_user: User, track_id: UUID) -> dict:
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
         existing = LikeRepository.get_like(db, current_user.user_id, track_id)
         if existing:
@@ -34,7 +48,6 @@ class EngagementService:
 
         like = LikeRepository.create(db, current_user.user_id, track_id)
 
-        # Notify track owner (skip if liking own track)
         if str(track.user_id) != str(current_user.user_id):
             NotificationRepository.create(
                 db,
@@ -42,7 +55,8 @@ class EngagementService:
                 actor_id=current_user.user_id,
                 notification_type="like",
                 message=(
-                    f"{current_user.display_name} liked your track" f' "{track.title}".'
+                    f"{current_user.display_name} liked your track"
+                    f' "{track.title}".'
                 ),
                 target_id=track_id,
             )
@@ -58,12 +72,8 @@ class EngagementService:
 
     @staticmethod
     def unlike_track(db: Session, current_user: User, track_id: UUID) -> dict:
-        track = TrackRepository.get_by_id(db, track_id)
-        if not track:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Track not found.",
-            )
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
         existing = LikeRepository.get_like(db, current_user.user_id, track_id)
         if not existing:
@@ -79,16 +89,61 @@ class EngagementService:
             "message": "Track unliked.",
         }
 
-    # ── Reposts ───────────────────────────────────────────
+    @staticmethod
+    def get_track_like_count(
+        db: Session,
+        track_id: UUID,
+        current_user: User | None = None,
+    ) -> dict:
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
+        like_count = LikeRepository.count_by_track_id(db, track_id)
+
+        return {
+            "success": True,
+            "data": {
+                "track_id": str(track_id),
+                "like_count": like_count,
+            },
+        }
+
+    @staticmethod
+    def get_track_engagement_summary(
+        db: Session,
+        track_id: UUID,
+        current_user: User | None = None,
+    ) -> dict:
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
+
+        liked_by_me = None
+        reposted_by_me = None
+
+        if current_user is not None:
+            liked_by_me = (
+                LikeRepository.get_like(db, current_user.user_id, track_id) is not None
+            )
+            reposted_by_me = (
+                RepostRepository.get_repost(db, current_user.user_id, track_id)
+                is not None
+            )
+
+        return {
+            "success": True,
+            "data": {
+                "track_id": str(track_id),
+                "like_count": LikeRepository.count_by_track_id(db, track_id),
+                "comment_count": CommentRepository.count_by_track_id(db, track_id),
+                "repost_count": RepostRepository.count_by_track_id(db, track_id),
+                "liked_by_me": liked_by_me,
+                "reposted_by_me": reposted_by_me,
+            },
+        }
 
     @staticmethod
     def repost_track(db: Session, current_user: User, track_id: UUID) -> dict:
-        track = TrackRepository.get_by_id(db, track_id)
-        if not track:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Track not found.",
-            )
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
         existing = RepostRepository.get_repost(db, current_user.user_id, track_id)
         if existing:
@@ -99,7 +154,6 @@ class EngagementService:
 
         repost = RepostRepository.create(db, current_user.user_id, track_id)
 
-        # Notify track owner (skip if reposting own track)
         if str(track.user_id) != str(current_user.user_id):
             NotificationRepository.create(
                 db,
@@ -124,12 +178,8 @@ class EngagementService:
 
     @staticmethod
     def remove_repost(db: Session, current_user: User, track_id: UUID) -> dict:
-        track = TrackRepository.get_by_id(db, track_id)
-        if not track:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Track not found.",
-            )
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
         existing = RepostRepository.get_repost(db, current_user.user_id, track_id)
         if not existing:
@@ -145,21 +195,16 @@ class EngagementService:
             "message": "Repost removed.",
         }
 
-    # ── Comments ──────────────────────────────────────────
-
     @staticmethod
     def get_track_comments(
         db: Session,
         track_id: UUID,
         limit: int = 50,
         offset: int = 0,
+        current_user: User | None = None,
     ) -> dict:
-        track = TrackRepository.get_by_id(db, track_id)
-        if not track:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Track not found.",
-            )
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
         comments = CommentRepository.get_by_track(
             db, track_id, limit=limit, offset=offset
@@ -170,16 +215,18 @@ class EngagementService:
             "data": {
                 "comments": [
                     {
-                        "comment_id": str(c.comment_id),
-                        "user_id": str(c.user_id),
-                        "content": c.content,
-                        "timestamp_in_track": c.timestamp_in_track,
+                        "comment_id": str(comment.comment_id),
+                        "user_id": str(comment.user_id),
+                        "content": comment.content,
+                        "timestamp_in_track": comment.timestamp_in_track,
                         "parent_comment_id": (
-                            str(c.parent_comment_id) if c.parent_comment_id else None
+                            str(comment.parent_comment_id)
+                            if comment.parent_comment_id
+                            else None
                         ),
-                        "created_at": c.created_at,
+                        "created_at": comment.created_at,
                     }
-                    for c in comments
+                    for comment in comments
                 ],
             },
         }
@@ -191,14 +238,9 @@ class EngagementService:
         track_id: UUID,
         data: AddCommentRequest,
     ) -> dict:
-        track = TrackRepository.get_by_id(db, track_id)
-        if not track:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Track not found.",
-            )
+        track = EngagementService._get_track_or_404(db, track_id)
+        EngagementService._ensure_track_access(track, current_user)
 
-        # Validate parent comment if provided
         if data.parent_comment_id:
             parent = CommentRepository.get_by_id(db, data.parent_comment_id)
             if not parent:
@@ -206,7 +248,6 @@ class EngagementService:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Parent comment not found.",
                 )
-            # Only one level of replies allowed
             if parent.parent_comment_id is not None:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -222,7 +263,6 @@ class EngagementService:
             parent_comment_id=data.parent_comment_id,
         )
 
-        # Notify track owner (skip if commenting on own track)
         if str(track.user_id) != str(current_user.user_id):
             NotificationRepository.create(
                 db,
@@ -236,8 +276,6 @@ class EngagementService:
                 target_id=track_id,
             )
 
-        # Notify parent comment author on a reply (skip if replying to yourself
-        # or if they are the track owner who was already notified above)
         if data.parent_comment_id:
             parent = CommentRepository.get_by_id(db, data.parent_comment_id)
             is_self = (

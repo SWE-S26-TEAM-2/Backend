@@ -5,11 +5,12 @@ Handles registration, login, email verification,
 and resend verification HTTP routes.
 """
 
-from fastapi import APIRouter, Depends  # type: ignore
+from fastapi import APIRouter, Depends, Header  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.database.database import get_db  # type: ignore
 from app.schemas.auth_schema import (  # type: ignore
+    BootstrapAdminRequest,
     ForgotPasswordRequest,
     LoginRequest,
     LogoutRequest,
@@ -24,6 +25,7 @@ from app.schemas.auth_schema import (  # type: ignore
 from app.core.dependencies import get_current_user  # type: ignore
 from app.models.user import User  # type: ignore
 from app.schemas.responses import (  # type: ignore
+    AdminBootstrapResponse,
     MessageResponse,
     RegisterResponse,
     LoginResponse,
@@ -33,6 +35,18 @@ from app.schemas.responses import (  # type: ignore
 from app.services.auth_service import AuthService  # type: ignore
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post("/bootstrap-admin", response_model=AdminBootstrapResponse)
+def bootstrap_admin(
+    request: BootstrapAdminRequest,
+    db: Session = Depends(get_db),
+    bootstrap_secret: str = Header(..., alias="X-Admin-Bootstrap-Secret"),
+):
+    """
+    Create the first admin account using a one-time bootstrap secret.
+    """
+    return AuthService.bootstrap_admin(db, request, bootstrap_secret)
 
 
 @router.post("/register", response_model=RegisterResponse)

@@ -673,6 +673,29 @@ def test_delete_track_forbidden(monkeypatch):
     assert exc.value.detail == "You can only delete your own tracks"
 
 
+def test_admin_delete_track_success(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(track_id=track_id, user_id=uuid4())
+
+    from app.repositories.track_repo import TrackRepository
+    from app.repositories.playlist_repo import PlaylistRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+    monkeypatch.setattr(
+        PlaylistRepository,
+        "get_playlist_tracks_by_track",
+        lambda db_arg, tid: ["pt1"],
+    )
+
+    result = TrackService.admin_delete_track(db, track_id)
+
+    assert result == track
+    assert len(db.deleted) == 2
+    assert track in db.deleted
+    assert db.committed is True
+
+
 def test_get_track_details_rejects_private_for_non_owner(monkeypatch):
     db = FakeDB()
     track_id = uuid4()

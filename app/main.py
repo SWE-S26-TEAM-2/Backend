@@ -10,8 +10,11 @@ from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 
+from app.core.config import AUTO_CREATE_TABLES
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
+    comment,
+    conversation,
     email_verification,
     password_reset,
     social_link,
@@ -22,10 +25,17 @@ from app.models import (  # noqa: F401
     playlist_like,
     follow,
     block,
+    like,
     listening_history,
+    message,
+    notification,
     refresh_token,
+    report,
+    repost,
 )
+from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router  # type: ignore
+from app.routers.engagement import router as engagement_router
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.messaging import router as messaging_router
 from app.routers.follower import router as follower_router
@@ -60,7 +70,8 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 @app.on_event("startup")
 def startup():
     """Create database tables on startup."""
-    Base.metadata.create_all(bind=engine)
+    if AUTO_CREATE_TABLES:
+        Base.metadata.create_all(bind=engine)
 
 
 app.include_router(auth_router)
@@ -72,6 +83,8 @@ app.include_router(playlist_router)
 app.include_router(search_router)
 app.include_router(subscription_router)
 app.include_router(track_router)
+app.include_router(engagement_router)
+app.include_router(admin_router)
 
 
 @app.get("/")
