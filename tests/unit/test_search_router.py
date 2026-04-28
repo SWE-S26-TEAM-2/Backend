@@ -51,6 +51,7 @@ def test_search_users_endpoint_success(monkeypatch):
                 "users": [
                     {
                         "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                        "username": "johndoe",
                         "display_name": "John Doe",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/pic.jpg",
@@ -59,6 +60,7 @@ def test_search_users_endpoint_success(monkeypatch):
                     },
                     {
                         "user_id": "223e4567-e89b-12d3-a456-426614174000",
+                        "username": "janesmith",
                         "display_name": "Jane Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -118,6 +120,7 @@ def test_search_users_endpoint_single_result(monkeypatch):
                 "users": [
                     {
                         "user_id": "323e4567-e89b-12d3-a456-426614174000",
+                        "username": "alicejohnson",
                         "display_name": "Alice Johnson",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/alice.jpg",
@@ -148,6 +151,7 @@ def test_search_users_endpoint_special_characters_in_keyword(monkeypatch):
                 "users": [
                     {
                         "user_id": "423e4567-e89b-12d3-a456-426614174000",
+                        "username": "userco",
                         "display_name": "User & Co",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -179,6 +183,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
                 "users": [
                     {
                         "user_id": "523e4567-e89b-12d3-a456-426614174000",
+                        "username": "bobdylan",
                         "display_name": "Bob Dylan",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -208,6 +213,7 @@ def test_search_users_endpoint_whitespace_keyword(monkeypatch):
                 "users": [
                     {
                         "user_id": "623e4567-e89b-12d3-a456-426614174000",
+                        "username": "johnsmith",
                         "display_name": "John Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -514,6 +520,7 @@ def test_search_users_and_tracks_separately(monkeypatch):
                 "users": [
                     {
                         "user_id": "f23e4567-e89b-12d3-a456-426614174000",
+                        "username": "user",
                         "display_name": "User",
                         "account_type": "artist",
                         "profile_picture": None,
