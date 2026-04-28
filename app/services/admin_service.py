@@ -99,7 +99,9 @@ class AdminService:
                 "track_id": str(comment.track_id),
                 "content": comment.content,
                 "parent_comment_id": (
-                    str(comment.parent_comment_id) if comment.parent_comment_id else None
+                    str(comment.parent_comment_id)
+                    if comment.parent_comment_id
+                    else None
                 ),
             }
 
@@ -116,7 +118,12 @@ class AdminService:
         }
 
     @staticmethod
-    def _serialize_report(report, users_by_id: dict, tracks_by_id: dict, comments_by_id: dict):
+    def _serialize_report(
+        report,
+        users_by_id: dict,
+        tracks_by_id: dict,
+        comments_by_id: dict,
+    ):
         reporter = users_by_id.get(report.reporter_id)
         reviewer = users_by_id.get(report.reviewed_by) if report.reviewed_by else None
 
@@ -326,7 +333,11 @@ class AdminService:
             report.entity_id for report in reports if report.entity_type == "user"
         )
 
-        track_ids = [report.entity_id for report in reports if report.entity_type == "track"]
+        track_ids = [
+            report.entity_id
+            for report in reports
+            if report.entity_type == "track"
+        ]
         comment_ids = [
             report.entity_id for report in reports if report.entity_type == "comment"
         ]
