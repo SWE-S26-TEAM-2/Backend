@@ -482,6 +482,30 @@ class LikeResponse(BaseModel):
     data: LikeData
 
 
+class TrackLikeCountData(BaseModel):
+    track_id: str
+    like_count: int
+
+
+class TrackLikeCountResponse(BaseModel):
+    success: bool
+    data: TrackLikeCountData
+
+
+class TrackEngagementSummaryData(BaseModel):
+    track_id: str
+    like_count: int
+    comment_count: int
+    repost_count: int
+    liked_by_me: Optional[bool] = None
+    reposted_by_me: Optional[bool] = None
+
+
+class TrackEngagementSummaryResponse(BaseModel):
+    success: bool
+    data: TrackEngagementSummaryData
+
+
 class RepostData(BaseModel):
     repost_id: str
     track_id: str
