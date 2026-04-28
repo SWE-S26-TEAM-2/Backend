@@ -61,6 +61,21 @@ class AuthService:
     """
 
     @staticmethod
+    def check_email_availability(db: Session, email: str) -> dict:
+        """
+        Check whether an email address is available for registration.
+
+        Args:
+            db (Session): The database session.
+            email (str): The email address to check.
+
+        Returns:
+            dict: success flag and available bool.
+        """
+        existing = UserRepository.get_by_email(db, email)
+        return {"success": True, "available": existing is None}
+
+    @staticmethod
     def register_user(db: Session, data) -> dict:
         """
         Register a new user account and generate a verification token.

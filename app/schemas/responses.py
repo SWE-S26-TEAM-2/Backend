@@ -28,6 +28,11 @@ class RegisterResponse(BaseModel):
     data: RegisterData
 
 
+class CheckEmailResponse(BaseModel):
+    success: bool
+    available: bool
+
+
 class UserInfo(BaseModel):
     user_id: str
     username: str
