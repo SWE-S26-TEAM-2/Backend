@@ -91,8 +91,7 @@ def test_create_playlist_endpoint_success(monkeypatch):
 
 
 def test_create_playlist_endpoint_without_auth(monkeypatch):
-    """Test POST /playlists/ without authentication returns 401 or 403."""
-    # Clear the override to simulate no user
+    """Test POST /playlists/ without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     response = client.post(
@@ -103,8 +102,7 @@ def test_create_playlist_endpoint_without_auth(monkeypatch):
         },
     )
 
-    # Should fail due to missing authentication
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 

@@ -120,12 +120,12 @@ def test_get_my_profile_endpoint_success(monkeypatch):
 
 
 def test_get_my_profile_endpoint_without_auth(monkeypatch):
-    """Test GET /users/me without authentication returns 401/403."""
+    """Test GET /users/me without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     response = client.get("/users/me")
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
@@ -454,12 +454,12 @@ def test_update_profile_endpoint_partial(monkeypatch):
 
 
 def test_update_profile_endpoint_without_auth(monkeypatch):
-    """Test PATCH /users/me without authentication."""
+    """Test PATCH /users/me without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     response = client.patch("/users/me", json={"display_name": "Hacker"})
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
@@ -574,7 +574,7 @@ def test_upload_avatar_endpoint_invalid_type(monkeypatch):
 
 
 def test_upload_avatar_endpoint_without_auth(monkeypatch):
-    """Test PUT /users/me/avatar without authentication."""
+    """Test PUT /users/me/avatar without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     file_content = b"fake image"
@@ -582,7 +582,7 @@ def test_upload_avatar_endpoint_without_auth(monkeypatch):
         "/users/me/avatar", files={"file": ("avatar.jpg", io.BytesIO(file_content))}
     )
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
@@ -670,12 +670,12 @@ def test_get_social_links_endpoint_empty(monkeypatch):
 
 
 def test_get_social_links_endpoint_without_auth(monkeypatch):
-    """Test GET /users/me/social-links without authentication."""
+    """Test GET /users/me/social-links without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     response = client.get("/users/me/social-links")
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
@@ -743,7 +743,7 @@ def test_update_social_links_endpoint_clear(monkeypatch):
 
 
 def test_update_social_links_endpoint_without_auth(monkeypatch):
-    """Test PUT /users/me/social-links without authentication."""
+    """Test PUT /users/me/social-links without authentication returns 401."""
     app.dependency_overrides.pop(get_current_user, None)
 
     response = client.put(
@@ -753,7 +753,7 @@ def test_update_social_links_endpoint_without_auth(monkeypatch):
         },
     )
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
@@ -829,6 +829,6 @@ def test_change_username_endpoint_without_auth(monkeypatch):
 
     response = client.patch("/users/me/username", json={"username": "newname"})
 
-    assert response.status_code in [401, 403]
+    assert response.status_code == 401
 
     app.dependency_overrides[get_current_user] = lambda: FakeUser()

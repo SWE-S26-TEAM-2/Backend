@@ -20,3 +20,7 @@ venv.bak/
 tmp/
 app/uploads/*
 !app/uploads/.gitkeep
+
+# OS
+.DS_Store
+**/.DS_Store
