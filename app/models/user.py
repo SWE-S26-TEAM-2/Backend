@@ -16,6 +16,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     display_name = Column(String, nullable=False)
     account_type = Column(String, server_default="listener")
+    role = Column(String, server_default="user")
     is_verified = Column(Boolean, server_default="false")
     is_suspended = Column(Boolean, server_default="false")
     CAPTCHA_verified = Column(Boolean, server_default="false")

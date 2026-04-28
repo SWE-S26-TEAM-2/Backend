@@ -20,6 +20,7 @@ from tests.unit.conftest import make_fake_user
 
 def _register_data(
     email="new@example.com",
+    username="newuser",
     password="StrongPass1",
     display_name="NewUser",
     account_type="listener",
@@ -27,6 +28,7 @@ def _register_data(
     """Return a MagicMock that looks like a RegisterRequest."""
     data = MagicMock()
     data.email = email
+    data.username = username
     data.password = password
     data.display_name = display_name
     data.account_type = account_type
@@ -114,6 +116,60 @@ class TestRegisterUser:
 
         with pytest.raises(HTTPException) as exc:
             AuthService.register_user(mock_db, _register_data())
+        assert exc.value.status_code == 409
+
+
+class TestBootstrapAdmin:
+    """Tests for AuthService.bootstrap_admin."""
+
+    @patch("app.services.auth_service.ADMIN_BOOTSTRAP_SECRET", "bootstrap-secret")
+    @patch("app.services.auth_service.UserRepository")
+    @patch("app.services.auth_service.hash_password", return_value="hashed")
+    def test_success(self, mock_hash, mock_user_repo, mock_db):
+        mock_user_repo.count_by_role.return_value = 0
+        mock_user_repo.get_by_email.return_value = None
+        mock_user_repo.get_by_username.return_value = None
+        created_user = make_fake_user(
+            email="admin@example.com",
+            username="adminuser",
+            role="admin",
+            is_verified=True,
+        )
+        mock_user_repo.create.return_value = created_user
+
+        result = AuthService.bootstrap_admin(
+            mock_db,
+            _register_data(
+                email="admin@example.com",
+                username="adminuser",
+                display_name="Admin User",
+            ),
+            "bootstrap-secret",
+        )
+
+        assert result["success"] is True
+        assert result["data"]["role"] == "admin"
+        mock_user_repo.create.assert_called_once()
+
+    @patch("app.services.auth_service.ADMIN_BOOTSTRAP_SECRET", "")
+    def test_unconfigured_secret_raises_503(self, mock_db):
+        with pytest.raises(HTTPException) as exc:
+            AuthService.bootstrap_admin(mock_db, _register_data(), "anything")
+        assert exc.value.status_code == 503
+
+    @patch("app.services.auth_service.ADMIN_BOOTSTRAP_SECRET", "bootstrap-secret")
+    def test_invalid_secret_raises_403(self, mock_db):
+        with pytest.raises(HTTPException) as exc:
+            AuthService.bootstrap_admin(mock_db, _register_data(), "wrong")
+        assert exc.value.status_code == 403
+
+    @patch("app.services.auth_service.ADMIN_BOOTSTRAP_SECRET", "bootstrap-secret")
+    @patch("app.services.auth_service.UserRepository")
+    def test_existing_admin_raises_409(self, mock_user_repo, mock_db):
+        mock_user_repo.count_by_role.return_value = 1
+
+        with pytest.raises(HTTPException) as exc:
+            AuthService.bootstrap_admin(mock_db, _register_data(), "bootstrap-secret")
         assert exc.value.status_code == 409
 
 
