@@ -12,7 +12,9 @@ router = APIRouter(prefix="/feed", tags=["Feed"])
 @router.get("/following", response_model=FeedResponse)
 def get_following_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of tracks per page"),
-    cursor: str | None = Query(None, description="Pagination cursor returned by the previous response"),
+    cursor: str | None = Query(
+        None, description="Pagination cursor returned by the previous response"
+    ),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -22,7 +24,9 @@ def get_following_feed(
 @router.get("/discover", response_model=FeedResponse)
 def get_discover_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of tracks per page"),
-    cursor: str | None = Query(None, description="Pagination cursor returned by the previous response"),
+    cursor: str | None = Query(
+        None, description="Pagination cursor returned by the previous response"
+    ),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):

@@ -24,7 +24,9 @@ class FeedService:
             "description": track.description,
             "genre": track.genre,
             "tags": track.tags or [],
-            "release_date": track.release_date.isoformat() if track.release_date else None,
+            "release_date": (
+                track.release_date.isoformat() if track.release_date else None
+            ),
             "cover_image_url": track.cover_image_url,
             "stream_url": TrackService._get_audio_stream_url(track),
             "duration_seconds": track.duration_seconds,
@@ -59,13 +61,18 @@ class FeedService:
         rows = rows[:limit]
 
         if not rows:
-            return {"success": True, "data": {"items": [], "next_cursor": None, "has_more": False}}
+            return {
+                "success": True,
+                "data": {"items": [], "next_cursor": None, "has_more": False},
+            }
 
         track_ids = [track.track_id for track, _ in rows]
         stats_map = FeedRepository.get_engagement_stats(db, track_ids, user.user_id)
 
         items = [
-            FeedService._serialize_item(track, artist, stats_map.get(track.track_id, _EMPTY_STATS))
+            FeedService._serialize_item(
+                track, artist, stats_map.get(track.track_id, _EMPTY_STATS)
+            )
             for track, artist in rows
         ]
 
@@ -113,13 +120,18 @@ class FeedService:
             )
 
         if not rows:
-            return {"success": True, "data": {"items": [], "next_cursor": None, "has_more": False}}
+            return {
+                "success": True,
+                "data": {"items": [], "next_cursor": None, "has_more": False},
+            }
 
         track_ids = [track.track_id for track, _ in rows]
         stats_map = FeedRepository.get_engagement_stats(db, track_ids, user.user_id)
 
         items = [
-            FeedService._serialize_item(track, artist, stats_map.get(track.track_id, _EMPTY_STATS))
+            FeedService._serialize_item(
+                track, artist, stats_map.get(track.track_id, _EMPTY_STATS)
+            )
             for track, artist in rows
         ]
 

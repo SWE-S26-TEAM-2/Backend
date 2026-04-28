@@ -55,10 +55,7 @@ class FeedRepository:
             query = query.filter(Track.created_at < cursor_dt)
 
         return (
-            query
-            .order_by(Track.created_at.desc().nullslast())
-            .limit(limit + 1)
-            .all()
+            query.order_by(Track.created_at.desc().nullslast()).limit(limit + 1).all()
         )
 
     @staticmethod
@@ -93,11 +90,18 @@ class FeedRepository:
         for genre, cnt in reposted_genres:
             scores[genre] = scores.get(genre, 0) + cnt * 3
 
-        return [g for g, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_n]]
+        return [
+            g
+            for g, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True)[:top_n]
+        ]
 
     @staticmethod
     def get_heard_track_ids(db: Session, user_id) -> set:
-        played = db.query(ListeningHistory.track_id).filter(ListeningHistory.user_id == user_id).all()
+        played = (
+            db.query(ListeningHistory.track_id)
+            .filter(ListeningHistory.user_id == user_id)
+            .all()
+        )
         liked = db.query(Like.track_id).filter(Like.user_id == user_id).all()
         return {r[0] for r in played} | {r[0] for r in liked}
 
@@ -124,8 +128,7 @@ class FeedRepository:
             query = query.filter(~Track.user_id.in_(excluded_user_ids))
 
         return (
-            query
-            .order_by(Track.play_count.desc(), Track.created_at.desc().nullslast())
+            query.order_by(Track.play_count.desc(), Track.created_at.desc().nullslast())
             .offset(offset)
             .limit(limit)
             .all()
@@ -150,8 +153,7 @@ class FeedRepository:
             query = query.filter(~Track.user_id.in_(excluded_user_ids))
 
         return (
-            query
-            .order_by(Track.play_count.desc(), Track.created_at.desc().nullslast())
+            query.order_by(Track.play_count.desc(), Track.created_at.desc().nullslast())
             .offset(offset)
             .limit(limit)
             .all()
@@ -181,14 +183,14 @@ class FeedRepository:
             .all()
         )
         user_liked = {
-            r[0] for r in
-            db.query(Like.track_id)
+            r[0]
+            for r in db.query(Like.track_id)
             .filter(Like.user_id == user_id, Like.track_id.in_(track_ids))
             .all()
         }
         user_reposted = {
-            r[0] for r in
-            db.query(Repost.track_id)
+            r[0]
+            for r in db.query(Repost.track_id)
             .filter(Repost.user_id == user_id, Repost.track_id.in_(track_ids))
             .all()
         }

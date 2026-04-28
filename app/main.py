@@ -67,7 +67,11 @@ def startup():
     existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
     if "created_at" not in existing_columns:
         with engine.connect() as conn:
-            conn.execute(text("ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"))
+            conn.execute(
+                text(
+                    "ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"
+                )
+            )
             conn.commit()
 
 
