@@ -415,18 +415,38 @@ class TrackService:
                 detail="You can only delete your own tracks",
             )
 
-        # optional: remove from playlists
-        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(db, track_id)
-        for pt in playlist_tracks:
-            db.delete(pt)
-
-        db.delete(track)
-        db.commit()
+        TrackService._delete_track_and_relations(db, track)
 
         return {
             "success": True,
             "message": "Track deleted successfully",
         }
+
+    @staticmethod
+    def admin_delete_track(db: Session, track_id: UUID):
+        track = TrackRepository.get_by_id(db, track_id)
+
+        if not track:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Track not found",
+            )
+
+        TrackService._delete_track_and_relations(db, track)
+
+        return track
+
+    @staticmethod
+    def _delete_track_and_relations(db: Session, track):
+        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(
+            db,
+            track.track_id,
+        )
+        for playlist_track in playlist_tracks:
+            db.delete(playlist_track)
+
+        db.delete(track)
+        db.commit()
 
     @staticmethod
     def get_track_by_id(db: Session, track_id: UUID):

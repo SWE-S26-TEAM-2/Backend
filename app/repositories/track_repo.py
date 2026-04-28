@@ -17,6 +17,12 @@ class TrackRepository:
         return db.query(Track).filter(Track.track_id == track_id).first()
 
     @staticmethod
+    def get_by_ids(db: Session, track_ids):
+        if not track_ids:
+            return []
+        return db.query(Track).filter(Track.track_id.in_(track_ids)).all()
+
+    @staticmethod
     def get_by_user_id_and_file_hash(db: Session, user_id, file_hash: str):
         return (
             db.query(Track)

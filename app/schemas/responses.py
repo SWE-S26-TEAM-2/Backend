@@ -529,6 +529,127 @@ class AddCommentResponse(BaseModel):
 # ── Search ─────────────────────────────────────────────────────────────────────
 
 
+class ReportSubmissionData(BaseModel):
+    report_id: str
+    entity_type: str
+    entity_id: str
+    status: str
+    created_at: Optional[datetime] = None
+
+
+class ReportSubmissionResponse(BaseModel):
+    success: bool
+    message: str
+    data: ReportSubmissionData
+
+
+class AdminActorData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+
+
+class AdminReportItem(BaseModel):
+    report_id: str
+    entity_type: str
+    entity_id: str
+    reason: str
+    status: str
+    created_at: Optional[datetime] = None
+    reporter: AdminActorData
+    reviewed_by: Optional[AdminActorData] = None
+    reviewed_at: Optional[datetime] = None
+    resolution_note: Optional[str] = None
+    entity_preview: Optional[dict[str, Any]] = None
+
+
+class AdminReportsData(BaseModel):
+    total: int
+    reports: List[AdminReportItem]
+
+
+class AdminReportsResponse(BaseModel):
+    success: bool
+    data: AdminReportsData
+
+
+class AdminReportReviewResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminReportItem
+
+
+class AdminAnalyticsData(BaseModel):
+    total_users: int
+    total_tracks: int
+    total_comments: int
+    total_reports: int
+    open_reports: int
+    under_review_reports: int
+    resolved_reports: int
+    dismissed_reports: int
+    suspended_users: int
+    active_streams_today: int
+
+
+class AdminAnalyticsResponse(BaseModel):
+    success: bool
+    data: AdminAnalyticsData
+
+
+class AdminUserModerationData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    is_suspended: bool
+    reason: Optional[str] = None
+
+
+class AdminUserModerationResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminUserModerationData
+
+
+class AdminTrackModerationData(BaseModel):
+    track_id: str
+    title: str
+
+
+class AdminTrackModerationResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminTrackModerationData
+
+
+class AdminUserRoleData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    role: str
+
+
+class AdminUserRoleResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminUserRoleData
+
+
+class AdminBootstrapData(BaseModel):
+    user_id: str
+    email: str
+    username: str
+    display_name: str
+    role: str
+    is_verified: bool
+
+
+class AdminBootstrapResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminBootstrapData
+
+
 class SearchUserItem(BaseModel):
     user_id: str
     display_name: str

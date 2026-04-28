@@ -10,6 +10,12 @@ class CommentRepository:
         return db.query(Comment).filter(Comment.comment_id == comment_id).first()
 
     @staticmethod
+    def get_by_ids(db: Session, comment_ids):
+        if not comment_ids:
+            return []
+        return db.query(Comment).filter(Comment.comment_id.in_(comment_ids)).all()
+
+    @staticmethod
     def get_by_track(db: Session, track_id, limit: int = 50, offset: int = 0):
         return (
             db.query(Comment)
@@ -40,3 +46,8 @@ class CommentRepository:
         db.commit()
         db.refresh(comment)
         return comment
+
+    @staticmethod
+    def delete(db: Session, comment: Comment) -> None:
+        db.delete(comment)
+        db.commit()

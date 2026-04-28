@@ -29,6 +29,24 @@ class RegisterRequest(BaseModel):
         return value.lower()
 
 
+class BootstrapAdminRequest(BaseModel):
+    email: EmailStr
+    username: str = Field(min_length=3, max_length=20)
+    password: str = Field(min_length=8)
+    display_name: str
+    account_type: Optional[str] = "listener"
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
+            raise ValueError(
+                "Username may only contain letters, numbers, "
+                "underscores, dots, and hyphens."
+            )
+        return value.lower()
+
+
 class LoginRequest(BaseModel):
     identifier: str
     password: str
