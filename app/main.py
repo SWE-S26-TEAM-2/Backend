@@ -9,6 +9,7 @@ import os
 from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from sqlalchemy import inspect, text  # type: ignore
 
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
@@ -34,6 +35,7 @@ from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
 from app.routers.subscription import router as subscription_router
 from app.routers.track import router as track_router
+from app.routers.feed import router as feed_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
@@ -62,6 +64,12 @@ def startup():
     """Create database tables on startup."""
     Base.metadata.create_all(bind=engine)
 
+    existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
+    if "created_at" not in existing_columns:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"))
+            conn.commit()
+
 
 app.include_router(auth_router)
 app.include_router(user_router)
@@ -72,6 +80,7 @@ app.include_router(playlist_router)
 app.include_router(search_router)
 app.include_router(subscription_router)
 app.include_router(track_router)
+app.include_router(feed_router)
 
 
 @app.get("/")

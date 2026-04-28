@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey  # type: ignore
+from sqlalchemy import JSON, Column, Date, Integer, String, ForeignKey, TIMESTAMP, text  # type: ignore
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
 from app.database.database import Base  # type: ignore
@@ -23,3 +23,4 @@ class Track(Base):
     play_count = Column(Integer, server_default="0")
     duration_seconds = Column(Integer, nullable=True)
     waveform_peaks = Column(JSON, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"), nullable=True)
