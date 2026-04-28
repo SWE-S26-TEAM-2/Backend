@@ -30,8 +30,10 @@ class FakeDB:
 
 
 class FakeUser:
-    def __init__(self, user_id):
+    def __init__(self, user_id, is_premium=True, track_count=0):
         self.user_id = user_id
+        self.is_premium = is_premium
+        self.track_count = track_count
 
 
 class FakeTrack:
