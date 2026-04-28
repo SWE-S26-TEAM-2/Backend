@@ -245,8 +245,7 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "title": "Rock Anthem",
                         "description": "Epic rock song",
                         "stream_url": (
-                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -256,8 +255,7 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "title": "Rock & Roll",
                         "description": "Classic rock",
                         "stream_url": (
-                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -317,8 +315,7 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
                         "title": "Bohemian Rhapsody",
                         "description": "Classic track from Queen",
                         "stream_url": (
-                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -350,8 +347,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "title": "Heartbeat",
                         "description": "Song about heartbeat",
                         "stream_url": (
-                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -361,8 +357,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
                         "stream_url": (
-                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -393,8 +388,7 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
                         "title": "Rock & Roll Revival",
                         "description": "Mix of rock and roll",
                         "stream_url": (
-                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -426,8 +420,7 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
                         "title": "Love Song",
                         "description": "Beautiful love song",
                         "stream_url": (
-                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -458,8 +451,7 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
                         "title": "Jazz Piano",
                         "description": "Smooth jazz",
                         "stream_url": (
-                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -486,8 +478,7 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
                 "title": f"Track {i}",
                 "description": f"Description {i}",
                 "stream_url": (
-                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000"
-                    "/audio"
+                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000" "/audio"
                 ),
                 "visibility": "public",
                 "processing_status": "finished",
@@ -543,8 +534,7 @@ def test_search_users_and_tracks_separately(monkeypatch):
                         "title": "Track",
                         "description": "Desc",
                         "stream_url": (
-                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
