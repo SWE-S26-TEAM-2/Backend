@@ -412,7 +412,9 @@ def test_update_user_role_rejects_self_demote(monkeypatch, mock_db, verified_use
     assert exc.value.detail == "Admins cannot remove their own admin role."
 
 
-def test_update_user_role_rejects_last_admin_demote(monkeypatch, mock_db, verified_user):
+def test_update_user_role_rejects_last_admin_demote(
+    monkeypatch, mock_db, verified_user
+):
     from app.repositories.user_repo import UserRepository
 
     target_admin = make_fake_user(role="admin")

@@ -676,6 +676,7 @@ class AdminBootstrapResponse(BaseModel):
 
 class SearchUserItem(BaseModel):
     user_id: str
+    username: str
     display_name: str
     account_type: str
     profile_picture: Optional[str] = None

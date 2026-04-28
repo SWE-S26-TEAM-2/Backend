@@ -206,9 +206,7 @@ class TestGetTrackLikeCount:
 
     @patch(LIKE_REPO)
     @patch(TRACK_REPO)
-    def test_get_track_like_count_private_track_for_owner(
-        self, mock_track, mock_like
-    ):
+    def test_get_track_like_count_private_track_for_owner(self, mock_track, mock_like):
         db = MagicMock()
         owner_id = uuid.uuid4()
         current_user = make_fake_user(user_id=owner_id)
@@ -274,7 +272,9 @@ class TestGetTrackEngagementSummary:
         mock_like.count_by_track_id.return_value = 8
         mock_comment.count_by_track_id.return_value = 5
         mock_repost.count_by_track_id.return_value = 1
-        mock_like.get_like.return_value = _make_like(current_user.user_id, track.track_id)
+        mock_like.get_like.return_value = _make_like(
+            current_user.user_id, track.track_id
+        )
         mock_repost.get_repost.return_value = _make_repost(
             current_user.user_id, track.track_id
         )
@@ -290,9 +290,7 @@ class TestGetTrackEngagementSummary:
         assert result["data"]["reposted_by_me"] is True
 
     @patch(TRACK_REPO)
-    def test_get_track_engagement_summary_private_track_for_anonymous(
-        self, mock_track
-    ):
+    def test_get_track_engagement_summary_private_track_for_anonymous(self, mock_track):
         db = MagicMock()
         track = _make_track()
         track.visibility = "private"

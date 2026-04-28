@@ -1,6 +1,13 @@
 import uuid
 from sqlalchemy import (  # type: ignore
-    JSON, Column, Date, Integer, String, ForeignKey, TIMESTAMP, text
+    JSON,
+    Column,
+    Date,
+    Integer,
+    String,
+    ForeignKey,
+    TIMESTAMP,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
