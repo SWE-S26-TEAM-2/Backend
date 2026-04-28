@@ -14,6 +14,10 @@ from sqlalchemy.orm import Session  # type: ignore
 from app.models.user import User  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 
+PUBLIC_UPLOAD_BASE_URL = os.environ.get(
+    "PUBLIC_UPLOAD_BASE_URL", "/api/uploads"
+)
+
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 COVER_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
@@ -296,4 +300,5 @@ class UserService:
         with open(absolute_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        return f"/uploads/{subfolder}/{file_name}"
+        base = PUBLIC_UPLOAD_BASE_URL.rstrip("/")
+        return f"{base}/{subfolder}/{file_name}"

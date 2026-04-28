@@ -1,4 +1,5 @@
 fastapi[all]
+stripe
 SQLAlchemy
 psycopg2-binary
 alembic

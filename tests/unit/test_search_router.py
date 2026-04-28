@@ -244,7 +244,10 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "track_id": "723e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock Anthem",
                         "description": "Epic rock song",
-                        "stream_url": "/api/tracks/723e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -252,7 +255,10 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "track_id": "823e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll",
                         "description": "Classic rock",
-                        "stream_url": "/api/tracks/823e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -310,7 +316,10 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
                         "track_id": "923e4567-e89b-12d3-a456-426614174000",
                         "title": "Bohemian Rhapsody",
                         "description": "Classic track from Queen",
-                        "stream_url": "/api/tracks/923e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -340,7 +349,10 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "track_id": "a23e4567-e89b-12d3-a456-426614174000",
                         "title": "Heartbeat",
                         "description": "Song about heartbeat",
-                        "stream_url": "/api/tracks/a23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -348,7 +360,10 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "track_id": "b23e4567-e89b-12d3-a456-426614174000",
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
-                        "stream_url": "/api/tracks/b23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -377,7 +392,10 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
                         "track_id": "c23e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll Revival",
                         "description": "Mix of rock and roll",
-                        "stream_url": "/api/tracks/c23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -407,7 +425,10 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
                         "track_id": "d23e4567-e89b-12d3-a456-426614174000",
                         "title": "Love Song",
                         "description": "Beautiful love song",
-                        "stream_url": "/api/tracks/d23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -436,7 +457,10 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
                         "track_id": "e23e4567-e89b-12d3-a456-426614174000",
                         "title": "Jazz Piano",
                         "description": "Smooth jazz",
-                        "stream_url": "/api/tracks/e23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -461,7 +485,10 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
                 "track_id": f"{i:03d}3e4567-e89b-12d3-a456-426614174000",
                 "title": f"Track {i}",
                 "description": f"Description {i}",
-                "stream_url": f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000/audio",
+                "stream_url": (
+                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000"
+                    "/audio"
+                ),
                 "visibility": "public",
                 "processing_status": "finished",
             }
@@ -515,7 +542,10 @@ def test_search_users_and_tracks_separately(monkeypatch):
                         "track_id": "023e4567-e89b-12d3-a456-426614174000",
                         "title": "Track",
                         "description": "Desc",
-                        "stream_url": "/api/tracks/023e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000"
+                            "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }

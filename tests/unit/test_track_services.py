@@ -30,8 +30,10 @@ class FakeDB:
 
 
 class FakeUser:
-    def __init__(self, user_id):
+    def __init__(self, user_id, is_premium=True, track_count=0):
         self.user_id = user_id
+        self.is_premium = is_premium
+        self.track_count = track_count
 
 
 class FakeTrack:
@@ -208,7 +210,7 @@ def test_create_track_with_cover_image(monkeypatch):
     assert result["success"] is True
     assert len(created_tracks) == 1
     assert result["data"]["cover_image_url"] == created_tracks[0].cover_image_url
-    assert result["data"]["cover_image_url"].startswith("/api/uploads/")
+    assert "/api/uploads/" in result["data"]["cover_image_url"]
     assert result["data"]["cover_image_url"].endswith(".png")
 
     saved_cover = upload_dir / Path(created_tracks[0].cover_image_url).name

@@ -32,6 +32,7 @@ from app.routers.follower import router as follower_router
 from app.routers.notification import router as notification_router
 from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
+from app.routers.subscription import router as subscription_router
 from app.routers.track import router as track_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -69,6 +70,7 @@ app.include_router(notification_router)
 app.include_router(follower_router)
 app.include_router(playlist_router)
 app.include_router(search_router)
+app.include_router(subscription_router)
 app.include_router(track_router)
 
 
