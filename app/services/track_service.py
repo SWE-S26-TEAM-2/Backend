@@ -214,6 +214,15 @@ class TrackService:
         visibility: str = "public",
         cover_image: UploadFile | None = None,
     ):
+        if not user.is_premium and user.track_count >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Free plan limit reached. "
+                    "Upgrade to Premium for unlimited uploads."
+                ),
+            )
+
         if not file.filename:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -309,6 +318,9 @@ class TrackService:
         )
 
         TrackRepository.create(db, track)
+
+        user.track_count = (user.track_count or 0) + 1
+        db.commit()
 
         # Notify all followers about the new track (only if public)
         if visibility == "public":
@@ -420,6 +432,7 @@ class TrackService:
         for pt in playlist_tracks:
             db.delete(pt)
 
+        user.track_count = max(0, (user.track_count or 0) - 1)
         db.delete(track)
         db.commit()
 

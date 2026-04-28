@@ -142,3 +142,20 @@ class UserRepository:
         db.commit()
         db.refresh(user)
         return user
+
+    @staticmethod
+    def set_premium(db: Session, user: User) -> User:
+        """
+        Set the user's is_premium flag to True.
+
+        Args:
+            db (Session): The database session.
+            user (User): The user to upgrade.
+
+        Returns:
+            User: The updated user object.
+        """
+        user.is_premium = True
+        db.commit()
+        db.refresh(user)
+        return user
