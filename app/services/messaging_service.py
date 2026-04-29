@@ -402,11 +402,15 @@ class MessagingService:
                         {
                             "user_id": str(user1.user_id),
                             "display_name": user1.display_name,
+                            "is_premium": user1.is_premium,
+                            "billing_cycle": getattr(user1, "billing_cycle", None),
                             "profile_picture": user1.profile_picture,
                         },
                         {
                             "user_id": str(user2.user_id),
                             "display_name": user2.display_name,
+                            "is_premium": user2.is_premium,
+                            "billing_cycle": getattr(user2, "billing_cycle", None),
                             "profile_picture": user2.profile_picture,
                         },
                     ],

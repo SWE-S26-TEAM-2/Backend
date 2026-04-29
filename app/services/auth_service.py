@@ -362,6 +362,7 @@ class AuthService:
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,
+                    "billing_cycle": getattr(user, "billing_cycle", None),
                 },
             },
         }
@@ -487,6 +488,7 @@ class AuthService:
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,
+                    "billing_cycle": getattr(user, "billing_cycle", None),
                 },
             },
         }
@@ -617,6 +619,7 @@ class AuthService:
                     "display_name": user.display_name,
                     "account_type": user.account_type,
                     "is_premium": user.is_premium,
+                    "billing_cycle": getattr(user, "billing_cycle", None),
                 },
             },
         }

@@ -45,6 +45,8 @@ class FakeUser:
         profile_picture=None,
         follower_count=0,
         is_verified=False,
+        is_premium=False,
+        billing_cycle=None,
     ):
         self.user_id = user_id or uuid.uuid4()
         self.username = username
@@ -53,6 +55,8 @@ class FakeUser:
         self.profile_picture = profile_picture
         self.follower_count = follower_count
         self.is_verified = is_verified
+        self.is_premium = is_premium
+        self.billing_cycle = billing_cycle
 
 
 class FakeTrack:

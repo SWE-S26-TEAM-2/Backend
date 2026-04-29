@@ -129,6 +129,8 @@ class FollowerService:
                     {
                         "user_id": str(user.user_id),
                         "display_name": user.display_name,
+                        "is_premium": user.is_premium,
+                        "billing_cycle": getattr(user, "billing_cycle", None),
                         "profile_picture": user.profile_picture,
                         "followed_at": record.created_at,
                     }
@@ -172,6 +174,8 @@ class FollowerService:
                     {
                         "user_id": str(user.user_id),
                         "display_name": user.display_name,
+                        "is_premium": user.is_premium,
+                        "billing_cycle": getattr(user, "billing_cycle", None),
                         "profile_picture": user.profile_picture,
                         "followed_at": record.created_at,
                     }
@@ -201,6 +205,8 @@ class FollowerService:
                         "user_id": str(user.user_id),
                         "username": user.username,
                         "display_name": user.display_name,
+                        "is_premium": user.is_premium,
+                        "billing_cycle": getattr(user, "billing_cycle", None),
                         "profile_picture": user.profile_picture,
                         "followed_at": record.created_at,
                     }
@@ -244,6 +250,8 @@ class FollowerService:
                         "user_id": str(user.user_id),
                         "username": user.username,
                         "display_name": user.display_name,
+                        "is_premium": user.is_premium,
+                        "billing_cycle": getattr(user, "billing_cycle", None),
                         "profile_picture": user.profile_picture,
                         "followed_at": record.created_at,
                     }
