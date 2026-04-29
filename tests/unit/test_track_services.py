@@ -180,13 +180,12 @@ def test_create_track_with_cover_image(monkeypatch):
     upload_dir = Path("tmp") / "test-track-service-cover" / str(uuid4())
     created_tracks = []
 
-    import app.utils.cloudinary_upload as cld_module
     from app.repositories.track_repo import TrackRepository
     from app.services import track_service
 
     monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
     monkeypatch.setattr(
-        cld_module,
+        track_service,
         "upload_image",
         lambda file, folder, public_id: "https://fake.cloudinary.com/cover.jpg",
     )

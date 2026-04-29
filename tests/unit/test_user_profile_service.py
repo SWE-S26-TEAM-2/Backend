@@ -428,7 +428,7 @@ def test_upload_avatar_success(monkeypatch):
         filename="avatar.jpg", content_type="image/jpeg", size=2000000
     )
 
-    import app.utils.cloudinary_upload as cld_module
+    import app.services.user_service as user_service_module
     from app.repositories.user_repo import UserRepository
 
     def fake_validate(f, max_size, label):
@@ -436,7 +436,7 @@ def test_upload_avatar_success(monkeypatch):
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
     monkeypatch.setattr(
-        cld_module,
+        user_service_module,
         "upload_image",
         lambda file, folder, public_id: "https://fake.cloudinary.com/avatar.jpg",
     )
@@ -505,7 +505,7 @@ def test_upload_cover_success(monkeypatch):
     user = FakeUser()
     file = FakeUploadFile(filename="cover.png", content_type="image/png", size=5000000)
 
-    import app.utils.cloudinary_upload as cld_module
+    import app.services.user_service as user_service_module
     from app.repositories.user_repo import UserRepository
 
     def fake_validate(f, max_size, label):
@@ -513,7 +513,7 @@ def test_upload_cover_success(monkeypatch):
 
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
     monkeypatch.setattr(
-        cld_module,
+        user_service_module,
         "upload_image",
         lambda file, folder, public_id: "https://fake.cloudinary.com/cover.jpg",
     )
