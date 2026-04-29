@@ -13,6 +13,12 @@ from app.repositories.user_repo import UserRepository  # type: ignore
 from app.utils.cloudinary_upload import upload_image
 
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
+
+
+def _safe_image_url(url: str | None) -> str | None:
+    if url and url.startswith("/api/uploads/"):
+        return None
+    return url
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 COVER_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_PROFILE_FIELDS = [
@@ -54,8 +60,8 @@ class UserService:
                 "location": current_user.location,
                 "is_premium": current_user.is_premium,
                 "is_private": current_user.is_private,
-                "profile_picture": current_user.profile_picture,
-                "cover_photo": current_user.cover_photo,
+                "profile_picture": _safe_image_url(current_user.profile_picture),
+                "cover_photo": _safe_image_url(current_user.cover_photo),
                 "follower_count": current_user.follower_count,
                 "following_count": current_user.following_count,
                 "track_count": current_user.track_count,
@@ -80,7 +86,7 @@ class UserService:
                     "user_id": str(user.user_id),
                     "username": user.username,
                     "display_name": user.display_name,
-                    "profile_picture": user.profile_picture,
+                    "profile_picture": _safe_image_url(user.profile_picture),
                     "follower_count": user.follower_count,
                 },
             }
@@ -95,8 +101,8 @@ class UserService:
                 "location": user.location,
                 "account_type": user.account_type,
                 "is_private": user.is_private,
-                "profile_picture": user.profile_picture,
-                "cover_photo": user.cover_photo,
+                "profile_picture": _safe_image_url(user.profile_picture),
+                "cover_photo": _safe_image_url(user.cover_photo),
                 "follower_count": user.follower_count,
                 "following_count": user.following_count,
                 "track_count": user.track_count,
