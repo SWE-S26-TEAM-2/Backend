@@ -127,10 +127,13 @@ class UserRepository:
 
     @staticmethod
     def search_by_name(db: Session, keyword: str, limit: int = 20):
-        """Search users by display_name (case-insensitive)."""
+        """Search users by display_name (case-insensitive), excluding private users."""
         return (
             db.query(User)
-            .filter(User.display_name.ilike(f"%{keyword}%"))
+            .filter(
+                User.display_name.ilike(f"%{keyword}%"),
+                User.is_private.is_(False),
+            )
             .limit(limit)
             .all()
         )

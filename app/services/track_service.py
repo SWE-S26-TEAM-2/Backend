@@ -243,7 +243,7 @@ class TrackService:
 
         if file_size > TRACK_MAX_SIZE:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="File size must not exceed 100 MB",
             )
 
@@ -267,7 +267,7 @@ class TrackService:
 
             if image_size > COVER_IMAGE_MAX_SIZE:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     detail="Cover image must not exceed 10 MB",
                 )
 
