@@ -55,8 +55,7 @@ class EngagementService:
                 actor_id=current_user.user_id,
                 notification_type="like",
                 message=(
-                    f"{current_user.display_name} liked your track"
-                    f' "{track.title}".'
+                    f"{current_user.display_name} liked your track" f' "{track.title}".'
                 ),
                 target_id=track_id,
             )

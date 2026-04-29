@@ -53,10 +53,7 @@ class ReportRepository:
 
         total = query.count()
         reports = (
-            query.order_by(Report.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
+            query.order_by(Report.created_at.desc()).offset(offset).limit(limit).all()
         )
 
         return reports, total
