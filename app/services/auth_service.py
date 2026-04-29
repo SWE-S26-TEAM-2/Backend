@@ -771,6 +771,41 @@ class AuthService:
         return generic_response
 
     @staticmethod
+    def verify_reset_token(db: Session, data) -> dict:
+        """
+        Check whether a password reset token is valid without consuming it.
+
+        Args:
+            db (Session): The database session.
+            data: The VerifyResetTokenRequest schema with token.
+
+        Returns:
+            dict: valid=True if the token exists, is unused, and not expired.
+                  valid=False otherwise, with a descriptive message.
+        """
+        token_record = PasswordResetRepository.get_by_token(db, data.token)
+
+        if not token_record or token_record.used:
+            return {
+                "success": True,
+                "valid": False,
+                "message": "Token is invalid or has already been used.",
+            }
+
+        if token_record.expires_at < datetime.now(timezone.utc):
+            return {
+                "success": True,
+                "valid": False,
+                "message": "Token has expired.",
+            }
+
+        return {
+            "success": True,
+            "valid": True,
+            "message": "Token is valid.",
+        }
+
+    @staticmethod
     def reset_password(db: Session, data) -> dict:
         """
         Reset a user's password using a valid reset token.

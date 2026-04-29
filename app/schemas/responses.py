@@ -33,6 +33,12 @@ class CheckEmailResponse(BaseModel):
     available: bool
 
 
+class VerifyResetTokenResponse(BaseModel):
+    success: bool
+    valid: bool
+    message: str
+
+
 class UserInfo(BaseModel):
     user_id: str
     username: str
