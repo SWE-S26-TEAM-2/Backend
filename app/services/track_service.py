@@ -13,6 +13,7 @@ from pydub import AudioSegment  # type: ignore
 from app.models.track import Track
 from app.models.listening_history import ListeningHistory
 from app.repositories.follow_repo import FollowRepository
+from app.utils.cloudinary_upload import upload_image
 from app.repositories.like_repo import LikeRepository
 from app.repositories.listening_history_repo import ListeningHistoryRepository
 from app.repositories.notification_repo import NotificationRepository
@@ -214,6 +215,15 @@ class TrackService:
         visibility: str = "public",
         cover_image: UploadFile | None = None,
     ):
+        if not user.is_premium and user.track_count >= 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    "Free plan limit reached. "
+                    "Upgrade to Premium for unlimited uploads."
+                ),
+            )
+
         if not file.filename:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -262,14 +272,11 @@ class TrackService:
                     detail="Cover image must not exceed 10 MB",
                 )
 
-            img_extension = os.path.splitext(cover_image.filename)[1] or ".jpg"
-            unique_img_name = f"{uuid4()}{img_extension}"
-            img_path = os.path.join(UPLOAD_DIR, unique_img_name)
-
-            with open(img_path, "wb") as img_buffer:
-                img_buffer.write(cover_image.file.read())
-
-            cover_image_url = TrackService._get_upload_url(unique_img_name)
+            cover_image_url = upload_image(
+                cover_image.file,
+                folder="streamline/tracks",
+                public_id=str(uuid4()),
+            )
 
         file_hash = TrackService._calculate_file_hash(file.file)
         existing_track = TrackRepository.get_by_user_id_and_file_hash(
@@ -309,6 +316,9 @@ class TrackService:
         )
 
         TrackRepository.create(db, track)
+
+        user.track_count = (user.track_count or 0) + 1
+        db.commit()
 
         # Notify all followers about the new track (only if public)
         if visibility == "public":
@@ -415,18 +425,39 @@ class TrackService:
                 detail="You can only delete your own tracks",
             )
 
-        # optional: remove from playlists
-        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(db, track_id)
-        for pt in playlist_tracks:
-            db.delete(pt)
-
-        db.delete(track)
-        db.commit()
+        user.track_count = max(0, (user.track_count or 0) - 1)
+        TrackService._delete_track_and_relations(db, track)
 
         return {
             "success": True,
             "message": "Track deleted successfully",
         }
+
+    @staticmethod
+    def admin_delete_track(db: Session, track_id: UUID):
+        track = TrackRepository.get_by_id(db, track_id)
+
+        if not track:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Track not found",
+            )
+
+        TrackService._delete_track_and_relations(db, track)
+
+        return track
+
+    @staticmethod
+    def _delete_track_and_relations(db: Session, track):
+        playlist_tracks = PlaylistRepository.get_playlist_tracks_by_track(
+            db,
+            track.track_id,
+        )
+        for playlist_track in playlist_tracks:
+            db.delete(playlist_track)
+
+        db.delete(track)
+        db.commit()
 
     @staticmethod
     def get_track_by_id(db: Session, track_id: UUID):

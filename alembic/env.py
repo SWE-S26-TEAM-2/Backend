@@ -18,6 +18,12 @@ from app.models.block import Block  # noqa: F401
 from app.models.conversation import Conversation  # noqa: F401
 from app.models.message import Message  # noqa: F401
 from app.models.listening_history import ListeningHistory  # noqa: F401
+from app.models.comment import Comment  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
+from app.models.playlist_like import PlaylistLike  # noqa: F401
+from app.models.like import Like  # noqa: F401
+from app.models.repost import Repost  # noqa: F401
+from app.models.report import Report  # noqa: F401
 
 config = context.config
 

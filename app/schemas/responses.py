@@ -1,12 +1,18 @@
 from datetime import datetime
 from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # ── Shared ─────────────────────────────────────────────────────────────────────
 
 
 class MessageResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "message": "Operation completed successfully."}
+        }
+    )
+
     success: bool
     message: str
 
@@ -15,6 +21,18 @@ class MessageResponse(BaseModel):
 
 
 class RegisterData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "email": "user@example.com",
+                "username": "john_doe",
+                "display_name": "John Doe",
+                "is_verified": False,
+            }
+        }
+    )
+
     user_id: str
     email: str
     username: str
@@ -23,12 +41,67 @@ class RegisterData(BaseModel):
 
 
 class RegisterResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Registration successful. Please verify your email.",
+                "data": {
+                    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "email": "user@example.com",
+                    "username": "john_doe",
+                    "display_name": "John Doe",
+                    "is_verified": False,
+                },
+            }
+        }
+    )
+
     success: bool
     message: str
     data: RegisterData
 
 
+class CheckEmailResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"success": True, "available": True}}
+    )
+
+    success: bool
+    available: bool
+
+
+class VerifyResetTokenResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "valid": True, "message": "Token is valid."}
+        }
+    )
+
+    success: bool
+    valid: bool
+    message: str
+
+
+_USER_INFO_EXAMPLE = {
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "username": "john_doe",
+    "display_name": "John Doe",
+    "account_type": "listener",
+    "is_premium": False,
+}
+
+_TOKEN_EXAMPLE = {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+    "token_type": "bearer",
+    "expires_in": 1800,
+}
+
+
 class UserInfo(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": _USER_INFO_EXAMPLE})
+
     user_id: str
     username: str
     display_name: str
@@ -37,6 +110,10 @@ class UserInfo(BaseModel):
 
 
 class LoginData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {**_TOKEN_EXAMPLE, "user": _USER_INFO_EXAMPLE}}
+    )
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -45,11 +122,30 @@ class LoginData(BaseModel):
 
 
 class LoginResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "data": {**_TOKEN_EXAMPLE, "user": _USER_INFO_EXAMPLE},
+            }
+        }
+    )
+
     success: bool
     data: LoginData
 
 
 class SocialLoginData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                **_TOKEN_EXAMPLE,
+                "is_new_user": False,
+                "user": _USER_INFO_EXAMPLE,
+            }
+        }
+    )
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -59,11 +155,26 @@ class SocialLoginData(BaseModel):
 
 
 class SocialLoginResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "data": {
+                    **_TOKEN_EXAMPLE,
+                    "is_new_user": False,
+                    "user": _USER_INFO_EXAMPLE,
+                },
+            }
+        }
+    )
+
     success: bool
     data: SocialLoginData
 
 
 class RefreshData(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": _TOKEN_EXAMPLE})
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -71,6 +182,12 @@ class RefreshData(BaseModel):
 
 
 class RefreshResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "data": _TOKEN_EXAMPLE}
+        }
+    )
+
     success: bool
     data: RefreshData
 
@@ -482,6 +599,30 @@ class LikeResponse(BaseModel):
     data: LikeData
 
 
+class TrackLikeCountData(BaseModel):
+    track_id: str
+    like_count: int
+
+
+class TrackLikeCountResponse(BaseModel):
+    success: bool
+    data: TrackLikeCountData
+
+
+class TrackEngagementSummaryData(BaseModel):
+    track_id: str
+    like_count: int
+    comment_count: int
+    repost_count: int
+    liked_by_me: Optional[bool] = None
+    reposted_by_me: Optional[bool] = None
+
+
+class TrackEngagementSummaryResponse(BaseModel):
+    success: bool
+    data: TrackEngagementSummaryData
+
+
 class RepostData(BaseModel):
     repost_id: str
     track_id: str
@@ -529,13 +670,136 @@ class AddCommentResponse(BaseModel):
 # ── Search ─────────────────────────────────────────────────────────────────────
 
 
+class ReportSubmissionData(BaseModel):
+    report_id: str
+    entity_type: str
+    entity_id: str
+    status: str
+    created_at: Optional[datetime] = None
+
+
+class ReportSubmissionResponse(BaseModel):
+    success: bool
+    message: str
+    data: ReportSubmissionData
+
+
+class AdminActorData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+
+
+class AdminReportItem(BaseModel):
+    report_id: str
+    entity_type: str
+    entity_id: str
+    reason: str
+    status: str
+    created_at: Optional[datetime] = None
+    reporter: AdminActorData
+    reviewed_by: Optional[AdminActorData] = None
+    reviewed_at: Optional[datetime] = None
+    resolution_note: Optional[str] = None
+    entity_preview: Optional[dict[str, Any]] = None
+
+
+class AdminReportsData(BaseModel):
+    total: int
+    reports: List[AdminReportItem]
+
+
+class AdminReportsResponse(BaseModel):
+    success: bool
+    data: AdminReportsData
+
+
+class AdminReportReviewResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminReportItem
+
+
+class AdminAnalyticsData(BaseModel):
+    total_users: int
+    total_tracks: int
+    total_comments: int
+    total_reports: int
+    open_reports: int
+    under_review_reports: int
+    resolved_reports: int
+    dismissed_reports: int
+    suspended_users: int
+    active_streams_today: int
+
+
+class AdminAnalyticsResponse(BaseModel):
+    success: bool
+    data: AdminAnalyticsData
+
+
+class AdminUserModerationData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    is_suspended: bool
+    reason: Optional[str] = None
+
+
+class AdminUserModerationResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminUserModerationData
+
+
+class AdminTrackModerationData(BaseModel):
+    track_id: str
+    title: str
+
+
+class AdminTrackModerationResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminTrackModerationData
+
+
+class AdminUserRoleData(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    role: str
+
+
+class AdminUserRoleResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminUserRoleData
+
+
+class AdminBootstrapData(BaseModel):
+    user_id: str
+    email: str
+    username: str
+    display_name: str
+    role: str
+    is_verified: bool
+
+
+class AdminBootstrapResponse(BaseModel):
+    success: bool
+    message: str
+    data: AdminBootstrapData
+
+
 class SearchUserItem(BaseModel):
     user_id: str
+    username: str
     display_name: str
     account_type: str
     profile_picture: Optional[str] = None
     follower_count: int
     is_verified: bool
+    is_following: bool = False
 
 
 class SearchUsersData(BaseModel):
@@ -544,6 +808,15 @@ class SearchUsersData(BaseModel):
 
 class SearchUsersResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchUsersData
+
+
+class SearchUsersOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchUsersData
 
 
@@ -566,6 +839,15 @@ class SearchTracksData(BaseModel):
 
 class SearchTracksResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchTracksData
+
+
+class SearchTracksOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchTracksData
 
 
@@ -584,6 +866,15 @@ class SearchPlaylistsData(BaseModel):
 
 class SearchPlaylistsResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchPlaylistsData
+
+
+class SearchPlaylistsOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchPlaylistsData
 
 
@@ -711,3 +1002,61 @@ class MessageReadResponse(BaseModel):
 class UnreadMessageCountResponse(BaseModel):
     success: bool
     data: UnreadCountData
+
+
+# ── Feed ───────────────────────────────────────────────────────────────────────
+
+
+class FeedArtist(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    profile_picture: Optional[str] = None
+    follower_count: int
+
+
+class FeedTrackItem(BaseModel):
+    track_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    tags: Optional[List[Any]] = None
+    release_date: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    stream_url: str
+    duration_seconds: Optional[int] = None
+    play_count: int
+    like_count: int
+    repost_count: int
+    comment_count: int
+    is_liked: bool
+    is_reposted: bool
+    created_at: Optional[datetime] = None
+    artist: FeedArtist
+
+
+class FeedData(BaseModel):
+    items: List[FeedTrackItem]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
+class FeedResponse(BaseModel):
+    success: bool
+    query_time_ms: Optional[float] = None
+    data: FeedData
+
+
+class CachedFeedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    cache_hit: bool
+    query_time_ms: float
+    cached_at: Optional[str] = None
+    cache_ttl_seconds: int
+    data: FeedData
+
+
+class CacheClearResponse(BaseModel):
+    success: bool
+    message: str

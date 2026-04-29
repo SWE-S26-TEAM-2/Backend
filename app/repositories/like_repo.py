@@ -40,3 +40,7 @@ class LikeRepository:
             query = query.filter(Track.visibility == "public")
 
         return query.all()
+
+    @staticmethod
+    def count_by_track_id(db: Session, track_id) -> int:
+        return int(db.query(Like).filter(Like.track_id == track_id).count())

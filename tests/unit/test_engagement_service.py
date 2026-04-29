@@ -15,6 +15,7 @@ def _make_track(owner_id=None):
     track.track_id = uuid.uuid4()
     track.user_id = owner_id or uuid.uuid4()
     track.title = "Test Track"
+    track.visibility = "public"
     return track
 
 
@@ -163,6 +164,170 @@ class TestUnlikeTrack:
         with pytest.raises(HTTPException) as exc:
             EngagementService.unlike_track(db, user, track.track_id)
         assert exc.value.status_code == 400
+
+
+class TestGetTrackLikeCount:
+
+    @patch(LIKE_REPO)
+    @patch(TRACK_REPO)
+    def test_get_track_like_count_success(self, mock_track, mock_like):
+        db = MagicMock()
+        track = _make_track()
+        mock_track.get_by_id.return_value = track
+        mock_like.count_by_track_id.return_value = 7
+
+        result = EngagementService.get_track_like_count(db, track.track_id)
+
+        assert result["success"] is True
+        assert result["data"]["track_id"] == str(track.track_id)
+        assert result["data"]["like_count"] == 7
+        mock_like.count_by_track_id.assert_called_once_with(db, track.track_id)
+
+    @patch(TRACK_REPO)
+    def test_get_track_like_count_not_found(self, mock_track):
+        db = MagicMock()
+        mock_track.get_by_id.return_value = None
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.get_track_like_count(db, uuid.uuid4())
+        assert exc.value.status_code == 404
+
+    @patch(TRACK_REPO)
+    def test_get_track_like_count_private_track_for_anonymous(self, mock_track):
+        db = MagicMock()
+        track = _make_track()
+        track.visibility = "private"
+        mock_track.get_by_id.return_value = track
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.get_track_like_count(db, track.track_id)
+        assert exc.value.status_code == 403
+        assert exc.value.detail == "Track is private."
+
+    @patch(LIKE_REPO)
+    @patch(TRACK_REPO)
+    def test_get_track_like_count_private_track_for_owner(self, mock_track, mock_like):
+        db = MagicMock()
+        owner_id = uuid.uuid4()
+        current_user = make_fake_user(user_id=owner_id)
+        track = _make_track(owner_id=owner_id)
+        track.visibility = "private"
+        mock_track.get_by_id.return_value = track
+        mock_like.count_by_track_id.return_value = 3
+
+        result = EngagementService.get_track_like_count(
+            db, track.track_id, current_user
+        )
+
+        assert result["data"]["like_count"] == 3
+
+
+class TestGetTrackEngagementSummary:
+
+    @patch(REPOST_REPO)
+    @patch(COMMENT_REPO)
+    @patch(LIKE_REPO)
+    @patch(TRACK_REPO)
+    def test_get_track_engagement_summary_success_for_anonymous(
+        self,
+        mock_track,
+        mock_like,
+        mock_comment,
+        mock_repost,
+    ):
+        db = MagicMock()
+        track = _make_track()
+        mock_track.get_by_id.return_value = track
+        mock_like.count_by_track_id.return_value = 11
+        mock_comment.count_by_track_id.return_value = 4
+        mock_repost.count_by_track_id.return_value = 2
+
+        result = EngagementService.get_track_engagement_summary(db, track.track_id)
+
+        assert result["success"] is True
+        assert result["data"] == {
+            "track_id": str(track.track_id),
+            "like_count": 11,
+            "comment_count": 4,
+            "repost_count": 2,
+            "liked_by_me": None,
+            "reposted_by_me": None,
+        }
+
+    @patch(REPOST_REPO)
+    @patch(COMMENT_REPO)
+    @patch(LIKE_REPO)
+    @patch(TRACK_REPO)
+    def test_get_track_engagement_summary_success_for_authenticated_user(
+        self,
+        mock_track,
+        mock_like,
+        mock_comment,
+        mock_repost,
+    ):
+        db = MagicMock()
+        current_user = make_fake_user()
+        track = _make_track()
+        mock_track.get_by_id.return_value = track
+        mock_like.count_by_track_id.return_value = 8
+        mock_comment.count_by_track_id.return_value = 5
+        mock_repost.count_by_track_id.return_value = 1
+        mock_like.get_like.return_value = _make_like(
+            current_user.user_id, track.track_id
+        )
+        mock_repost.get_repost.return_value = _make_repost(
+            current_user.user_id, track.track_id
+        )
+
+        result = EngagementService.get_track_engagement_summary(
+            db, track.track_id, current_user
+        )
+
+        assert result["data"]["like_count"] == 8
+        assert result["data"]["comment_count"] == 5
+        assert result["data"]["repost_count"] == 1
+        assert result["data"]["liked_by_me"] is True
+        assert result["data"]["reposted_by_me"] is True
+
+    @patch(TRACK_REPO)
+    def test_get_track_engagement_summary_private_track_for_anonymous(self, mock_track):
+        db = MagicMock()
+        track = _make_track()
+        track.visibility = "private"
+        mock_track.get_by_id.return_value = track
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.get_track_engagement_summary(db, track.track_id)
+        assert exc.value.status_code == 403
+        assert exc.value.detail == "Track is private."
+
+
+class TestPrivateTrackAccess:
+
+    @patch(TRACK_REPO)
+    def test_like_private_track_forbidden_for_non_owner(self, mock_track):
+        db = MagicMock()
+        current_user = make_fake_user()
+        track = _make_track()
+        track.visibility = "private"
+        mock_track.get_by_id.return_value = track
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.like_track(db, current_user, track.track_id)
+        assert exc.value.status_code == 403
+        assert exc.value.detail == "Track is private."
+
+    @patch(TRACK_REPO)
+    def test_get_comments_private_track_for_anonymous(self, mock_track):
+        db = MagicMock()
+        track = _make_track()
+        track.visibility = "private"
+        mock_track.get_by_id.return_value = track
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.get_track_comments(db, track.track_id)
+        assert exc.value.status_code == 403
+        assert exc.value.detail == "Track is private."
 
 
 # ── Repost Tests ──────────────────────────────────────────

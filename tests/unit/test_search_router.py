@@ -6,13 +6,23 @@ Tests all API endpoints with TestClient, including:
 - GET /search/tracks?keyword=... - Search tracks
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.search_service import SearchService
 
 client = TestClient(app)
+
+FAKE_USER_ID = uuid.UUID("123e4567-e89b-12d3-a456-426614174999")
+
+
+class FakeUser:
+    user_id = FAKE_USER_ID
+    username = "testuser"
 
 
 class DummyDB:
@@ -29,6 +39,7 @@ def override_get_db():
 def setup_module(module):
     """Setup test fixtures before running tests."""
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
 
 def teardown_module(module):
@@ -44,13 +55,14 @@ def teardown_module(module):
 def test_search_users_endpoint_success(monkeypatch):
     """Test GET /search/users?keyword=test returns 200 with results."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                        "username": "johndoe",
                         "display_name": "John Doe",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/pic.jpg",
@@ -59,6 +71,7 @@ def test_search_users_endpoint_success(monkeypatch):
                     },
                     {
                         "user_id": "223e4567-e89b-12d3-a456-426614174000",
+                        "username": "janesmith",
                         "display_name": "Jane Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -84,7 +97,7 @@ def test_search_users_endpoint_success(monkeypatch):
 def test_search_users_endpoint_no_results(monkeypatch):
     """Test GET /search/users?keyword=xyzabc returns empty results."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {"users": []},
@@ -111,13 +124,14 @@ def test_search_users_endpoint_missing_keyword(monkeypatch):
 def test_search_users_endpoint_single_result(monkeypatch):
     """Test GET /search/users?keyword=alice returns single result."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": "323e4567-e89b-12d3-a456-426614174000",
+                        "username": "alicejohnson",
                         "display_name": "Alice Johnson",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/alice.jpg",
@@ -141,13 +155,14 @@ def test_search_users_endpoint_single_result(monkeypatch):
 def test_search_users_endpoint_special_characters_in_keyword(monkeypatch):
     """Test GET /search/users with special characters in keyword."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": "423e4567-e89b-12d3-a456-426614174000",
+                        "username": "userco",
                         "display_name": "User & Co",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -171,7 +186,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
     """Test GET /search/users is case-insensitive."""
     search_calls = []
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         search_calls.append(keyword)
         return {
             "success": True,
@@ -179,6 +194,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
                 "users": [
                     {
                         "user_id": "523e4567-e89b-12d3-a456-426614174000",
+                        "username": "bobdylan",
                         "display_name": "Bob Dylan",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -201,13 +217,14 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
 def test_search_users_endpoint_whitespace_keyword(monkeypatch):
     """Test GET /search/users with whitespace in keyword."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": "623e4567-e89b-12d3-a456-426614174000",
+                        "username": "johnsmith",
                         "display_name": "John Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -244,7 +261,9 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "track_id": "723e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock Anthem",
                         "description": "Epic rock song",
-                        "stream_url": "/api/tracks/723e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -252,7 +271,9 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "track_id": "823e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll",
                         "description": "Classic rock",
-                        "stream_url": "/api/tracks/823e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -310,7 +331,9 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
                         "track_id": "923e4567-e89b-12d3-a456-426614174000",
                         "title": "Bohemian Rhapsody",
                         "description": "Classic track from Queen",
-                        "stream_url": "/api/tracks/923e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -340,7 +363,9 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "track_id": "a23e4567-e89b-12d3-a456-426614174000",
                         "title": "Heartbeat",
                         "description": "Song about heartbeat",
-                        "stream_url": "/api/tracks/a23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -348,7 +373,9 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "track_id": "b23e4567-e89b-12d3-a456-426614174000",
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
-                        "stream_url": "/api/tracks/b23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     },
@@ -377,7 +404,9 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
                         "track_id": "c23e4567-e89b-12d3-a456-426614174000",
                         "title": "Rock & Roll Revival",
                         "description": "Mix of rock and roll",
-                        "stream_url": "/api/tracks/c23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -407,7 +436,9 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
                         "track_id": "d23e4567-e89b-12d3-a456-426614174000",
                         "title": "Love Song",
                         "description": "Beautiful love song",
-                        "stream_url": "/api/tracks/d23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -436,7 +467,9 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
                         "track_id": "e23e4567-e89b-12d3-a456-426614174000",
                         "title": "Jazz Piano",
                         "description": "Smooth jazz",
-                        "stream_url": "/api/tracks/e23e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }
@@ -461,7 +494,9 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
                 "track_id": f"{i:03d}3e4567-e89b-12d3-a456-426614174000",
                 "title": f"Track {i}",
                 "description": f"Description {i}",
-                "stream_url": f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000/audio",
+                "stream_url": (
+                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000" "/audio"
+                ),
                 "visibility": "public",
                 "processing_status": "finished",
             }
@@ -489,13 +524,14 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
 def test_search_users_and_tracks_separately(monkeypatch):
     """Test that user and track searches can be called separately."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": "f23e4567-e89b-12d3-a456-426614174000",
+                        "username": "user",
                         "display_name": "User",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -515,7 +551,9 @@ def test_search_users_and_tracks_separately(monkeypatch):
                         "track_id": "023e4567-e89b-12d3-a456-426614174000",
                         "title": "Track",
                         "description": "Desc",
-                        "stream_url": "/api/tracks/023e4567-e89b-12d3-a456-426614174000/audio",
+                        "stream_url": (
+                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000" "/audio"
+                        ),
                         "visibility": "public",
                         "processing_status": "finished",
                     }

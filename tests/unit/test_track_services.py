@@ -30,8 +30,10 @@ class FakeDB:
 
 
 class FakeUser:
-    def __init__(self, user_id):
+    def __init__(self, user_id, is_premium=True, track_count=0):
         self.user_id = user_id
+        self.is_premium = is_premium
+        self.track_count = track_count
 
 
 class FakeTrack:
@@ -183,6 +185,11 @@ def test_create_track_with_cover_image(monkeypatch):
 
     monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
     monkeypatch.setattr(
+        track_service,
+        "upload_image",
+        lambda file, folder, public_id: "https://fake.cloudinary.com/cover.jpg",
+    )
+    monkeypatch.setattr(
         TrackRepository,
         "get_by_user_id_and_file_hash",
         lambda db_arg, uid, file_hash: None,
@@ -207,13 +214,10 @@ def test_create_track_with_cover_image(monkeypatch):
 
     assert result["success"] is True
     assert len(created_tracks) == 1
+    assert result["data"]["cover_image_url"] == "https://fake.cloudinary.com/cover.jpg"
     assert result["data"]["cover_image_url"] == created_tracks[0].cover_image_url
-    assert result["data"]["cover_image_url"].startswith("/api/uploads/")
-    assert result["data"]["cover_image_url"].endswith(".png")
 
-    saved_cover = upload_dir / Path(created_tracks[0].cover_image_url).name
     saved_audio = upload_dir / Path(created_tracks[0].file_url).name
-    assert saved_cover.read_bytes() == b"fake image content"
     assert saved_audio.read_bytes() == b"fake mp3 content"
 
 
@@ -669,6 +673,29 @@ def test_delete_track_forbidden(monkeypatch):
 
     assert exc.value.status_code == 403
     assert exc.value.detail == "You can only delete your own tracks"
+
+
+def test_admin_delete_track_success(monkeypatch):
+    db = FakeDB()
+    track_id = uuid4()
+    track = FakeTrack(track_id=track_id, user_id=uuid4())
+
+    from app.repositories.track_repo import TrackRepository
+    from app.repositories.playlist_repo import PlaylistRepository
+
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db_arg, tid: track)
+    monkeypatch.setattr(
+        PlaylistRepository,
+        "get_playlist_tracks_by_track",
+        lambda db_arg, tid: ["pt1"],
+    )
+
+    result = TrackService.admin_delete_track(db, track_id)
+
+    assert result == track
+    assert len(db.deleted) == 2
+    assert track in db.deleted
+    assert db.committed is True
 
 
 def test_get_track_details_rejects_private_for_non_owner(monkeypatch):

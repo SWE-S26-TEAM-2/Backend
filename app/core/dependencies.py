@@ -85,3 +85,16 @@ def get_optional_current_user(
         return None
 
     return get_current_user(token=token, db=db)
+
+
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Return the current user only when they have admin privileges.
+    """
+    if getattr(current_user, "role", None) != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required.",
+        )
+
+    return current_user

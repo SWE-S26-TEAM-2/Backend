@@ -1,3 +1,4 @@
+from app.models.follow import Follow
 from app.repositories.playlist_repo import PlaylistRepository
 from app.repositories.track_repo import TrackRepository
 from app.repositories.user_repo import UserRepository
@@ -6,19 +7,35 @@ from app.repositories.user_repo import UserRepository
 class SearchService:
 
     @staticmethod
-    def search_users(db, keyword: str):
+    def search_users(db, keyword: str, current_user_id=None):
         users = UserRepository.search_by_name(db, keyword)
+
+        following_ids: set = set()
+        if current_user_id and users:
+            target_ids = [u.user_id for u in users]
+            rows = (
+                db.query(Follow.following_id)
+                .filter(
+                    Follow.follower_id == current_user_id,
+                    Follow.following_id.in_(target_ids),
+                )
+                .all()
+            )
+            following_ids = {r[0] for r in rows}
+
         return {
             "success": True,
             "data": {
                 "users": [
                     {
                         "user_id": str(u.user_id),
+                        "username": u.username,
                         "display_name": u.display_name,
                         "account_type": u.account_type,
                         "profile_picture": u.profile_picture,
                         "follower_count": u.follower_count,
                         "is_verified": u.is_verified,
+                        "is_following": u.user_id in following_ids,
                     }
                     for u in users
                 ]

@@ -39,6 +39,7 @@ class FakeUser:
     def __init__(
         self,
         user_id=None,
+        username="testuser",
         display_name="Test User",
         account_type="listener",
         profile_picture=None,
@@ -46,6 +47,7 @@ class FakeUser:
         is_verified=False,
     ):
         self.user_id = user_id or uuid.uuid4()
+        self.username = username
         self.display_name = display_name
         self.account_type = account_type
         self.profile_picture = profile_picture

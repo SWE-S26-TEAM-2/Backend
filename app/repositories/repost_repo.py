@@ -14,6 +14,10 @@ class RepostRepository:
         )
 
     @staticmethod
+    def count_by_track_id(db: Session, track_id) -> int:
+        return int(db.query(Repost).filter(Repost.track_id == track_id).count())
+
+    @staticmethod
     def create(db: Session, user_id, track_id) -> Repost:
         repost = Repost(user_id=user_id, track_id=track_id)
         db.add(repost)

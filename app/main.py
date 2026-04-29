@@ -9,9 +9,13 @@ import os
 from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from sqlalchemy import inspect, text  # type: ignore
 
+from app.core.config import AUTO_CREATE_TABLES
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
+    comment,
+    conversation,
     email_verification,
     password_reset,
     social_link,
@@ -22,18 +26,28 @@ from app.models import (  # noqa: F401
     playlist_like,
     follow,
     block,
+    like,
     listening_history,
+    message,
+    notification,
     refresh_token,
+    report,
+    repost,
 )
+from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router  # type: ignore
+from app.routers.engagement import router as engagement_router
 from app.routers.user_profile import router as user_router  # type: ignore
 from app.routers.messaging import router as messaging_router
 from app.routers.follower import router as follower_router
 from app.routers.notification import router as notification_router
 from app.routers.playlist import router as playlist_router
 from app.routers.search import router as search_router
+from app.routers.search_performance import router as search_performance_router
+from app.routers.subscription import router as subscription_router
 from app.routers.track import router as track_router
-from app.routers.engagement import router as engagement_router
+from app.routers.feed import router as feed_router
+from app.routers.feed_cached import router as feed_cached_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
@@ -60,7 +74,41 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 @app.on_event("startup")
 def startup():
     """Create database tables on startup."""
-    Base.metadata.create_all(bind=engine)
+    if AUTO_CREATE_TABLES:
+        Base.metadata.create_all(bind=engine)
+
+    existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
+    if "created_at" not in existing_columns:
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"
+                )
+            )
+            conn.commit()
+
+    # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
+    with engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
+                "ON users USING gin(display_name gin_trgm_ops)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
+                "ON tracks USING gin(title gin_trgm_ops)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
+                "ON playlists USING gin(name gin_trgm_ops)"
+            )
+        )
+        conn.commit()
 
 
 app.include_router(auth_router)
@@ -70,8 +118,13 @@ app.include_router(notification_router)
 app.include_router(follower_router)
 app.include_router(playlist_router)
 app.include_router(search_router)
+app.include_router(search_performance_router)
+app.include_router(subscription_router)
 app.include_router(track_router)
+app.include_router(feed_router)
+app.include_router(feed_cached_router)
 app.include_router(engagement_router)
+app.include_router(admin_router)
 
 
 @app.get("/")

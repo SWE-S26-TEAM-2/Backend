@@ -33,6 +33,7 @@ from app.core.config import (
     GOOGLE_CLIENT_ID_WEB,
     FACEBOOK_APP_ID,
     FACEBOOK_APP_SECRET,
+    ADMIN_BOOTSTRAP_SECRET,
 )  # type: ignore
 import requests
 from app.repositories.refresh_token_repo import RefreshTokenRepository  # type: ignore
@@ -58,6 +59,21 @@ class AuthService:
     """
     Business logic layer for all authentication operations.
     """
+
+    @staticmethod
+    def check_email_availability(db: Session, email: str) -> dict:
+        """
+        Check whether an email address is available for registration.
+
+        Args:
+            db (Session): The database session.
+            email (str): The email address to check.
+
+        Returns:
+            dict: success flag and available bool.
+        """
+        existing = UserRepository.get_by_email(db, email)
+        return {"success": True, "available": existing is None}
 
     @staticmethod
     def register_user(db: Session, data) -> dict:
@@ -118,6 +134,73 @@ class AuthService:
                 "username": new_user.username,
                 "display_name": new_user.display_name,
                 "is_verified": new_user.is_verified,
+            },
+        }
+
+    @staticmethod
+    def bootstrap_admin(db: Session, data, bootstrap_secret: str) -> dict:
+        """
+        Create the very first admin account using a bootstrap secret.
+
+        This endpoint is intended for one-time environment setup. It is
+        disabled as soon as at least one admin account exists.
+        """
+        if not ADMIN_BOOTSTRAP_SECRET:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Admin bootstrap is not configured.",
+            )
+
+        if bootstrap_secret != ADMIN_BOOTSTRAP_SECRET:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid admin bootstrap secret.",
+            )
+
+        if UserRepository.count_by_role(db, "admin") > 0:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Admin bootstrap has already been completed.",
+            )
+
+        existing_user = UserRepository.get_by_email(db, data.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            )
+
+        existing_username = UserRepository.get_by_username(db, data.username)
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+
+        hashed = hash_password(data.password)
+
+        admin_user = User(
+            email=data.email,
+            username=data.username.lower(),
+            password_hash=hashed,
+            display_name=data.display_name,
+            account_type=data.account_type or "listener",
+            role="admin",
+            is_verified=True,
+        )
+
+        UserRepository.create(db, admin_user)
+
+        return {
+            "success": True,
+            "message": "Initial admin account created successfully.",
+            "data": {
+                "user_id": str(admin_user.user_id),
+                "email": admin_user.email,
+                "username": admin_user.username,
+                "display_name": admin_user.display_name,
+                "role": admin_user.role,
+                "is_verified": bool(admin_user.is_verified),
             },
         }
 
@@ -686,6 +769,41 @@ class AuthService:
         send_password_reset_email(user.email, user.display_name, reset_record.token)
 
         return generic_response
+
+    @staticmethod
+    def verify_reset_token(db: Session, data) -> dict:
+        """
+        Check whether a password reset token is valid without consuming it.
+
+        Args:
+            db (Session): The database session.
+            data: The VerifyResetTokenRequest schema with token.
+
+        Returns:
+            dict: valid=True if the token exists, is unused, and not expired.
+                  valid=False otherwise, with a descriptive message.
+        """
+        token_record = PasswordResetRepository.get_by_token(db, data.token)
+
+        if not token_record or token_record.used:
+            return {
+                "success": True,
+                "valid": False,
+                "message": "Token is invalid or has already been used.",
+            }
+
+        if token_record.expires_at < datetime.now(timezone.utc):
+            return {
+                "success": True,
+                "valid": False,
+                "message": "Token has expired.",
+            }
+
+        return {
+            "success": True,
+            "valid": True,
+            "message": "Token is valid.",
+        }
 
     @staticmethod
     def reset_password(db: Session, data) -> dict:
