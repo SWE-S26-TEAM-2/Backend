@@ -304,7 +304,7 @@ def test_create_track_rejects_large_file(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         TrackService.create_track(db, user, "Song", "Desc", upload)
 
-    assert exc.value.status_code == 400
+    assert exc.value.status_code == 413
     assert exc.value.detail == "File size must not exceed 100 MB"
 
 

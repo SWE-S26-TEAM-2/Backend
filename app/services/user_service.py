@@ -268,6 +268,6 @@ class UserService:
 
         if file_size > max_size:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f"File size must not exceed {label}",
             )

@@ -561,6 +561,7 @@ class FollowerItem(BaseModel):
 class FollowerListData(BaseModel):
     count: int
     followers: List[FollowerItem]
+    private: bool = False
 
 
 class FollowerListResponse(BaseModel):
@@ -578,6 +579,7 @@ class FollowingItem(BaseModel):
 class FollowingListData(BaseModel):
     count: int
     following: List[FollowingItem]
+    private: bool = False
 
 
 class FollowingListResponse(BaseModel):

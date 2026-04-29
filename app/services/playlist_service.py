@@ -335,7 +335,7 @@ class PlaylistService:
 
         if file_size > COVER_PHOTO_MAX_SIZE:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail="File size must not exceed 5 MB",
             )
 
