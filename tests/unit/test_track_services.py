@@ -180,10 +180,16 @@ def test_create_track_with_cover_image(monkeypatch):
     upload_dir = Path("tmp") / "test-track-service-cover" / str(uuid4())
     created_tracks = []
 
+    import app.utils.cloudinary_upload as cld_module
     from app.repositories.track_repo import TrackRepository
     from app.services import track_service
 
     monkeypatch.setattr(track_service, "UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setattr(
+        cld_module,
+        "upload_image",
+        lambda file, folder, public_id: "https://fake.cloudinary.com/cover.jpg",
+    )
     monkeypatch.setattr(
         TrackRepository,
         "get_by_user_id_and_file_hash",
@@ -209,13 +215,10 @@ def test_create_track_with_cover_image(monkeypatch):
 
     assert result["success"] is True
     assert len(created_tracks) == 1
+    assert result["data"]["cover_image_url"] == "https://fake.cloudinary.com/cover.jpg"
     assert result["data"]["cover_image_url"] == created_tracks[0].cover_image_url
-    assert "/api/uploads/" in result["data"]["cover_image_url"]
-    assert result["data"]["cover_image_url"].endswith(".png")
 
-    saved_cover = upload_dir / Path(created_tracks[0].cover_image_url).name
     saved_audio = upload_dir / Path(created_tracks[0].file_url).name
-    assert saved_cover.read_bytes() == b"fake image content"
     assert saved_audio.read_bytes() == b"fake mp3 content"
 
 
