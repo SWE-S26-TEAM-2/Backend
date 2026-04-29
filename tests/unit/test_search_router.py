@@ -6,13 +6,23 @@ Tests all API endpoints with TestClient, including:
 - GET /search/tracks?keyword=... - Search tracks
 """
 
+import uuid
+
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.search_service import SearchService
 
 client = TestClient(app)
+
+FAKE_USER_ID = uuid.UUID("123e4567-e89b-12d3-a456-426614174999")
+
+
+class FakeUser:
+    user_id = FAKE_USER_ID
+    username = "testuser"
 
 
 class DummyDB:
@@ -29,6 +39,7 @@ def override_get_db():
 def setup_module(module):
     """Setup test fixtures before running tests."""
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: FakeUser()
 
 
 def teardown_module(module):
@@ -44,7 +55,7 @@ def teardown_module(module):
 def test_search_users_endpoint_success(monkeypatch):
     """Test GET /search/users?keyword=test returns 200 with results."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
@@ -86,7 +97,7 @@ def test_search_users_endpoint_success(monkeypatch):
 def test_search_users_endpoint_no_results(monkeypatch):
     """Test GET /search/users?keyword=xyzabc returns empty results."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {"users": []},
@@ -113,7 +124,7 @@ def test_search_users_endpoint_missing_keyword(monkeypatch):
 def test_search_users_endpoint_single_result(monkeypatch):
     """Test GET /search/users?keyword=alice returns single result."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
@@ -144,7 +155,7 @@ def test_search_users_endpoint_single_result(monkeypatch):
 def test_search_users_endpoint_special_characters_in_keyword(monkeypatch):
     """Test GET /search/users with special characters in keyword."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
@@ -175,7 +186,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
     """Test GET /search/users is case-insensitive."""
     search_calls = []
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         search_calls.append(keyword)
         return {
             "success": True,
@@ -206,7 +217,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
 def test_search_users_endpoint_whitespace_keyword(monkeypatch):
     """Test GET /search/users with whitespace in keyword."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
@@ -513,7 +524,7 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
 def test_search_users_and_tracks_separately(monkeypatch):
     """Test that user and track searches can be called separately."""
 
-    def fake_search_users(db, keyword):
+    def fake_search_users(db, keyword, current_user_id=None):
         return {
             "success": True,
             "data": {
