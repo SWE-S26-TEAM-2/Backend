@@ -6,7 +6,6 @@ track and playlist sharing via nullable foreign keys.
 receiver_id and is_read enable read-receipt tracking.
 """
 
-from modulefinder import test
 import uuid
 
 from sqlalchemy import (  # type: ignore
@@ -55,4 +54,3 @@ class Message(Base):
     )
     is_read = Column(Boolean, server_default="false", nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text("now()"))
-# test
