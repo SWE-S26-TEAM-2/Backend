@@ -39,12 +39,7 @@ router = APIRouter(
 # Users
 # ──────────────────────────────────────────────
 
-<<<<<<< fix/playlist/cover
-
-@router.get("/users/optimized")
-=======
 @router.get("/users/optimized", response_model=SearchUsersOptimizedResponse)
->>>>>>> main
 def search_users_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
