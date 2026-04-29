@@ -5,12 +5,17 @@ from sqlalchemy.orm import Session  # type: ignore
 
 from app.core.dependencies import get_current_user
 from app.database.database import get_db
+from app.schemas.responses import (
+    SearchUsersResponse,
+    SearchTracksResponse,
+    SearchPlaylistsResponse,
+)
 from app.services.search_service import SearchService
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
 
-@router.get("/users")
+@router.get("/users", response_model=SearchUsersResponse)
 def search_users(
     keyword: str = Query(...),
     db: Session = Depends(get_db),
@@ -22,7 +27,7 @@ def search_users(
     return result
 
 
-@router.get("/tracks")
+@router.get("/tracks", response_model=SearchTracksResponse)
 def search_tracks(
     keyword: str = Query(...),
     db: Session = Depends(get_db),
@@ -33,7 +38,7 @@ def search_tracks(
     return result
 
 
-@router.get("/playlists")
+@router.get("/playlists", response_model=SearchPlaylistsResponse)
 def search_playlists(
     keyword: str = Query(...),
     db: Session = Depends(get_db),

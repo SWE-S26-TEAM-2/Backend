@@ -687,6 +687,7 @@ class SearchUserItem(BaseModel):
     profile_picture: Optional[str] = None
     follower_count: int
     is_verified: bool
+    is_following: bool = False
 
 
 class SearchUsersData(BaseModel):
@@ -695,6 +696,15 @@ class SearchUsersData(BaseModel):
 
 class SearchUsersResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchUsersData
+
+
+class SearchUsersOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchUsersData
 
 
@@ -717,6 +727,15 @@ class SearchTracksData(BaseModel):
 
 class SearchTracksResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchTracksData
+
+
+class SearchTracksOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchTracksData
 
 
@@ -735,6 +754,15 @@ class SearchPlaylistsData(BaseModel):
 
 class SearchPlaylistsResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchPlaylistsData
+
+
+class SearchPlaylistsOptimizedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    query_time_ms: float
+    result_count: int
     data: SearchPlaylistsData
 
 
@@ -903,4 +931,20 @@ class FeedData(BaseModel):
 
 class FeedResponse(BaseModel):
     success: bool
+    query_time_ms: Optional[float] = None
     data: FeedData
+
+
+class CachedFeedResponse(BaseModel):
+    success: bool
+    optimized: bool
+    cache_hit: bool
+    query_time_ms: float
+    cached_at: Optional[str] = None
+    cache_ttl_seconds: int
+    data: FeedData
+
+
+class CacheClearResponse(BaseModel):
+    success: bool
+    message: str
