@@ -1,15 +1,11 @@
-from fastapi import HTTPException, status  # type: ignore
-from fastapi import UploadFile  # type: ignore
-import os
+from fastapi import HTTPException, UploadFile, status  # type: ignore
 
 from app.models.playlist import Playlist
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.playlist_repo import PlaylistRepository
 from app.repositories.track_repo import TrackRepository
+from app.utils.cloudinary_upload import upload_image
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(BASE_DIR, "uploads"))
-PUBLIC_UPLOAD_BASE_URL = os.environ.get("PUBLIC_UPLOAD_BASE_URL", "/api/uploads")
 COVER_PHOTO_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
@@ -333,7 +329,7 @@ class PlaylistService:
                 detail="Only image files are allowed (JPEG, PNG, GIF, WebP)",
             )
 
-        file.file.seek(0, os.SEEK_END)
+        file.file.seek(0, 2)
         file_size = file.file.tell()
         file.file.seek(0)
 
@@ -343,16 +339,11 @@ class PlaylistService:
                 detail="File size must not exceed 5 MB",
             )
 
-        file_extension = os.path.splitext(file.filename)[1] or ".jpg"
-        unique_filename = f"playlist_{playlist_id}{file_extension}"
-
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-
-        with open(file_path, "wb") as buffer:
-            buffer.write(file.file.read())
-
-        cover_photo_url = f"{PUBLIC_UPLOAD_BASE_URL.rstrip('/')}/{unique_filename}"
+        cover_photo_url = upload_image(
+            file.file,
+            folder="streamline/playlists",
+            public_id=f"playlist_{playlist_id}",
+        )
 
         PlaylistRepository.update(db, playlist, {"cover_photo_url": cover_photo_url})
 

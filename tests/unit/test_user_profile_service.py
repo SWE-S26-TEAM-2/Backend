@@ -428,16 +428,18 @@ def test_upload_avatar_success(monkeypatch):
         filename="avatar.jpg", content_type="image/jpeg", size=2000000
     )
 
+    import app.services.user_service as user_service_module
     from app.repositories.user_repo import UserRepository
 
     def fake_validate(f, max_size, label):
         pass  # No validation errors
 
-    def fake_save(f, uid, subfolder):
-        return f"Uploads/{subfolder}/avatar.jpg"
-
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
-    monkeypatch.setattr(UserService, "_save_file", fake_save)
+    monkeypatch.setattr(
+        user_service_module,
+        "upload_image",
+        lambda file, folder, public_id: "https://fake.cloudinary.com/avatar.jpg",
+    )
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.upload_avatar(db, user, file)
@@ -503,16 +505,18 @@ def test_upload_cover_success(monkeypatch):
     user = FakeUser()
     file = FakeUploadFile(filename="cover.png", content_type="image/png", size=5000000)
 
+    import app.services.user_service as user_service_module
     from app.repositories.user_repo import UserRepository
 
     def fake_validate(f, max_size, label):
         pass
 
-    def fake_save(f, uid, subfolder):
-        return f"Uploads/{subfolder}/cover.png"
-
     monkeypatch.setattr(UserService, "_validate_image", fake_validate)
-    monkeypatch.setattr(UserService, "_save_file", fake_save)
+    monkeypatch.setattr(
+        user_service_module,
+        "upload_image",
+        lambda file, folder, public_id: "https://fake.cloudinary.com/cover.jpg",
+    )
     monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
 
     result = UserService.upload_cover(db, user, file)
