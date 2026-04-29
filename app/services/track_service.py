@@ -13,6 +13,7 @@ from pydub import AudioSegment  # type: ignore
 from app.models.track import Track
 from app.models.listening_history import ListeningHistory
 from app.repositories.follow_repo import FollowRepository
+from app.utils.cloudinary_upload import upload_image
 from app.repositories.like_repo import LikeRepository
 from app.repositories.listening_history_repo import ListeningHistoryRepository
 from app.repositories.notification_repo import NotificationRepository
@@ -271,14 +272,11 @@ class TrackService:
                     detail="Cover image must not exceed 10 MB",
                 )
 
-            img_extension = os.path.splitext(cover_image.filename)[1] or ".jpg"
-            unique_img_name = f"{uuid4()}{img_extension}"
-            img_path = os.path.join(UPLOAD_DIR, unique_img_name)
-
-            with open(img_path, "wb") as img_buffer:
-                img_buffer.write(cover_image.file.read())
-
-            cover_image_url = TrackService._get_upload_url(unique_img_name)
+            cover_image_url = upload_image(
+                cover_image.file,
+                folder="streamline/tracks",
+                public_id=str(uuid4()),
+            )
 
         file_hash = TrackService._calculate_file_hash(file.file)
         existing_track = TrackRepository.get_by_user_id_and_file_hash(

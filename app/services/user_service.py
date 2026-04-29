@@ -5,18 +5,12 @@ Handles profile retrieval, updates, privacy toggling,
 and avatar/cover photo uploads.
 """
 
-import os
-import shutil
-
 from fastapi import HTTPException, UploadFile, status  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.user import User  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
-
-PUBLIC_UPLOAD_BASE_URL = os.environ.get(
-    "PUBLIC_UPLOAD_BASE_URL", "/api/uploads"
-)
+from app.utils.cloudinary_upload import upload_image
 
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"]
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
@@ -202,9 +196,12 @@ class UserService:
         """
         UserService._validate_image(file, AVATAR_MAX_SIZE, "5 MB")
 
-        path = UserService._save_file(file, current_user.user_id, "Avatar")
-
-        UserRepository.update_fields(db, current_user, {"profile_picture": path})
+        url = upload_image(
+            file.file,
+            folder="streamline/avatars",
+            public_id=f"avatar_{current_user.user_id}",
+        )
+        UserRepository.update_fields(db, current_user, {"profile_picture": url})
 
         return {
             "success": True,
@@ -232,9 +229,12 @@ class UserService:
         """
         UserService._validate_image(file, COVER_MAX_SIZE, "10 MB")
 
-        path = UserService._save_file(file, current_user.user_id, "Cover")
-
-        UserRepository.update_fields(db, current_user, {"cover_photo": path})
+        url = upload_image(
+            file.file,
+            folder="streamline/covers",
+            public_id=f"cover_{current_user.user_id}",
+        )
+        UserRepository.update_fields(db, current_user, {"cover_photo": url})
 
         return {
             "success": True,
@@ -248,17 +248,6 @@ class UserService:
 
     @staticmethod
     def _validate_image(file: UploadFile, max_size: int, label: str) -> None:
-        """
-        Validate image file type and size.
-
-        Args:
-            file (UploadFile): The uploaded file.
-            max_size (int): Maximum allowed file size in bytes.
-            label (str): Human-readable size label for error message.
-
-        Raises:
-            HTTPException: 400 if validation fails.
-        """
         if file.content_type not in ALLOWED_IMAGE_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -274,31 +263,3 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File size must not exceed {label}",
             )
-
-    @staticmethod
-    def _save_file(file: UploadFile, user_id, subfolder: str) -> str:
-        """
-        Save an uploaded file to the Uploads directory.
-
-        Args:
-            file (UploadFile): The uploaded file.
-            user_id: The UUID of the user.
-            subfolder (str): Subfolder name (Avatar or Cover).
-
-        Returns:
-            str: Relative file path for storage in the database.
-        """
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        upload_folder = os.path.join(base_dir, "Uploads", subfolder)
-        os.makedirs(upload_folder, exist_ok=True)
-
-        file_ext = file.filename.split(".")[-1]
-        file_name = f"{user_id}.{file_ext}"
-
-        absolute_path = os.path.join(upload_folder, file_name)
-
-        with open(absolute_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        base = PUBLIC_UPLOAD_BASE_URL.rstrip("/")
-        return f"{base}/{subfolder}/{file_name}"
