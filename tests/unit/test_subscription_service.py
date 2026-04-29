@@ -35,7 +35,7 @@ def test_get_subscription_premium_yearly():
     assert result["data"]["billing_cycle"] == "yearly"
 
 
-# ── upgrade ─────────────────────────────────────────────────────────────────────
+# ── upgrade — validation ────────────────────────────────────────────────────────
 
 
 def test_upgrade_invalid_plan_raises_400():
@@ -46,14 +46,47 @@ def test_upgrade_invalid_plan_raises_400():
     assert exc_info.value.status_code == 400
 
 
-def test_upgrade_already_premium_is_idempotent():
-    user = make_fake_user(is_premium=True)
+def test_upgrade_monthly_user_tries_monthly_raises_409_same_plan():
+    user = make_fake_user(is_premium=True, billing_cycle="monthly")
     db = MagicMock()
-    with patch("app.services.subscription_service.stripe.Charge.create") as mock_charge:
-        result = SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
-    mock_charge.assert_not_called()
-    assert result["success"] is True
-    assert "Premium" in result["message"]
+    with pytest.raises(HTTPException) as exc_info:
+        SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
+    assert exc_info.value.status_code == 409
+    assert "already subscribed to the monthly plan" in exc_info.value.detail
+    assert "Switching" not in exc_info.value.detail
+
+
+def test_upgrade_monthly_user_tries_yearly_raises_409_switching():
+    user = make_fake_user(is_premium=True, billing_cycle="monthly")
+    db = MagicMock()
+    with pytest.raises(HTTPException) as exc_info:
+        SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "yearly")
+    assert exc_info.value.status_code == 409
+    assert "monthly" in exc_info.value.detail
+    assert "Switching" in exc_info.value.detail
+
+
+def test_upgrade_yearly_user_tries_yearly_raises_409_same_plan():
+    user = make_fake_user(is_premium=True, billing_cycle="yearly")
+    db = MagicMock()
+    with pytest.raises(HTTPException) as exc_info:
+        SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "yearly")
+    assert exc_info.value.status_code == 409
+    assert "already subscribed to the yearly plan" in exc_info.value.detail
+    assert "Switching" not in exc_info.value.detail
+
+
+def test_upgrade_yearly_user_tries_monthly_raises_409_switching():
+    user = make_fake_user(is_premium=True, billing_cycle="yearly")
+    db = MagicMock()
+    with pytest.raises(HTTPException) as exc_info:
+        SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
+    assert exc_info.value.status_code == 409
+    assert "yearly" in exc_info.value.detail
+    assert "Switching" in exc_info.value.detail
+
+
+# ── upgrade — Stripe charges ────────────────────────────────────────────────────
 
 
 def test_upgrade_monthly_charges_999():
@@ -67,8 +100,7 @@ def test_upgrade_monthly_charges_999():
         mock_charge.return_value = MagicMock(id="ch_test_monthly")
         SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
     mock_charge.assert_called_once()
-    call_kwargs = mock_charge.call_args[1]
-    assert call_kwargs["amount"] == 999
+    assert mock_charge.call_args[1]["amount"] == 999
 
 
 def test_upgrade_yearly_charges_9999():
@@ -82,8 +114,7 @@ def test_upgrade_yearly_charges_9999():
         mock_charge.return_value = MagicMock(id="ch_test_yearly")
         SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "yearly")
     mock_charge.assert_called_once()
-    call_kwargs = mock_charge.call_args[1]
-    assert call_kwargs["amount"] == 9999
+    assert mock_charge.call_args[1]["amount"] == 9999
 
 
 def test_upgrade_monthly_calls_set_premium_with_cycle():
@@ -114,7 +145,10 @@ def test_upgrade_yearly_calls_set_premium_with_cycle():
     mock_set.assert_called_once_with(db, user, "yearly")
 
 
-def test_upgrade_card_declined_raises_402():
+# ── upgrade — error handling ────────────────────────────────────────────────────
+
+
+def test_upgrade_card_declined_monthly_raises_402():
     user = make_fake_user(is_premium=False)
     db = MagicMock()
     card_error = stripe.error.CardError(
@@ -123,7 +157,8 @@ def test_upgrade_card_declined_raises_402():
         code="card_declined",
     )
     with patch(
-        "app.services.subscription_service.stripe.Charge.create", side_effect=card_error
+        "app.services.subscription_service.stripe.Charge.create",
+        side_effect=card_error,
     ):
         with pytest.raises(HTTPException) as exc_info:
             SubscriptionService.upgrade(
@@ -132,7 +167,7 @@ def test_upgrade_card_declined_raises_402():
     assert exc_info.value.status_code == 402
 
 
-def test_upgrade_yearly_card_declined_raises_402():
+def test_upgrade_card_declined_yearly_raises_402():
     user = make_fake_user(is_premium=False)
     db = MagicMock()
     card_error = stripe.error.CardError(
@@ -141,10 +176,65 @@ def test_upgrade_yearly_card_declined_raises_402():
         code="card_declined",
     )
     with patch(
-        "app.services.subscription_service.stripe.Charge.create", side_effect=card_error
+        "app.services.subscription_service.stripe.Charge.create",
+        side_effect=card_error,
     ):
         with pytest.raises(HTTPException) as exc_info:
             SubscriptionService.upgrade(
                 db, user, "tok_chargeDeclined", "Premium", "yearly"
             )
     assert exc_info.value.status_code == 402
+
+
+def test_upgrade_stripe_auth_error_raises_503():
+    user = make_fake_user(is_premium=False)
+    db = MagicMock()
+    with patch(
+        "app.services.subscription_service.stripe.Charge.create",
+        side_effect=stripe.error.AuthenticationError("Invalid API key"),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
+    assert exc_info.value.status_code == 503
+
+
+def test_upgrade_stripe_generic_error_raises_502():
+    user = make_fake_user(is_premium=False)
+    db = MagicMock()
+    with patch(
+        "app.services.subscription_service.stripe.Charge.create",
+        side_effect=stripe.error.StripeError("Service unavailable"),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
+    assert exc_info.value.status_code == 502
+
+
+def test_upgrade_invalid_token_raises_402():
+    user = make_fake_user(is_premium=False)
+    db = MagicMock()
+    invalid_error = stripe.error.InvalidRequestError(
+        message="No such token: 'invalid_token'",
+        param="source",
+    )
+    with patch(
+        "app.services.subscription_service.stripe.Charge.create",
+        side_effect=invalid_error,
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            SubscriptionService.upgrade(
+                db, user, "invalid_token", "Premium", "monthly"
+            )
+    assert exc_info.value.status_code == 402
+
+
+def test_upgrade_already_subscribed_does_not_call_stripe():
+    user = make_fake_user(is_premium=True, billing_cycle="monthly")
+    db = MagicMock()
+    with patch(
+        "app.services.subscription_service.stripe.Charge.create"
+    ) as mock_charge:
+        with pytest.raises(HTTPException) as exc_info:
+            SubscriptionService.upgrade(db, user, "tok_visa", "Premium", "monthly")
+    mock_charge.assert_not_called()
+    assert exc_info.value.status_code == 409
