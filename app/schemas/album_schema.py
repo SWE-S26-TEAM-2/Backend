@@ -1,29 +1,12 @@
-from datetime import date
 from typing import List, Optional
 
 from pydantic import BaseModel, field_validator
 
 
-ALLOWED_VISIBILITIES = {"public", "private"}
-
-
 class CreateAlbumRequest(BaseModel):
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    tags: Optional[List[str]] = None
-    release_date: Optional[date] = None
-    visibility: str = "public"
-    upc: Optional[str] = None
-    label: Optional[str] = None
+    year: int
     track_ids: Optional[List[str]] = None
-
-    @field_validator("visibility")
-    @classmethod
-    def validate_visibility(cls, v: str) -> str:
-        if v not in ALLOWED_VISIBILITIES:
-            raise ValueError("Visibility must be 'public' or 'private'")
-        return v
 
     @field_validator("title")
     @classmethod
@@ -35,34 +18,17 @@ class CreateAlbumRequest(BaseModel):
             raise ValueError("Title cannot exceed 255 characters")
         return v
 
-    @field_validator("upc")
+    @field_validator("year")
     @classmethod
-    def validate_upc(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None:
-            v = v.strip()
-            if v and not v.isdigit():
-                raise ValueError("UPC must contain only digits")
-            if v and len(v) not in (12, 13):
-                raise ValueError("UPC must be 12 or 13 digits")
+    def validate_year(cls, v: int) -> int:
+        if v < 1900 or v > 2100:
+            raise ValueError("Year must be between 1900 and 2100")
         return v
 
 
 class UpdateAlbumRequest(BaseModel):
     title: Optional[str] = None
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    tags: Optional[List[str]] = None
-    release_date: Optional[date] = None
-    visibility: Optional[str] = None
-    upc: Optional[str] = None
-    label: Optional[str] = None
-
-    @field_validator("visibility")
-    @classmethod
-    def validate_visibility(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ALLOWED_VISIBILITIES:
-            raise ValueError("Visibility must be 'public' or 'private'")
-        return v
+    year: Optional[int] = None
 
     @field_validator("title")
     @classmethod
@@ -73,6 +39,13 @@ class UpdateAlbumRequest(BaseModel):
                 raise ValueError("Title cannot be empty")
             if len(v) > 255:
                 raise ValueError("Title cannot exceed 255 characters")
+        return v
+
+    @field_validator("year")
+    @classmethod
+    def validate_year(cls, v: Optional[int]) -> Optional[int]:
+        if v is not None and (v < 1900 or v > 2100):
+            raise ValueError("Year must be between 1900 and 2100")
         return v
 
 

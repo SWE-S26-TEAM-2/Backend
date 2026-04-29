@@ -1,3 +1,4 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException, UploadFile, status  # type: ignore
@@ -6,54 +7,45 @@ from app.models.album import Album
 from app.repositories.album_repo import AlbumRepository
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.track_repo import TrackRepository
+from app.repositories.user_repo import UserRepository
 from app.utils.cloudinary_upload import upload_image
 
-FREE_ALBUM_LIMIT = 1
 COVER_PHOTO_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
-ALLOWED_VISIBILITIES = {"public", "private"}
 
 
 class AlbumService:
 
     @staticmethod
-    def _serialize_album(album) -> dict:
+    def _get_year(album) -> int | None:
+        return album.release_date.year if album.release_date else None
+
+    @staticmethod
+    def _get_artist_name(db, album) -> str:
+        user = UserRepository.get_by_id(db, album.user_id)
+        return user.display_name if user else "Unknown Artist"
+
+    @staticmethod
+    def _serialize_album(album, artist_name: str) -> dict:
         return {
             "album_id": str(album.album_id),
-            "user_id": str(album.user_id),
             "title": album.title,
-            "description": album.description,
-            "genre": album.genre,
-            "tags": album.tags,
-            "release_date": (
-                album.release_date.isoformat() if album.release_date else None
-            ),
+            "year": album.release_date.year if album.release_date else None,
+            "artist_name": artist_name,
             "cover_photo_url": album.cover_photo_url,
-            "visibility": album.visibility,
-            "upc": album.upc,
-            "label": album.label,
             "like_count": int(album.like_count or 0),
             "track_count": int(album.track_count or 0),
-            "created_at": album.created_at,
         }
 
     @staticmethod
     def _serialize_track_in_album(track, position: int) -> dict:
         return {
             "track_id": str(track.track_id),
-            "user_id": str(track.user_id),
             "title": track.title,
-            "description": track.description,
-            "genre": track.genre,
-            "tags": track.tags,
-            "release_date": (
-                track.release_date.isoformat() if track.release_date else None
-            ),
             "stream_url": f"/api/tracks/{track.track_id}/audio",
             "cover_image_url": getattr(track, "cover_image_url", None),
-            "visibility": track.visibility,
-            "play_count": int(track.play_count or 0),
             "duration_seconds": track.duration_seconds,
+            "play_count": int(track.play_count or 0),
             "position": position,
         }
 
@@ -87,27 +79,11 @@ class AlbumService:
 
     @staticmethod
     def create_album(db, user, data):
-        if not user.is_premium:
-            count = AlbumRepository.count_by_user_id(db, user.user_id)
-            if count >= FREE_ALBUM_LIMIT:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=(
-                        "Free plan limit reached. "
-                        "Upgrade to Premium to create more albums."
-                    ),
-                )
-
         album = Album(
             user_id=user.user_id,
             title=data.title,
-            description=data.description,
-            genre=data.genre,
-            tags=data.tags,
-            release_date=data.release_date,
-            visibility=data.visibility,
-            upc=data.upc,
-            label=data.label,
+            release_date=date(data.year, 1, 1),
+            visibility="public",
             like_count=0,
             track_count=0,
         )
@@ -119,12 +95,11 @@ class AlbumService:
         return {
             "success": True,
             "message": "Album created successfully.",
-            "data": AlbumService._serialize_album(album),
+            "data": AlbumService._serialize_album(album, user.display_name),
         }
 
     @staticmethod
     def _bulk_add_tracks(db, user, album, track_ids: list):
-        """Add multiple tracks to a newly created album."""
         for i, track_id_str in enumerate(track_ids, start=1):
             try:
                 track_id = UUID(track_id_str)
@@ -155,8 +130,7 @@ class AlbumService:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
-                        f"Track {track_id_str} already belongs to another album. "
-                        "A track can only be in one album at a time."
+                        f"Track {track_id_str} already belongs to another album."
                     ),
                 )
 
@@ -171,12 +145,12 @@ class AlbumService:
         album = AlbumService._get_album_or_404(db, album_id)
         AlbumService._check_album_visibility(album, user)
 
+        artist_name = AlbumService._get_artist_name(db, album)
         album_tracks = AlbumRepository.get_album_tracks(db, album_id)
         tracks = []
         for at in album_tracks:
             track = TrackRepository.get_by_id(db, at.track_id)
             if track:
-                # Skip private tracks if viewer is not the owner
                 if track.visibility == "private" and (
                     user is None or str(track.user_id) != str(user.user_id)
                 ):
@@ -185,7 +159,7 @@ class AlbumService:
                     AlbumService._serialize_track_in_album(track, at.position)
                 )
 
-        data = AlbumService._serialize_album(album)
+        data = AlbumService._serialize_album(album, artist_name)
         data["tracks"] = tracks
 
         return {"success": True, "data": data}
@@ -202,6 +176,9 @@ class AlbumService:
                 detail="No fields provided for update",
             )
 
+        if "year" in update_data:
+            update_data["release_date"] = date(update_data.pop("year"), 1, 1)
+
         updated = AlbumRepository.update(db, album, update_data)
 
         return {
@@ -210,9 +187,9 @@ class AlbumService:
             "data": {
                 "album_id": str(updated.album_id),
                 "title": updated.title,
-                "description": updated.description,
-                "genre": updated.genre,
-                "visibility": updated.visibility,
+                "year": (
+                    updated.release_date.year if updated.release_date else None
+                ),
             },
         }
 
@@ -223,10 +200,7 @@ class AlbumService:
 
         AlbumRepository.delete(db, album)
 
-        return {
-            "success": True,
-            "message": "Album deleted successfully.",
-        }
+        return {"success": True, "message": "Album deleted successfully."}
 
     @staticmethod
     def upload_cover_photo(db, user, album_id, file: UploadFile):
@@ -292,14 +266,12 @@ class AlbumService:
                 detail="Track not found",
             )
 
-        # Track must belong to the album owner
         if str(track.user_id) != str(user.user_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only add your own tracks to your album",
             )
 
-        # Track can't be added to this album twice
         existing_in_album = AlbumRepository.get_album_track(db, album_id, track_id)
         if existing_in_album:
             raise HTTPException(
@@ -307,7 +279,6 @@ class AlbumService:
                 detail="Track is already in this album",
             )
 
-        # Track can't already belong to another album
         existing_album_membership = AlbumRepository.get_track_album(db, track_id)
         if existing_album_membership:
             raise HTTPException(
@@ -327,10 +298,7 @@ class AlbumService:
         album.track_count = (album.track_count or 0) + 1
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Track added to album successfully.",
-        }
+        return {"success": True, "message": "Track added to album successfully."}
 
     @staticmethod
     def remove_track(db, user, album_id, track_id):
@@ -349,17 +317,13 @@ class AlbumService:
         album.track_count = max(0, (album.track_count or 0) - 1)
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Track removed from album successfully.",
-        }
+        return {"success": True, "message": "Track removed from album successfully."}
 
     @staticmethod
     def reorder_tracks(db, user, album_id, data):
         album = AlbumService._get_album_or_404(db, album_id)
         AlbumService._assert_owner(album, user)
 
-        # Verify all provided track_ids actually belong to this album
         existing_track_ids = {
             str(at.track_id)
             for at in AlbumRepository.get_album_tracks(db, album_id)
@@ -374,7 +338,9 @@ class AlbumService:
         if len(set(data.track_ids)) != len(existing_track_ids):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="track_ids must contain all tracks currently in the album",
+                detail=(
+                    "track_ids must contain all tracks currently in the album"
+                ),
             )
 
         try:
@@ -387,10 +353,7 @@ class AlbumService:
 
         AlbumRepository.reorder_tracks(db, album_id, ordered_uuids)
 
-        return {
-            "success": True,
-            "message": "Album tracks reordered successfully.",
-        }
+        return {"success": True, "message": "Album tracks reordered successfully."}
 
     @staticmethod
     def like_album(db, user, album_id):
@@ -444,10 +407,7 @@ class AlbumService:
         album.like_count = max(0, (album.like_count or 0) - 1)
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Album unliked successfully.",
-        }
+        return {"success": True, "message": "Album unliked successfully."}
 
     @staticmethod
     def get_liked_albums(db, user):
@@ -455,7 +415,12 @@ class AlbumService:
 
         return {
             "success": True,
-            "data": [AlbumService._serialize_album(a) for a in albums],
+            "data": [
+                AlbumService._serialize_album(
+                    a, AlbumService._get_artist_name(db, a)
+                )
+                for a in albums
+            ],
         }
 
     @staticmethod
@@ -470,5 +435,10 @@ class AlbumService:
 
         return {
             "success": True,
-            "data": [AlbumService._serialize_album(a) for a in albums],
+            "data": [
+                AlbumService._serialize_album(
+                    a, AlbumService._get_artist_name(db, a)
+                )
+                for a in albums
+            ],
         }
