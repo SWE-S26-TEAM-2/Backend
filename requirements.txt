@@ -23,3 +23,5 @@ audioop-lts; python_version >= "3.13"
 
 # Cloud storage
 cloudinary
+# In-memory caching
+cachetools
