@@ -1,12 +1,18 @@
 from datetime import datetime
 from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # ── Shared ─────────────────────────────────────────────────────────────────────
 
 
 class MessageResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "message": "Operation completed successfully."}
+        }
+    )
+
     success: bool
     message: str
 
@@ -15,6 +21,18 @@ class MessageResponse(BaseModel):
 
 
 class RegisterData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "email": "user@example.com",
+                "username": "john_doe",
+                "display_name": "John Doe",
+                "is_verified": False,
+            }
+        }
+    )
+
     user_id: str
     email: str
     username: str
@@ -23,23 +41,67 @@ class RegisterData(BaseModel):
 
 
 class RegisterResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Registration successful. Please verify your email.",
+                "data": {
+                    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    "email": "user@example.com",
+                    "username": "john_doe",
+                    "display_name": "John Doe",
+                    "is_verified": False,
+                },
+            }
+        }
+    )
+
     success: bool
     message: str
     data: RegisterData
 
 
 class CheckEmailResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"success": True, "available": True}}
+    )
+
     success: bool
     available: bool
 
 
 class VerifyResetTokenResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "valid": True, "message": "Token is valid."}
+        }
+    )
+
     success: bool
     valid: bool
     message: str
 
 
+_USER_INFO_EXAMPLE = {
+    "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "username": "john_doe",
+    "display_name": "John Doe",
+    "account_type": "listener",
+    "is_premium": False,
+}
+
+_TOKEN_EXAMPLE = {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+    "token_type": "bearer",
+    "expires_in": 1800,
+}
+
+
 class UserInfo(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": _USER_INFO_EXAMPLE})
+
     user_id: str
     username: str
     display_name: str
@@ -48,6 +110,10 @@ class UserInfo(BaseModel):
 
 
 class LoginData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={"example": {**_TOKEN_EXAMPLE, "user": _USER_INFO_EXAMPLE}}
+    )
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -56,11 +122,30 @@ class LoginData(BaseModel):
 
 
 class LoginResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "data": {**_TOKEN_EXAMPLE, "user": _USER_INFO_EXAMPLE},
+            }
+        }
+    )
+
     success: bool
     data: LoginData
 
 
 class SocialLoginData(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                **_TOKEN_EXAMPLE,
+                "is_new_user": False,
+                "user": _USER_INFO_EXAMPLE,
+            }
+        }
+    )
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -70,11 +155,26 @@ class SocialLoginData(BaseModel):
 
 
 class SocialLoginResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "data": {
+                    **_TOKEN_EXAMPLE,
+                    "is_new_user": False,
+                    "user": _USER_INFO_EXAMPLE,
+                },
+            }
+        }
+    )
+
     success: bool
     data: SocialLoginData
 
 
 class RefreshData(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": _TOKEN_EXAMPLE})
+
     access_token: str
     refresh_token: str
     token_type: str
@@ -82,6 +182,12 @@ class RefreshData(BaseModel):
 
 
 class RefreshResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"success": True, "data": _TOKEN_EXAMPLE}
+        }
+    )
+
     success: bool
     data: RefreshData
 
