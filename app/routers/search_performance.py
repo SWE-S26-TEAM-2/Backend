@@ -23,6 +23,11 @@ from app.models.follow import Follow
 from app.models.playlist import Playlist
 from app.models.track import Track
 from app.models.user import User
+from app.schemas.responses import (
+    SearchUsersOptimizedResponse,
+    SearchTracksOptimizedResponse,
+    SearchPlaylistsOptimizedResponse,
+)
 
 router = APIRouter(
     prefix="/search/performance",
@@ -34,7 +39,7 @@ router = APIRouter(
 # Users
 # ──────────────────────────────────────────────
 
-@router.get("/users/optimized")
+@router.get("/users/optimized", response_model=SearchUsersOptimizedResponse)
 def search_users_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
@@ -94,7 +99,7 @@ def search_users_optimized(
 # Tracks
 # ──────────────────────────────────────────────
 
-@router.get("/tracks/optimized")
+@router.get("/tracks/optimized", response_model=SearchTracksOptimizedResponse)
 def search_tracks_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
@@ -140,7 +145,7 @@ def search_tracks_optimized(
 # Playlists
 # ──────────────────────────────────────────────
 
-@router.get("/playlists/optimized")
+@router.get("/playlists/optimized", response_model=SearchPlaylistsOptimizedResponse)
 def search_playlists_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),

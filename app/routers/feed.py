@@ -5,12 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_user
 from app.database.database import get_db
+from app.schemas.responses import FeedResponse
 from app.services.feed_service import FeedService
 
 router = APIRouter(prefix="/feed", tags=["Feed"])
 
 
-@router.get("/following")
+@router.get("/following", response_model=FeedResponse)
 def get_following_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of tracks per page"),
     cursor: str | None = Query(
@@ -25,7 +26,7 @@ def get_following_feed(
     return result
 
 
-@router.get("/discover")
+@router.get("/discover", response_model=FeedResponse)
 def get_discover_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of tracks per page"),
     cursor: str | None = Query(
