@@ -116,15 +116,6 @@ class AlbumService:
                     detail=f"Track {track_id_str} not found",
                 )
 
-            if str(track.user_id) != str(user.user_id):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=(
-                        f"Track {track_id_str} does not belong to you. "
-                        "Albums can only contain your own tracks."
-                    ),
-                )
-
             existing = AlbumRepository.get_track_album(db, track_id)
             if existing:
                 raise HTTPException(
@@ -264,12 +255,6 @@ class AlbumService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Track not found",
-            )
-
-        if str(track.user_id) != str(user.user_id):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can only add your own tracks to your album",
             )
 
         existing_in_album = AlbumRepository.get_album_track(db, album_id, track_id)
