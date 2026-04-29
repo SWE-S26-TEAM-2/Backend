@@ -17,12 +17,17 @@ import time
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.database.database import get_db
+from app.models.follow import Follow
 from app.models.playlist import Playlist
 from app.models.track import Track
 from app.models.user import User
 
-router = APIRouter(prefix="/search/performance", tags=["Search Performance (Optimized)"])
+router = APIRouter(
+    prefix="/search/performance",
+    tags=["Search Performance (Optimized)"],
+)
 
 
 # ──────────────────────────────────────────────
@@ -33,6 +38,7 @@ router = APIRouter(prefix="/search/performance", tags=["Search Performance (Opti
 def search_users_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     """
     Search users using a GIN trigram index on display_name.
@@ -45,6 +51,20 @@ def search_users_optimized(
         .limit(20)
         .all()
     )
+
+    following_ids: set = set()
+    if users:
+        target_ids = [u.user_id for u in users]
+        rows = (
+            db.query(Follow.following_id)
+            .filter(
+                Follow.follower_id == current_user.user_id,
+                Follow.following_id.in_(target_ids),
+            )
+            .all()
+        )
+        following_ids = {r[0] for r in rows}
+
     elapsed_ms = (time.perf_counter() - start) * 1000
 
     return {
@@ -62,6 +82,7 @@ def search_users_optimized(
                     "profile_picture": u.profile_picture,
                     "follower_count": u.follower_count,
                     "is_verified": u.is_verified,
+                    "is_following": u.user_id in following_ids,
                 }
                 for u in users
             ]

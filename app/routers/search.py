@@ -3,6 +3,7 @@ import time
 from fastapi import APIRouter, Depends, Query  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
+from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.services.search_service import SearchService
 
@@ -13,9 +14,10 @@ router = APIRouter(prefix="/search", tags=["Search"])
 def search_users(
     keyword: str = Query(...),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     start = time.perf_counter()
-    result = SearchService.search_users(db, keyword)
+    result = SearchService.search_users(db, keyword, current_user.user_id)
     result["query_time_ms"] = round((time.perf_counter() - start) * 1000, 3)
     return result
 
