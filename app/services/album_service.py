@@ -181,7 +181,9 @@ class AlbumService:
                     user is None or str(track.user_id) != str(user.user_id)
                 ):
                     continue
-                tracks.append(AlbumService._serialize_track_in_album(track, at.position))
+                tracks.append(
+                    AlbumService._serialize_track_in_album(track, at.position)
+                )
 
         data = AlbumService._serialize_album(album)
         data["tracks"] = tracks
@@ -462,7 +464,9 @@ class AlbumService:
             current_user is not None
             and str(current_user.user_id) == str(user_id)
         )
-        albums = AlbumRepository.get_by_user_id(db, user_id, include_private=include_private)
+        albums = AlbumRepository.get_by_user_id(
+            db, user_id, include_private=include_private
+        )
 
         return {
             "success": True,

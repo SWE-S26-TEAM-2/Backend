@@ -1,6 +1,8 @@
 import uuid
 
-from sqlalchemy import Column, ForeignKey, TIMESTAMP, text, UniqueConstraint  # type: ignore
+from sqlalchemy import (  # type: ignore
+    Column, ForeignKey, TIMESTAMP, text, UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
 from app.database.database import Base  # type: ignore
