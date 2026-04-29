@@ -3,6 +3,7 @@ Business logic for the subscription module.
 
 Handles reading subscription status from the User model and upgrading
 a user to Premium via a real Stripe test-mode charge.
+Monthly plan: $9.99 — Yearly plan: $99.99.
 """
 
 import stripe
@@ -16,35 +17,43 @@ stripe.api_key = config.STRIPE_SECRET_KEY
 
 FREE_TRACK_LIMIT = 3
 
+PRICES = {
+    "monthly": 999,   # $9.99
+    "yearly": 9999,   # $99.99
+}
+
 
 class SubscriptionService:
     @staticmethod
     def get_subscription(user) -> dict:
         """
-        Return the current user's subscription plan and upload usage.
+        Return the current user's subscription plan, upload usage, and billing cycle.
 
-        Free users have a limit of 3 uploaded tracks. Premium users are
-        unlimited (limit is None).
+        Free users have a limit of 3 uploaded tracks and no billing cycle.
+        Premium users are unlimited with a stored billing cycle.
 
         Args:
             user: The authenticated User ORM object.
 
         Returns:
-            dict: Success envelope with plan, tracks_uploaded, and limit.
+            dict: Success envelope with plan, tracks_uploaded, limit, and billing_cycle.
         """
         plan = "Premium" if user.is_premium else "Free"
         limit = None if user.is_premium else FREE_TRACK_LIMIT
+        billing_cycle = getattr(user, "billing_cycle", None)
         return {
             "success": True,
             "data": {
                 "plan": plan,
                 "tracks_uploaded": user.track_count,
                 "limit": limit,
+                "billing_cycle": billing_cycle if user.is_premium else None,
             },
         }
 
     @staticmethod
-    def upgrade(db: Session, user, payment_token: str, plan: str) -> dict:
+    def upgrade(db: Session, user, payment_token: str, plan: str,
+                billing_cycle: str) -> dict:
         """
         Upgrade a user to Premium by processing a Stripe charge.
 
@@ -58,6 +67,7 @@ class SubscriptionService:
             user: The authenticated User ORM object.
             payment_token (str): A Stripe test token (e.g. tok_visa).
             plan (str): Must be "Premium".
+            billing_cycle (str): "monthly" or "yearly", set by the endpoint called.
 
         Returns:
             dict: Success message on upgrade.
@@ -78,12 +88,14 @@ class SubscriptionService:
                 "message": "Welcome to Premium! Unlimited uploads unlocked.",
             }
 
+        amount = PRICES[billing_cycle]
+
         try:
             stripe.Charge.create(
-                amount=999,
+                amount=amount,
                 currency="usd",
                 source=payment_token,
-                description="Streamline Premium subscription",
+                description=f"Streamline Premium subscription ({billing_cycle})",
             )
         except stripe.error.CardError:
             raise HTTPException(
@@ -91,7 +103,7 @@ class SubscriptionService:
                 detail="Card declined",
             )
 
-        UserRepository.set_premium(db, user)
+        UserRepository.set_premium(db, user, billing_cycle)
 
         return {
             "success": True,

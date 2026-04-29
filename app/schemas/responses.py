@@ -107,6 +107,7 @@ class UserInfo(BaseModel):
     display_name: str
     account_type: str
     is_premium: bool
+    billing_cycle: Optional[str] = None
 
 
 class LoginData(BaseModel):
@@ -206,6 +207,7 @@ class UserProfileData(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     is_premium: bool
+    billing_cycle: Optional[str] = None
     is_private: bool
     profile_picture: Optional[str] = None
     cover_photo: Optional[str] = None
@@ -227,6 +229,8 @@ class PublicUserProfileData(BaseModel):
     account_type: Optional[str] = None
     bio: Optional[str] = None
     location: Optional[str] = None
+    is_premium: Optional[bool] = None
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     cover_photo: Optional[str] = None
     follower_count: int
@@ -554,6 +558,8 @@ class PlaylistCoverResponse(BaseModel):
 class FollowerItem(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
@@ -572,6 +578,8 @@ class FollowerListResponse(BaseModel):
 class FollowingItem(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
@@ -801,6 +809,8 @@ class SearchUserItem(BaseModel):
     profile_picture: Optional[str] = None
     follower_count: int
     is_verified: bool
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     is_following: bool = False
 
 
@@ -954,6 +964,8 @@ class LastMessageData(BaseModel):
 class ParticipantData(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
 
 
@@ -1013,6 +1025,8 @@ class FeedArtist(BaseModel):
     user_id: str
     username: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     follower_count: int
 

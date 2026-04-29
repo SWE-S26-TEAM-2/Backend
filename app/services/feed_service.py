@@ -41,6 +41,8 @@ class FeedService:
                 "user_id": str(artist.user_id),
                 "username": artist.username,
                 "display_name": artist.display_name,
+                "is_premium": artist.is_premium,
+                "billing_cycle": getattr(artist, "billing_cycle", None),
                 "profile_picture": artist.profile_picture,
                 "follower_count": int(artist.follower_count or 0),
             },
