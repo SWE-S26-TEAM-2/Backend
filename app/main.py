@@ -14,6 +14,9 @@ from sqlalchemy import inspect, text  # type: ignore
 from app.core.config import AUTO_CREATE_TABLES
 from app.database.database import Base, engine  # type: ignore
 from app.models import (  # noqa: F401
+    album,
+    album_like,
+    album_track,
     comment,
     conversation,
     email_verification,
@@ -34,6 +37,7 @@ from app.models import (  # noqa: F401
     report,
     repost,
 )
+from app.routers.album import router as album_router
 from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router  # type: ignore
 from app.routers.engagement import router as engagement_router
@@ -87,6 +91,16 @@ def startup():
             )
             conn.commit()
 
+    if "album_id" not in existing_columns:
+        with engine.connect() as conn:
+            conn.execute(
+                text(
+                    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id UUID "
+                    "REFERENCES albums(album_id) ON DELETE SET NULL"
+                )
+            )
+            conn.commit()
+
     # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
@@ -124,6 +138,7 @@ app.include_router(track_router)
 app.include_router(feed_router)
 app.include_router(feed_cached_router)
 app.include_router(engagement_router)
+app.include_router(album_router)
 app.include_router(admin_router)
 
 
