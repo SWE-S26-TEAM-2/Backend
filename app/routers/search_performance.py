@@ -51,10 +51,7 @@ def search_users_optimized(
     """
     start = time.perf_counter()
     users = (
-        db.query(User)
-        .filter(User.display_name.ilike(f"%{keyword}%"))
-        .limit(20)
-        .all()
+        db.query(User).filter(User.display_name.ilike(f"%{keyword}%")).limit(20).all()
     )
 
     following_ids: set = set()
@@ -156,10 +153,7 @@ def search_playlists_optimized(
     """
     start = time.perf_counter()
     playlists = (
-        db.query(Playlist)
-        .filter(Playlist.name.ilike(f"%{keyword}%"))
-        .limit(20)
-        .all()
+        db.query(Playlist).filter(Playlist.name.ilike(f"%{keyword}%")).limit(20).all()
     )
     elapsed_ms = (time.perf_counter() - start) * 1000
 
