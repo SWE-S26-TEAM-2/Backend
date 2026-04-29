@@ -1,8 +1,8 @@
 """add albums module
 
-Revision ID: c1d2e3f4a5b6
-Revises: b2c3d4e5f6a7
-Create Date: 2026-04-29 00:00:00.000000
+Revision ID: d2e3f4a5b6c7
+Revises: c1d2e3f4a5b6
+Create Date: 2026-04-29 01:00:00.000000
 
 """
 
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "c1d2e3f4a5b6"
-down_revision: Union[str, Sequence[str], None] = "b2c3d4e5f6a7"
+revision: str = "d2e3f4a5b6c7"
+down_revision: Union[str, Sequence[str], None] = "c1d2e3f4a5b6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -68,19 +68,20 @@ def upgrade() -> None:
             sa.PrimaryKeyConstraint("album_id"),
         )
 
-    album_indexes = {
-        index["name"] for index in inspector.get_indexes("albums")
-    } if inspector.has_table("albums") else set()
+    if inspector.has_table("albums"):
+        album_indexes = {
+            index["name"] for index in inspector.get_indexes("albums")
+        }
+        if "ix_albums_user_id" not in album_indexes:
+            op.create_index(
+                "ix_albums_user_id", "albums", ["user_id"], unique=False
+            )
+        if "ix_albums_visibility" not in album_indexes:
+            op.create_index(
+                "ix_albums_visibility", "albums", ["visibility"], unique=False
+            )
 
-    if "ix_albums_user_id" not in album_indexes:
-        op.create_index("ix_albums_user_id", "albums", ["user_id"], unique=False)
-
-    if "ix_albums_visibility" not in album_indexes:
-        op.create_index(
-            "ix_albums_visibility", "albums", ["visibility"], unique=False
-        )
-
-    # ── tracks.album_id ───────────────────────────────────────────────────────
+    # ── tracks.album_id ────────────────────────────────────────────────────────
     track_columns = {col["name"] for col in inspector.get_columns("tracks")}
     if "album_id" not in track_columns:
         op.add_column(
@@ -141,7 +142,9 @@ def upgrade() -> None:
                 ondelete="CASCADE",
             ),
             sa.PrimaryKeyConstraint("album_like_id"),
-            sa.UniqueConstraint("user_id", "album_id", name="uq_user_album_like"),
+            sa.UniqueConstraint(
+                "user_id", "album_id", name="uq_user_album_like"
+            ),
         )
 
 
@@ -157,11 +160,15 @@ def downgrade() -> None:
 
     track_columns = {col["name"] for col in inspector.get_columns("tracks")}
     if "album_id" in track_columns:
-        op.drop_constraint("fk_tracks_album_id", "tracks", type_="foreignkey")
+        op.drop_constraint(
+            "fk_tracks_album_id", "tracks", type_="foreignkey"
+        )
         op.drop_column("tracks", "album_id")
 
     if inspector.has_table("albums"):
-        album_indexes = {index["name"] for index in inspector.get_indexes("albums")}
+        album_indexes = {
+            index["name"] for index in inspector.get_indexes("albums")
+        }
         if "ix_albums_visibility" in album_indexes:
             op.drop_index("ix_albums_visibility", table_name="albums")
         if "ix_albums_user_id" in album_indexes:
