@@ -334,9 +334,7 @@ class AdminService:
         )
 
         track_ids = [
-            report.entity_id
-            for report in reports
-            if report.entity_type == "track"
+            report.entity_id for report in reports if report.entity_type == "track"
         ]
         comment_ids = [
             report.entity_id for report in reports if report.entity_type == "comment"

@@ -14,6 +14,7 @@ class SearchService:
                 "users": [
                     {
                         "user_id": str(u.user_id),
+                        "username": u.username,
                         "display_name": u.display_name,
                         "account_type": u.account_type,
                         "profile_picture": u.profile_picture,

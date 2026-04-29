@@ -28,6 +28,11 @@ class RegisterResponse(BaseModel):
     data: RegisterData
 
 
+class CheckEmailResponse(BaseModel):
+    success: bool
+    available: bool
+
+
 class UserInfo(BaseModel):
     user_id: str
     username: str
@@ -676,6 +681,7 @@ class AdminBootstrapResponse(BaseModel):
 
 class SearchUserItem(BaseModel):
     user_id: str
+    username: str
     display_name: str
     account_type: str
     profile_picture: Optional[str] = None
@@ -856,3 +862,45 @@ class MessageReadResponse(BaseModel):
 class UnreadMessageCountResponse(BaseModel):
     success: bool
     data: UnreadCountData
+
+
+# ── Feed ───────────────────────────────────────────────────────────────────────
+
+
+class FeedArtist(BaseModel):
+    user_id: str
+    username: str
+    display_name: str
+    profile_picture: Optional[str] = None
+    follower_count: int
+
+
+class FeedTrackItem(BaseModel):
+    track_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    tags: Optional[List[Any]] = None
+    release_date: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    stream_url: str
+    duration_seconds: Optional[int] = None
+    play_count: int
+    like_count: int
+    repost_count: int
+    comment_count: int
+    is_liked: bool
+    is_reposted: bool
+    created_at: Optional[datetime] = None
+    artist: FeedArtist
+
+
+class FeedData(BaseModel):
+    items: List[FeedTrackItem]
+    next_cursor: Optional[str] = None
+    has_more: bool
+
+
+class FeedResponse(BaseModel):
+    success: bool
+    data: FeedData

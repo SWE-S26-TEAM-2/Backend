@@ -51,6 +51,7 @@ def test_search_users_endpoint_success(monkeypatch):
                 "users": [
                     {
                         "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                        "username": "johndoe",
                         "display_name": "John Doe",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/pic.jpg",
@@ -59,6 +60,7 @@ def test_search_users_endpoint_success(monkeypatch):
                     },
                     {
                         "user_id": "223e4567-e89b-12d3-a456-426614174000",
+                        "username": "janesmith",
                         "display_name": "Jane Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -118,6 +120,7 @@ def test_search_users_endpoint_single_result(monkeypatch):
                 "users": [
                     {
                         "user_id": "323e4567-e89b-12d3-a456-426614174000",
+                        "username": "alicejohnson",
                         "display_name": "Alice Johnson",
                         "account_type": "artist",
                         "profile_picture": "https://example.com/alice.jpg",
@@ -148,6 +151,7 @@ def test_search_users_endpoint_special_characters_in_keyword(monkeypatch):
                 "users": [
                     {
                         "user_id": "423e4567-e89b-12d3-a456-426614174000",
+                        "username": "userco",
                         "display_name": "User & Co",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -179,6 +183,7 @@ def test_search_users_endpoint_case_insensitive(monkeypatch):
                 "users": [
                     {
                         "user_id": "523e4567-e89b-12d3-a456-426614174000",
+                        "username": "bobdylan",
                         "display_name": "Bob Dylan",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -208,6 +213,7 @@ def test_search_users_endpoint_whitespace_keyword(monkeypatch):
                 "users": [
                     {
                         "user_id": "623e4567-e89b-12d3-a456-426614174000",
+                        "username": "johnsmith",
                         "display_name": "John Smith",
                         "account_type": "listener",
                         "profile_picture": None,
@@ -245,8 +251,7 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "title": "Rock Anthem",
                         "description": "Epic rock song",
                         "stream_url": (
-                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/723e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -256,8 +261,7 @@ def test_search_tracks_endpoint_success(monkeypatch):
                         "title": "Rock & Roll",
                         "description": "Classic rock",
                         "stream_url": (
-                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/823e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -317,8 +321,7 @@ def test_search_tracks_endpoint_single_result(monkeypatch):
                         "title": "Bohemian Rhapsody",
                         "description": "Classic track from Queen",
                         "stream_url": (
-                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/923e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -350,8 +353,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "title": "Heartbeat",
                         "description": "Song about heartbeat",
                         "stream_url": (
-                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/a23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -361,8 +363,7 @@ def test_search_tracks_endpoint_partial_match(monkeypatch):
                         "title": "Off the Beat",
                         "description": "Syncopated rhythm",
                         "stream_url": (
-                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/b23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -393,8 +394,7 @@ def test_search_tracks_endpoint_special_characters(monkeypatch):
                         "title": "Rock & Roll Revival",
                         "description": "Mix of rock and roll",
                         "stream_url": (
-                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/c23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -426,8 +426,7 @@ def test_search_tracks_endpoint_whitespace_keyword(monkeypatch):
                         "title": "Love Song",
                         "description": "Beautiful love song",
                         "stream_url": (
-                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/d23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -458,8 +457,7 @@ def test_search_tracks_endpoint_case_insensitive(monkeypatch):
                         "title": "Jazz Piano",
                         "description": "Smooth jazz",
                         "stream_url": (
-                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/e23e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
@@ -486,8 +484,7 @@ def test_search_tracks_endpoint_many_results(monkeypatch):
                 "title": f"Track {i}",
                 "description": f"Description {i}",
                 "stream_url": (
-                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000"
-                    "/audio"
+                    f"/api/tracks/{i:03d}3e4567-e89b-12d3-a456-426614174000" "/audio"
                 ),
                 "visibility": "public",
                 "processing_status": "finished",
@@ -523,6 +520,7 @@ def test_search_users_and_tracks_separately(monkeypatch):
                 "users": [
                     {
                         "user_id": "f23e4567-e89b-12d3-a456-426614174000",
+                        "username": "user",
                         "display_name": "User",
                         "account_type": "artist",
                         "profile_picture": None,
@@ -543,8 +541,7 @@ def test_search_users_and_tracks_separately(monkeypatch):
                         "title": "Track",
                         "description": "Desc",
                         "stream_url": (
-                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000"
-                            "/audio"
+                            "/api/tracks/023e4567-e89b-12d3-a456-426614174000" "/audio"
                         ),
                         "visibility": "public",
                         "processing_status": "finished",
