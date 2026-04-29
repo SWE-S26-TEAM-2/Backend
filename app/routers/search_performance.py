@@ -96,12 +96,7 @@ def search_users_optimized(
 # Tracks
 # ──────────────────────────────────────────────
 
-<<<<<<< fix/playlist/cover
-
-@router.get("/tracks/optimized")
-=======
 @router.get("/tracks/optimized", response_model=SearchTracksOptimizedResponse)
->>>>>>> main
 def search_tracks_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
@@ -147,12 +142,7 @@ def search_tracks_optimized(
 # Playlists
 # ──────────────────────────────────────────────
 
-<<<<<<< fix/playlist/cover
-
-@router.get("/playlists/optimized")
-=======
 @router.get("/playlists/optimized", response_model=SearchPlaylistsOptimizedResponse)
->>>>>>> main
 def search_playlists_optimized(
     keyword: str = Query(..., description="Search keyword"),
     db: Session = Depends(get_db),
