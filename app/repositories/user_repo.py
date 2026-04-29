@@ -127,10 +127,13 @@ class UserRepository:
 
     @staticmethod
     def search_by_name(db: Session, keyword: str, limit: int = 20):
-        """Search users by display_name (case-insensitive)."""
+        """Search users by display_name (case-insensitive), excluding private users."""
         return (
             db.query(User)
-            .filter(User.display_name.ilike(f"%{keyword}%"))
+            .filter(
+                User.display_name.ilike(f"%{keyword}%"),
+                User.is_private.is_(False),
+            )
             .limit(limit)
             .all()
         )
@@ -154,18 +157,20 @@ class UserRepository:
         return user
 
     @staticmethod
-    def set_premium(db: Session, user: User) -> User:
+    def set_premium(db: Session, user: User, billing_cycle: str) -> User:
         """
-        Set the user's is_premium flag to True.
+        Set the user's is_premium flag to True and store the billing cycle.
 
         Args:
             db (Session): The database session.
             user (User): The user to upgrade.
+            billing_cycle (str): "monthly" or "yearly".
 
         Returns:
             User: The updated user object.
         """
         user.is_premium = True
+        user.billing_cycle = billing_cycle
         db.commit()
         db.refresh(user)
         return user

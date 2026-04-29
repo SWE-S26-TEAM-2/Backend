@@ -32,6 +32,11 @@ class Track(Base):
     play_count = Column(Integer, server_default="0")
     duration_seconds = Column(Integer, nullable=True)
     waveform_peaks = Column(JSON, nullable=True)
+    album_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("albums.album_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     created_at = Column(
         TIMESTAMP(timezone=True), server_default=text("now()"), nullable=True
     )

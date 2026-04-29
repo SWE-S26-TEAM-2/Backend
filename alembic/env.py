@@ -5,6 +5,9 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.database.database import Base
+from app.models.album import Album  # noqa: F401
+from app.models.album_like import AlbumLike  # noqa: F401
+from app.models.album_track import AlbumTrack  # noqa: F401
 from app.models.user import User  # noqa: F401
 from app.models.email_verification import EmailVerification  # noqa: F401
 from app.models.social_link import SocialLink  # noqa: F401

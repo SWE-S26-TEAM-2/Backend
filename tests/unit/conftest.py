@@ -34,6 +34,7 @@ def make_fake_user(**overrides):
         "bio": None,
         "location": None,
         "is_premium": False,
+        "billing_cycle": None,
         "is_private": False,
         "profile_picture": None,
         "cover_photo": None,

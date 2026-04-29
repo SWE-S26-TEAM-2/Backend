@@ -107,6 +107,7 @@ class UserInfo(BaseModel):
     display_name: str
     account_type: str
     is_premium: bool
+    billing_cycle: Optional[str] = None
 
 
 class LoginData(BaseModel):
@@ -206,6 +207,7 @@ class UserProfileData(BaseModel):
     bio: Optional[str] = None
     location: Optional[str] = None
     is_premium: bool
+    billing_cycle: Optional[str] = None
     is_private: bool
     profile_picture: Optional[str] = None
     cover_photo: Optional[str] = None
@@ -227,6 +229,8 @@ class PublicUserProfileData(BaseModel):
     account_type: Optional[str] = None
     bio: Optional[str] = None
     location: Optional[str] = None
+    is_premium: Optional[bool] = None
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     cover_photo: Optional[str] = None
     follower_count: int
@@ -554,6 +558,8 @@ class PlaylistCoverResponse(BaseModel):
 class FollowerItem(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
@@ -561,6 +567,7 @@ class FollowerItem(BaseModel):
 class FollowerListData(BaseModel):
     count: int
     followers: List[FollowerItem]
+    private: bool = False
 
 
 class FollowerListResponse(BaseModel):
@@ -571,6 +578,8 @@ class FollowerListResponse(BaseModel):
 class FollowingItem(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     followed_at: Optional[datetime] = None
 
@@ -578,6 +587,7 @@ class FollowingItem(BaseModel):
 class FollowingListData(BaseModel):
     count: int
     following: List[FollowingItem]
+    private: bool = False
 
 
 class FollowingListResponse(BaseModel):
@@ -799,6 +809,8 @@ class SearchUserItem(BaseModel):
     profile_picture: Optional[str] = None
     follower_count: int
     is_verified: bool
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     is_following: bool = False
 
 
@@ -952,6 +964,8 @@ class LastMessageData(BaseModel):
 class ParticipantData(BaseModel):
     user_id: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
 
 
@@ -1011,6 +1025,8 @@ class FeedArtist(BaseModel):
     user_id: str
     username: str
     display_name: str
+    is_premium: bool = False
+    billing_cycle: Optional[str] = None
     profile_picture: Optional[str] = None
     follower_count: int
 
@@ -1060,3 +1076,122 @@ class CachedFeedResponse(BaseModel):
 class CacheClearResponse(BaseModel):
     success: bool
     message: str
+
+
+# ── Albums ─────────────────────────────────────────────────────────────────────
+
+
+class AlbumTrackItem(BaseModel):
+    track_id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    tags: Optional[Any] = None
+    release_date: Optional[Any] = None
+    stream_url: str
+    cover_image_url: Optional[str] = None
+    visibility: str
+    play_count: Optional[int] = None
+    duration_seconds: Optional[int] = None
+    position: int
+
+
+class AlbumData(BaseModel):
+    album_id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    tags: Optional[Any] = None
+    release_date: Optional[Any] = None
+    cover_photo_url: Optional[str] = None
+    visibility: str
+    upc: Optional[str] = None
+    label: Optional[str] = None
+    like_count: int
+    track_count: int
+    created_at: Optional[datetime] = None
+
+
+class AlbumResponse(BaseModel):
+    success: bool
+    message: str
+    data: AlbumData
+
+
+class AlbumDetailData(BaseModel):
+    album_id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    tags: Optional[Any] = None
+    release_date: Optional[Any] = None
+    cover_photo_url: Optional[str] = None
+    visibility: str
+    upc: Optional[str] = None
+    label: Optional[str] = None
+    like_count: int
+    track_count: int
+    created_at: Optional[datetime] = None
+    tracks: List[AlbumTrackItem]
+
+
+class AlbumDetailResponse(BaseModel):
+    success: bool
+    data: AlbumDetailData
+
+
+class AlbumListItem(BaseModel):
+    album_id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    cover_photo_url: Optional[str] = None
+    visibility: str
+    genre: Optional[str] = None
+    like_count: int
+    track_count: int
+    created_at: Optional[datetime] = None
+
+
+class AlbumListResponse(BaseModel):
+    success: bool
+    data: List[AlbumListItem]
+
+
+class AlbumUpdateData(BaseModel):
+    album_id: str
+    title: str
+    description: Optional[str] = None
+    genre: Optional[str] = None
+    visibility: str
+
+
+class AlbumUpdateResponse(BaseModel):
+    success: bool
+    message: str
+    data: AlbumUpdateData
+
+
+class AlbumLikeData(BaseModel):
+    album_like_id: str
+    album_id: str
+
+
+class AlbumLikeResponse(BaseModel):
+    success: bool
+    message: str
+    data: AlbumLikeData
+
+
+class AlbumCoverData(BaseModel):
+    album_id: str
+    cover_photo_url: str
+
+
+class AlbumCoverResponse(BaseModel):
+    success: bool
+    message: str
+    data: AlbumCoverData

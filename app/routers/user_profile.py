@@ -30,12 +30,14 @@ from app.schemas.user_schema import (  # type: ignore
     UpdatePrivacyRequest,
     UpdateProfileRequest,
 )
+from app.services.album_service import AlbumService  # type: ignore
 from app.services.playlist_service import PlaylistService  # type: ignore
 from app.services.social_link_service import SocialLinkService  # type: ignore
 from app.services.track_service import TrackService  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 from app.services.user_service import UserService  # type: ignore
 from app.schemas.responses import (  # type: ignore
+    AlbumListResponse,
     UserProfileResponse,
     PublicUserProfileResponse,
     UpdateProfileResponse,
@@ -304,3 +306,19 @@ def get_user_liked_tracks(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return TrackService.get_liked_tracks_by_user(db, user.user_id, current_user)
+
+
+@router.get(
+    "/{username}/albums",
+    status_code=status.HTTP_200_OK,
+    response_model=AlbumListResponse,
+)
+def get_user_albums(
+    username: str,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
+):
+    user = UserRepository.get_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return AlbumService.get_albums_by_user(db, user.user_id, current_user)

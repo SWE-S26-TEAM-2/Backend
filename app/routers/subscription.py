@@ -2,7 +2,7 @@
 Subscription router.
 
 Exposes endpoints for reading a user's subscription status and upgrading
-to Premium via Stripe.
+to Premium via Stripe — either monthly ($9.99) or yearly ($99.99).
 """
 
 from fastapi import APIRouter, Depends
@@ -26,25 +26,43 @@ def get_subscription(
     Get the current user's subscription status and upload usage.
 
     Returns the plan name ("Free" or "Premium"), how many tracks the user
-    has uploaded, and the upload limit (3 for Free, null for Premium).
+    has uploaded, the upload limit (3 for Free, null for Premium), and
+    the billing cycle ("monthly", "yearly", or null for Free users).
 
     Requires Bearer JWT authentication.
     """
     return SubscriptionService.get_subscription(user)
 
 
-@router.post("/upgrade", response_model=MessageResponse)
-def upgrade(
+@router.post("/upgrade/monthly", response_model=MessageResponse)
+def upgrade_monthly(
     body: UpgradeRequest,
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     """
-    Upgrade the current user to Premium via a Stripe charge.
+    Upgrade the current user to Premium with a monthly billing cycle ($9.99).
 
-    Accepts a Stripe test token and the target plan ("Premium").
-    On success, the user's is_premium flag is set to True permanently.
+    Accepts a Stripe test token and plan="Premium". Charges 999 cents (USD).
 
     Requires Bearer JWT authentication.
     """
-    return SubscriptionService.upgrade(db, user, body.payment_token, body.plan)
+    return SubscriptionService.upgrade(db, user, body.payment_token, body.plan,
+                                       "monthly")
+
+
+@router.post("/upgrade/yearly", response_model=MessageResponse)
+def upgrade_yearly(
+    body: UpgradeRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Upgrade the current user to Premium with a yearly billing cycle ($99.99).
+
+    Accepts a Stripe test token and plan="Premium". Charges 9999 cents (USD).
+
+    Requires Bearer JWT authentication.
+    """
+    return SubscriptionService.upgrade(db, user, body.payment_token, body.plan,
+                                       "yearly")

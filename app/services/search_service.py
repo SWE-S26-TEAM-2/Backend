@@ -35,6 +35,8 @@ class SearchService:
                         "profile_picture": u.profile_picture,
                         "follower_count": u.follower_count,
                         "is_verified": u.is_verified,
+                        "is_premium": u.is_premium,
+                        "billing_cycle": getattr(u, "billing_cycle", None),
                         "is_following": u.user_id in following_ids,
                     }
                     for u in users

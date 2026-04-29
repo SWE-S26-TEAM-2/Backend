@@ -61,6 +61,7 @@ class UserService:
                 "bio": current_user.bio,
                 "location": current_user.location,
                 "is_premium": current_user.is_premium,
+                "billing_cycle": getattr(current_user, "billing_cycle", None),
                 "is_private": current_user.is_private,
                 "profile_picture": _safe_image_url(current_user.profile_picture),
                 "cover_photo": _safe_image_url(current_user.cover_photo),
@@ -102,6 +103,8 @@ class UserService:
                 "bio": user.bio,
                 "location": user.location,
                 "account_type": user.account_type,
+                "is_premium": user.is_premium,
+                "billing_cycle": getattr(user, "billing_cycle", None),
                 "is_private": user.is_private,
                 "profile_picture": _safe_image_url(user.profile_picture),
                 "cover_photo": _safe_image_url(user.cover_photo),
@@ -268,6 +271,6 @@ class UserService:
 
         if file_size > max_size:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 detail=f"File size must not exceed {label}",
             )
