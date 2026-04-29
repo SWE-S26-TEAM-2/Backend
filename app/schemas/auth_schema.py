@@ -120,6 +120,17 @@ class LogoutRequest(BaseModel):
     refresh_token: str
 
 
+class VerifyResetTokenRequest(BaseModel):
+    """
+    Schema for verifying a password reset token without consuming it.
+
+    Args:
+        token (str): Password reset token from the email.
+    """
+
+    token: str
+
+
 class ForgotPasswordRequest(BaseModel):
     """
     Schema for requesting a password reset link.

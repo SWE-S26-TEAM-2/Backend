@@ -21,6 +21,7 @@ from app.schemas.auth_schema import (  # type: ignore
     ResendVerificationRequest,
     ResetPasswordRequest,
     VerifyEmailRequest,
+    VerifyResetTokenRequest,
 )
 from app.core.dependencies import get_current_user  # type: ignore
 from app.models.user import User  # type: ignore
@@ -32,6 +33,7 @@ from app.schemas.responses import (  # type: ignore
     LoginResponse,
     SocialLoginResponse,
     RefreshResponse,
+    VerifyResetTokenResponse,
 )
 from app.services.auth_service import AuthService  # type: ignore
 
@@ -229,6 +231,27 @@ def forgot_password(
         dict: Generic success message.
     """
     return AuthService.forgot_password(db, request)
+
+
+@router.post("/verify-reset-token", response_model=VerifyResetTokenResponse)
+def verify_reset_token(
+    request: VerifyResetTokenRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify that a password reset token is valid and not yet used or expired.
+
+    Does not consume the token — the user can still call /reset-password
+    with the same token afterwards.
+
+    Args:
+        request (VerifyResetTokenRequest): The reset token to check.
+        db (Session): Database session injected by FastAPI.
+
+    Returns:
+        dict: valid=true if the token is usable, false otherwise with a reason.
+    """
+    return AuthService.verify_reset_token(db, request)
 
 
 @router.post("/reset-password", response_model=MessageResponse)
