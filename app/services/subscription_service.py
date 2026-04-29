@@ -57,10 +57,11 @@ class SubscriptionService:
         """
         Upgrade a user to Premium by processing a Stripe charge.
 
-        Uses Stripe's test mode — pass a real Stripe test token such as
-        tok_visa (success) or tok_chargeDeclined (decline).
-        The upgrade is idempotent: calling it on an already-Premium user
-        returns success without making another charge.
+        Already-subscribed users receive a 409 and Stripe is never called,
+        so no failed payment is recorded in Stripe.
+        For all other users, Stripe processes the token: tok_visa succeeds,
+        tok_chargeDeclined and any invalid token are declined and Stripe
+        records the failure in the dashboard.
 
         Args:
             db (Session): The database session.
@@ -74,7 +75,10 @@ class SubscriptionService:
 
         Raises:
             HTTPException: 400 if plan is not "Premium".
-            HTTPException: 402 if the Stripe card is declined.
+            HTTPException: 402 if the card is declined or token is invalid.
+            HTTPException: 409 if the user is already subscribed to any plan.
+            HTTPException: 503 if the Stripe API key is not configured.
+            HTTPException: 502 if Stripe returns an unexpected error.
         """
         if plan != "Premium":
             raise HTTPException(
@@ -82,11 +86,20 @@ class SubscriptionService:
                 detail="Invalid plan. Must be 'Premium'.",
             )
 
+        # Check before calling Stripe so no failed charge is recorded
         if user.is_premium:
-            return {
-                "success": True,
-                "message": "Welcome to Premium! Unlimited uploads unlocked.",
-            }
+            current_cycle = getattr(user, "billing_cycle", None) or "unknown"
+            if current_cycle == billing_cycle:
+                detail = f"You are already subscribed to the {current_cycle} plan."
+            else:
+                detail = (
+                    f"You are already subscribed to the {current_cycle} plan. "
+                    f"Switching between plans is not supported."
+                )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=detail,
+            )
 
         amount = PRICES[billing_cycle]
 
@@ -97,10 +110,21 @@ class SubscriptionService:
                 source=payment_token,
                 description=f"Streamline Premium subscription ({billing_cycle})",
             )
-        except stripe.error.CardError:
+        except (stripe.error.CardError, stripe.error.InvalidRequestError):
+            # Stripe has already recorded the failed attempt in the dashboard
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail="Card declined",
+            )
+        except stripe.error.AuthenticationError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Payment service is not configured correctly.",
+            )
+        except stripe.error.StripeError:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Payment service error. Please try again later.",
             )
 
         UserRepository.set_premium(db, user, billing_cycle)

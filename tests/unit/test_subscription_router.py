@@ -227,3 +227,51 @@ def test_upgrade_yearly_card_declined(monkeypatch):
     assert response.status_code == 402
 
     app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_upgrade_monthly_already_subscribed_returns_409(monkeypatch):
+    fake_user = make_fake_user(is_premium=True, billing_cycle="monthly")
+    app.dependency_overrides[get_current_user] = lambda: fake_user
+
+    monkeypatch.setattr(
+        SubscriptionService,
+        "upgrade",
+        lambda db, user, token, plan, cycle: (_ for _ in ()).throw(
+            HTTPException(
+                status_code=409,
+                detail="You are already subscribed to the monthly plan.",
+            )
+        ),
+    )
+
+    response = client.post(
+        "/subscriptions/upgrade/monthly",
+        json={"payment_token": "tok_visa", "plan": "Premium"},
+    )
+    assert response.status_code == 409
+
+    app.dependency_overrides.pop(get_current_user, None)
+
+
+def test_upgrade_yearly_already_subscribed_returns_409(monkeypatch):
+    fake_user = make_fake_user(is_premium=True, billing_cycle="yearly")
+    app.dependency_overrides[get_current_user] = lambda: fake_user
+
+    monkeypatch.setattr(
+        SubscriptionService,
+        "upgrade",
+        lambda db, user, token, plan, cycle: (_ for _ in ()).throw(
+            HTTPException(
+                status_code=409,
+                detail="You are already subscribed to the yearly plan.",
+            )
+        ),
+    )
+
+    response = client.post(
+        "/subscriptions/upgrade/yearly",
+        json={"payment_token": "tok_visa", "plan": "Premium"},
+    )
+    assert response.status_code == 409
+
+    app.dependency_overrides.pop(get_current_user, None)
