@@ -201,7 +201,7 @@ def test_get_comments_returns_list(client, monkeypatch):
     monkeypatch.setattr(
         EngagementService,
         "get_track_comments",
-        lambda db, tid, limit=50, offset=0: {
+        lambda db, tid, limit=50, offset=0, current_user=None: {
             "success": True,
             "data": {
                 "comments": [

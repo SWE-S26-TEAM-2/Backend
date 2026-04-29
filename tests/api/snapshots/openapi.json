@@ -118,6 +118,1148 @@
         "title": "AddCommentResponse",
         "type": "object"
       },
+      "AdminActorData": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "username",
+          "display_name"
+        ],
+        "title": "AdminActorData",
+        "type": "object"
+      },
+      "AdminAnalyticsData": {
+        "properties": {
+          "active_streams_today": {
+            "title": "Active Streams Today",
+            "type": "integer"
+          },
+          "dismissed_reports": {
+            "title": "Dismissed Reports",
+            "type": "integer"
+          },
+          "open_reports": {
+            "title": "Open Reports",
+            "type": "integer"
+          },
+          "resolved_reports": {
+            "title": "Resolved Reports",
+            "type": "integer"
+          },
+          "suspended_users": {
+            "title": "Suspended Users",
+            "type": "integer"
+          },
+          "total_comments": {
+            "title": "Total Comments",
+            "type": "integer"
+          },
+          "total_reports": {
+            "title": "Total Reports",
+            "type": "integer"
+          },
+          "total_tracks": {
+            "title": "Total Tracks",
+            "type": "integer"
+          },
+          "total_users": {
+            "title": "Total Users",
+            "type": "integer"
+          },
+          "under_review_reports": {
+            "title": "Under Review Reports",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_users",
+          "total_tracks",
+          "total_comments",
+          "total_reports",
+          "open_reports",
+          "under_review_reports",
+          "resolved_reports",
+          "dismissed_reports",
+          "suspended_users",
+          "active_streams_today"
+        ],
+        "title": "AdminAnalyticsData",
+        "type": "object"
+      },
+      "AdminAnalyticsResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminAnalyticsData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "AdminAnalyticsResponse",
+        "type": "object"
+      },
+      "AdminBootstrapData": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "is_verified": {
+            "title": "Is Verified",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "username",
+          "display_name",
+          "role",
+          "is_verified"
+        ],
+        "title": "AdminBootstrapData",
+        "type": "object"
+      },
+      "AdminBootstrapResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminBootstrapData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AdminBootstrapResponse",
+        "type": "object"
+      },
+      "AdminReportItem": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_preview": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Preview"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "reporter": {
+            "$ref": "#/components/schemas/AdminActorData"
+          },
+          "resolution_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminActorData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "entity_type",
+          "entity_id",
+          "reason",
+          "status",
+          "reporter"
+        ],
+        "title": "AdminReportItem",
+        "type": "object"
+      },
+      "AdminReportReviewResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminReportItem"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AdminReportReviewResponse",
+        "type": "object"
+      },
+      "AdminReportsData": {
+        "properties": {
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/AdminReportItem"
+            },
+            "title": "Reports",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "reports"
+        ],
+        "title": "AdminReportsData",
+        "type": "object"
+      },
+      "AdminReportsResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminReportsData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "AdminReportsResponse",
+        "type": "object"
+      },
+      "AdminTrackModerationData": {
+        "properties": {
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id",
+          "title"
+        ],
+        "title": "AdminTrackModerationData",
+        "type": "object"
+      },
+      "AdminTrackModerationResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminTrackModerationData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AdminTrackModerationResponse",
+        "type": "object"
+      },
+      "AdminUserModerationData": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "is_suspended": {
+            "title": "Is Suspended",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "username",
+          "display_name",
+          "is_suspended"
+        ],
+        "title": "AdminUserModerationData",
+        "type": "object"
+      },
+      "AdminUserModerationResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminUserModerationData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AdminUserModerationResponse",
+        "type": "object"
+      },
+      "AdminUserRoleData": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "username",
+          "display_name",
+          "role"
+        ],
+        "title": "AdminUserRoleData",
+        "type": "object"
+      },
+      "AdminUserRoleResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AdminUserRoleData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AdminUserRoleResponse",
+        "type": "object"
+      },
+      "AlbumCoverData": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "cover_photo_url": {
+            "title": "Cover Photo Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_id",
+          "cover_photo_url"
+        ],
+        "title": "AlbumCoverData",
+        "type": "object"
+      },
+      "AlbumCoverResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlbumCoverData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AlbumCoverResponse",
+        "type": "object"
+      },
+      "AlbumData": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "cover_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Photo Url"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "release_date": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "tags": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_count": {
+            "title": "Track Count",
+            "type": "integer"
+          },
+          "upc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upc"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_id",
+          "user_id",
+          "title",
+          "visibility",
+          "like_count",
+          "track_count"
+        ],
+        "title": "AlbumData",
+        "type": "object"
+      },
+      "AlbumDetailData": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "cover_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Photo Url"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "release_date": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "tags": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_count": {
+            "title": "Track Count",
+            "type": "integer"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/AlbumTrackItem"
+            },
+            "title": "Tracks",
+            "type": "array"
+          },
+          "upc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upc"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_id",
+          "user_id",
+          "title",
+          "visibility",
+          "like_count",
+          "track_count",
+          "tracks"
+        ],
+        "title": "AlbumDetailData",
+        "type": "object"
+      },
+      "AlbumDetailResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlbumDetailData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "AlbumDetailResponse",
+        "type": "object"
+      },
+      "AlbumLikeData": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "album_like_id": {
+            "title": "Album Like Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_like_id",
+          "album_id"
+        ],
+        "title": "AlbumLikeData",
+        "type": "object"
+      },
+      "AlbumLikeResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlbumLikeData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AlbumLikeResponse",
+        "type": "object"
+      },
+      "AlbumListItem": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "cover_photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Photo Url"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_count": {
+            "title": "Track Count",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_id",
+          "user_id",
+          "title",
+          "visibility",
+          "like_count",
+          "track_count"
+        ],
+        "title": "AlbumListItem",
+        "type": "object"
+      },
+      "AlbumListResponse": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AlbumListItem"
+            },
+            "title": "Data",
+            "type": "array"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "AlbumListResponse",
+        "type": "object"
+      },
+      "AlbumResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlbumData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AlbumResponse",
+        "type": "object"
+      },
+      "AlbumTrackItem": {
+        "properties": {
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "play_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Play Count"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "release_date": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "stream_url": {
+            "title": "Stream Url",
+            "type": "string"
+          },
+          "tags": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id",
+          "user_id",
+          "title",
+          "stream_url",
+          "visibility",
+          "position"
+        ],
+        "title": "AlbumTrackItem",
+        "type": "object"
+      },
+      "AlbumTrackRequest": {
+        "properties": {
+          "position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id"
+        ],
+        "title": "AlbumTrackRequest",
+        "type": "object"
+      },
+      "AlbumUpdateData": {
+        "properties": {
+          "album_id": {
+            "title": "Album Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "visibility": {
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "album_id",
+          "title",
+          "visibility"
+        ],
+        "title": "AlbumUpdateData",
+        "type": "object"
+      },
+      "AlbumUpdateResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AlbumUpdateData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "AlbumUpdateResponse",
+        "type": "object"
+      },
       "AvatarData": {
         "properties": {
           "profile_picture": {
@@ -242,6 +1384,20 @@
         "title": "Body_upload_avatar_users_me_avatar_put",
         "type": "object"
       },
+      "Body_upload_cover_photo_albums__album_id__cover_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_cover_photo_albums__album_id__cover_post",
+        "type": "object"
+      },
       "Body_upload_cover_photo_playlists__playlist_id__cover_post": {
         "properties": {
           "file": {
@@ -270,6 +1426,116 @@
         "title": "Body_upload_cover_users_me_cover_put",
         "type": "object"
       },
+      "BootstrapAdminRequest": {
+        "properties": {
+          "account_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "listener",
+            "title": "Account Type"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "title": "Password",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 20,
+            "minLength": 3,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "username",
+          "password",
+          "display_name"
+        ],
+        "title": "BootstrapAdminRequest",
+        "type": "object"
+      },
+      "CacheClearResponse": {
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message"
+        ],
+        "title": "CacheClearResponse",
+        "type": "object"
+      },
+      "CachedFeedResponse": {
+        "properties": {
+          "cache_hit": {
+            "title": "Cache Hit",
+            "type": "boolean"
+          },
+          "cache_ttl_seconds": {
+            "title": "Cache Ttl Seconds",
+            "type": "integer"
+          },
+          "cached_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cached At"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FeedData"
+          },
+          "optimized": {
+            "title": "Optimized",
+            "type": "boolean"
+          },
+          "query_time_ms": {
+            "title": "Query Time Ms",
+            "type": "number"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "optimized",
+          "cache_hit",
+          "query_time_ms",
+          "cache_ttl_seconds",
+          "data"
+        ],
+        "title": "CachedFeedResponse",
+        "type": "object"
+      },
       "ChangeUsernameRequest": {
         "properties": {
           "username": {
@@ -283,6 +1549,28 @@
           "username"
         ],
         "title": "ChangeUsernameRequest",
+        "type": "object"
+      },
+      "CheckEmailResponse": {
+        "example": {
+          "available": true,
+          "success": true
+        },
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "available"
+        ],
+        "title": "CheckEmailResponse",
         "type": "object"
       },
       "CommentItem": {
@@ -504,6 +1792,108 @@
         "title": "CoverResponse",
         "type": "object"
       },
+      "CreateAlbumRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track Ids"
+          },
+          "upc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upc"
+          },
+          "visibility": {
+            "default": "public",
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "CreateAlbumRequest",
+        "type": "object"
+      },
       "CreateConversationRequest": {
         "description": "Schema for creating or retrieving a 1-to-1 conversation.\n\nArgs:\n    username (str): Username of the other user.",
         "properties": {
@@ -542,6 +1932,37 @@
         "title": "CreatePlaylistRequest",
         "type": "object"
       },
+      "CreateReportRequest": {
+        "properties": {
+          "entity_id": {
+            "format": "uuid",
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "enum": [
+              "track",
+              "comment",
+              "user"
+            ],
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity_type",
+          "entity_id",
+          "reason"
+        ],
+        "title": "CreateReportRequest",
+        "type": "object"
+      },
       "FacebookLoginRequest": {
         "description": "Schema for Facebook OAuth2 social login request.\n\nArgs:\n    facebook_token (str): The Facebook access token returned by the\n        client-side Facebook SDK.",
         "properties": {
@@ -556,8 +1977,270 @@
         "title": "FacebookLoginRequest",
         "type": "object"
       },
+      "FeedArtist": {
+        "properties": {
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "follower_count": {
+            "title": "Follower Count",
+            "type": "integer"
+          },
+          "is_premium": {
+            "default": false,
+            "title": "Is Premium",
+            "type": "boolean"
+          },
+          "profile_picture": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Picture"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "username",
+          "display_name",
+          "follower_count"
+        ],
+        "title": "FeedArtist",
+        "type": "object"
+      },
+      "FeedData": {
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedTrackItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "has_more"
+        ],
+        "title": "FeedData",
+        "type": "object"
+      },
+      "FeedResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/FeedData"
+          },
+          "query_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Time Ms"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "FeedResponse",
+        "type": "object"
+      },
+      "FeedTrackItem": {
+        "properties": {
+          "artist": {
+            "$ref": "#/components/schemas/FeedArtist"
+          },
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          },
+          "cover_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Image Url"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "duration_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Seconds"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "is_liked": {
+            "title": "Is Liked",
+            "type": "boolean"
+          },
+          "is_reposted": {
+            "title": "Is Reposted",
+            "type": "boolean"
+          },
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "play_count": {
+            "title": "Play Count",
+            "type": "integer"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "repost_count": {
+            "title": "Repost Count",
+            "type": "integer"
+          },
+          "stream_url": {
+            "title": "Stream Url",
+            "type": "string"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id",
+          "title",
+          "stream_url",
+          "play_count",
+          "like_count",
+          "repost_count",
+          "comment_count",
+          "is_liked",
+          "is_reposted",
+          "artist"
+        ],
+        "title": "FeedTrackItem",
+        "type": "object"
+      },
       "FollowerItem": {
         "properties": {
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -573,6 +2256,11 @@
               }
             ],
             "title": "Followed At"
+          },
+          "is_premium": {
+            "default": false,
+            "title": "Is Premium",
+            "type": "boolean"
           },
           "profile_picture": {
             "anyOf": [
@@ -609,6 +2297,11 @@
             },
             "title": "Followers",
             "type": "array"
+          },
+          "private": {
+            "default": false,
+            "title": "Private",
+            "type": "boolean"
           }
         },
         "required": [
@@ -637,6 +2330,17 @@
       },
       "FollowingItem": {
         "properties": {
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -652,6 +2356,11 @@
               }
             ],
             "title": "Followed At"
+          },
+          "is_premium": {
+            "default": false,
+            "title": "Is Premium",
+            "type": "boolean"
           },
           "profile_picture": {
             "anyOf": [
@@ -688,6 +2397,11 @@
             },
             "title": "Following",
             "type": "array"
+          },
+          "private": {
+            "default": false,
+            "title": "Private",
+            "type": "boolean"
           }
         },
         "required": [
@@ -972,6 +2686,19 @@
         "type": "object"
       },
       "LoginData": {
+        "example": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+          "expires_in": 1800,
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+          "token_type": "bearer",
+          "user": {
+            "account_type": "listener",
+            "display_name": "John Doe",
+            "is_premium": false,
+            "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "username": "john_doe"
+          }
+        },
         "properties": {
           "access_token": {
             "title": "Access Token",
@@ -1022,6 +2749,22 @@
         "type": "object"
       },
       "LoginResponse": {
+        "example": {
+          "data": {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+            "expires_in": 1800,
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+            "token_type": "bearer",
+            "user": {
+              "account_type": "listener",
+              "display_name": "John Doe",
+              "is_premium": false,
+              "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "username": "john_doe"
+            }
+          },
+          "success": true
+        },
         "properties": {
           "data": {
             "$ref": "#/components/schemas/LoginData"
@@ -1241,6 +2984,10 @@
         "type": "object"
       },
       "MessageResponse": {
+        "example": {
+          "message": "Operation completed successfully.",
+          "success": true
+        },
         "properties": {
           "message": {
             "title": "Message",
@@ -1370,9 +3117,25 @@
       },
       "ParticipantData": {
         "properties": {
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
+          },
+          "is_premium": {
+            "default": false,
+            "title": "Is Premium",
+            "type": "boolean"
           },
           "profile_picture": {
             "anyOf": [
@@ -2091,6 +3854,17 @@
             ],
             "title": "Account Type"
           },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
           "bio": {
             "anyOf": [
               {
@@ -2131,6 +3905,17 @@
               }
             ],
             "title": "Following Count"
+          },
+          "is_premium": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Premium"
           },
           "is_private": {
             "anyOf": [
@@ -2229,6 +4014,12 @@
         "type": "object"
       },
       "RefreshData": {
+        "example": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+          "expires_in": 1800,
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+          "token_type": "bearer"
+        },
         "properties": {
           "access_token": {
             "title": "Access Token",
@@ -2257,6 +4048,15 @@
         "type": "object"
       },
       "RefreshResponse": {
+        "example": {
+          "data": {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+            "expires_in": 1800,
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+            "token_type": "bearer"
+          },
+          "success": true
+        },
         "properties": {
           "data": {
             "$ref": "#/components/schemas/RefreshData"
@@ -2288,6 +4088,13 @@
         "type": "object"
       },
       "RegisterData": {
+        "example": {
+          "display_name": "John Doe",
+          "email": "user@example.com",
+          "is_verified": false,
+          "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "username": "john_doe"
+        },
         "properties": {
           "display_name": {
             "title": "Display Name",
@@ -2365,6 +4172,17 @@
         "type": "object"
       },
       "RegisterResponse": {
+        "example": {
+          "data": {
+            "display_name": "John Doe",
+            "email": "user@example.com",
+            "is_verified": false,
+            "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "username": "john_doe"
+          },
+          "message": "Registration successful. Please verify your email.",
+          "success": true
+        },
         "properties": {
           "data": {
             "$ref": "#/components/schemas/RegisterData"
@@ -2384,6 +4202,84 @@
           "data"
         ],
         "title": "RegisterResponse",
+        "type": "object"
+      },
+      "ReorderAlbumTracksRequest": {
+        "properties": {
+          "track_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Track Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "track_ids"
+        ],
+        "title": "ReorderAlbumTracksRequest",
+        "type": "object"
+      },
+      "ReportSubmissionData": {
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "entity_id": {
+            "title": "Entity Id",
+            "type": "string"
+          },
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "entity_type",
+          "entity_id",
+          "status"
+        ],
+        "title": "ReportSubmissionData",
+        "type": "object"
+      },
+      "ReportSubmissionResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ReportSubmissionData"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "message",
+          "data"
+        ],
+        "title": "ReportSubmissionResponse",
         "type": "object"
       },
       "RepostData": {
@@ -2461,6 +4357,37 @@
         "title": "ResetPasswordRequest",
         "type": "object"
       },
+      "ReviewReportRequest": {
+        "properties": {
+          "resolution_note": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolution Note"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "under_review",
+              "resolved",
+              "dismissed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "ReviewReportRequest",
+        "type": "object"
+      },
       "SearchPlaylistItem": {
         "properties": {
           "cover_photo_url": {
@@ -2530,10 +4457,53 @@
         "title": "SearchPlaylistsData",
         "type": "object"
       },
+      "SearchPlaylistsOptimizedResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SearchPlaylistsData"
+          },
+          "optimized": {
+            "title": "Optimized",
+            "type": "boolean"
+          },
+          "query_time_ms": {
+            "title": "Query Time Ms",
+            "type": "number"
+          },
+          "result_count": {
+            "title": "Result Count",
+            "type": "integer"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "optimized",
+          "query_time_ms",
+          "result_count",
+          "data"
+        ],
+        "title": "SearchPlaylistsOptimizedResponse",
+        "type": "object"
+      },
       "SearchPlaylistsResponse": {
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SearchPlaylistsData"
+          },
+          "query_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Time Ms"
           },
           "success": {
             "title": "Success",
@@ -2652,10 +4622,53 @@
         "title": "SearchTracksData",
         "type": "object"
       },
+      "SearchTracksOptimizedResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SearchTracksData"
+          },
+          "optimized": {
+            "title": "Optimized",
+            "type": "boolean"
+          },
+          "query_time_ms": {
+            "title": "Query Time Ms",
+            "type": "number"
+          },
+          "result_count": {
+            "title": "Result Count",
+            "type": "integer"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "optimized",
+          "query_time_ms",
+          "result_count",
+          "data"
+        ],
+        "title": "SearchTracksOptimizedResponse",
+        "type": "object"
+      },
       "SearchTracksResponse": {
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SearchTracksData"
+          },
+          "query_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Time Ms"
           },
           "success": {
             "title": "Success",
@@ -2675,6 +4688,17 @@
             "title": "Account Type",
             "type": "string"
           },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -2682,6 +4706,16 @@
           "follower_count": {
             "title": "Follower Count",
             "type": "integer"
+          },
+          "is_following": {
+            "default": false,
+            "title": "Is Following",
+            "type": "boolean"
+          },
+          "is_premium": {
+            "default": false,
+            "title": "Is Premium",
+            "type": "boolean"
           },
           "is_verified": {
             "title": "Is Verified",
@@ -2701,10 +4735,15 @@
           "user_id": {
             "title": "User Id",
             "type": "string"
+          },
+          "username": {
+            "title": "Username",
+            "type": "string"
           }
         },
         "required": [
           "user_id",
+          "username",
           "display_name",
           "account_type",
           "follower_count",
@@ -2729,10 +4768,53 @@
         "title": "SearchUsersData",
         "type": "object"
       },
+      "SearchUsersOptimizedResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SearchUsersData"
+          },
+          "optimized": {
+            "title": "Optimized",
+            "type": "boolean"
+          },
+          "query_time_ms": {
+            "title": "Query Time Ms",
+            "type": "number"
+          },
+          "result_count": {
+            "title": "Result Count",
+            "type": "integer"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "optimized",
+          "query_time_ms",
+          "result_count",
+          "data"
+        ],
+        "title": "SearchUsersOptimizedResponse",
+        "type": "object"
+      },
       "SearchUsersResponse": {
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SearchUsersData"
+          },
+          "query_time_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query Time Ms"
           },
           "success": {
             "title": "Success",
@@ -2877,6 +4959,20 @@
         "type": "object"
       },
       "SocialLoginData": {
+        "example": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+          "expires_in": 1800,
+          "is_new_user": false,
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+          "token_type": "bearer",
+          "user": {
+            "account_type": "listener",
+            "display_name": "John Doe",
+            "is_premium": false,
+            "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "username": "john_doe"
+          }
+        },
         "properties": {
           "access_token": {
             "title": "Access Token",
@@ -2914,6 +5010,23 @@
         "type": "object"
       },
       "SocialLoginResponse": {
+        "example": {
+          "data": {
+            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+            "expires_in": 1800,
+            "is_new_user": false,
+            "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh",
+            "token_type": "bearer",
+            "user": {
+              "account_type": "listener",
+              "display_name": "John Doe",
+              "is_premium": false,
+              "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "username": "john_doe"
+            }
+          },
+          "success": true
+        },
         "properties": {
           "data": {
             "$ref": "#/components/schemas/SocialLoginData"
@@ -2989,6 +5102,67 @@
           "data"
         ],
         "title": "StreamResponse",
+        "type": "object"
+      },
+      "SubscriptionData": {
+        "description": "Subscription details returned in GET /subscriptions/me.",
+        "properties": {
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "tracks_uploaded": {
+            "title": "Tracks Uploaded",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plan",
+          "tracks_uploaded",
+          "limit",
+          "billing_cycle"
+        ],
+        "title": "SubscriptionData",
+        "type": "object"
+      },
+      "SubscriptionResponse": {
+        "description": "Wrapper response for GET /subscriptions/me.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SubscriptionData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "SubscriptionResponse",
         "type": "object"
       },
       "TrackCreateData": {
@@ -3201,6 +5375,108 @@
         "title": "TrackData",
         "type": "object"
       },
+      "TrackEngagementSummaryData": {
+        "properties": {
+          "comment_count": {
+            "title": "Comment Count",
+            "type": "integer"
+          },
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "liked_by_me": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liked By Me"
+          },
+          "repost_count": {
+            "title": "Repost Count",
+            "type": "integer"
+          },
+          "reposted_by_me": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reposted By Me"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id",
+          "like_count",
+          "comment_count",
+          "repost_count"
+        ],
+        "title": "TrackEngagementSummaryData",
+        "type": "object"
+      },
+      "TrackEngagementSummaryResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TrackEngagementSummaryData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "TrackEngagementSummaryResponse",
+        "type": "object"
+      },
+      "TrackLikeCountData": {
+        "properties": {
+          "like_count": {
+            "title": "Like Count",
+            "type": "integer"
+          },
+          "track_id": {
+            "title": "Track Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track_id",
+          "like_count"
+        ],
+        "title": "TrackLikeCountData",
+        "type": "object"
+      },
+      "TrackLikeCountResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/TrackLikeCountData"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "data"
+        ],
+        "title": "TrackLikeCountResponse",
+        "type": "object"
+      },
       "TrackResponse": {
         "properties": {
           "data": {
@@ -3350,6 +5626,104 @@
           "data"
         ],
         "title": "UnreadMessageCountResponse",
+        "type": "object"
+      },
+      "UpdateAlbumRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "genre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genre"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "upc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upc"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility"
+          }
+        },
+        "title": "UpdateAlbumRequest",
         "type": "object"
       },
       "UpdatePlaylistRequest": {
@@ -3570,11 +5944,90 @@
         "title": "UpdateSocialLinksRequest",
         "type": "object"
       },
+      "UpdateUserRoleRequest": {
+        "properties": {
+          "role": {
+            "enum": [
+              "user",
+              "admin"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "UpdateUserRoleRequest",
+        "type": "object"
+      },
+      "UpdateUserSuspensionRequest": {
+        "properties": {
+          "is_suspended": {
+            "title": "Is Suspended",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "is_suspended"
+        ],
+        "title": "UpdateUserSuspensionRequest",
+        "type": "object"
+      },
+      "UpgradeRequest": {
+        "description": "Request body for upgrading to Premium (monthly or yearly endpoint).",
+        "properties": {
+          "payment_token": {
+            "title": "Payment Token",
+            "type": "string"
+          },
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          }
+        },
+        "required": [
+          "payment_token",
+          "plan"
+        ],
+        "title": "UpgradeRequest",
+        "type": "object"
+      },
       "UserInfo": {
+        "example": {
+          "account_type": "listener",
+          "display_name": "John Doe",
+          "is_premium": false,
+          "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "username": "john_doe"
+        },
         "properties": {
           "account_type": {
             "title": "Account Type",
             "type": "string"
+          },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
           },
           "display_name": {
             "title": "Display Name",
@@ -3608,6 +6061,17 @@
           "account_type": {
             "title": "Account Type",
             "type": "string"
+          },
+          "billing_cycle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Billing Cycle"
           },
           "bio": {
             "anyOf": [
@@ -3866,6 +6330,48 @@
         "title": "VerifyEmailRequest",
         "type": "object"
       },
+      "VerifyResetTokenRequest": {
+        "description": "Schema for verifying a password reset token without consuming it.\n\nArgs:\n    token (str): Password reset token from the email.",
+        "properties": {
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "title": "VerifyResetTokenRequest",
+        "type": "object"
+      },
+      "VerifyResetTokenResponse": {
+        "example": {
+          "message": "Token is valid.",
+          "success": true,
+          "valid": true
+        },
+        "properties": {
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "success": {
+            "title": "Success",
+            "type": "boolean"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success",
+          "valid",
+          "message"
+        ],
+        "title": "VerifyResetTokenResponse",
+        "type": "object"
+      },
       "WaveformData": {
         "properties": {
           "duration_seconds": {
@@ -3954,6 +6460,1041 @@
           }
         },
         "summary": "Root"
+      }
+    },
+    "/admin/analytics": {
+      "get": {
+        "operationId": "get_admin_analytics_admin_analytics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAnalyticsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Admin Analytics",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/comments/{comment_id}": {
+      "delete": {
+        "operationId": "delete_comment_admin_comments__comment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Comment",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/reports": {
+      "get": {
+        "operationId": "list_reports_admin_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "entity_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReportsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Reports",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/reports/{report_id}": {
+      "patch": {
+        "operationId": "review_report_admin_reports__report_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminReportReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Review Report",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/tracks/{track_id}": {
+      "delete": {
+        "operationId": "delete_track_admin_tracks__track_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTrackModerationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Track",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/users/{user_id}/role": {
+      "patch": {
+        "operationId": "update_user_role_admin_users__user_id__role_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserRoleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update User Role",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/admin/users/{user_id}/suspension": {
+      "patch": {
+        "operationId": "update_user_suspension_admin_users__user_id__suspension_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserSuspensionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserModerationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update User Suspension",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
+    "/albums/": {
+      "post": {
+        "operationId": "create_album_albums__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAlbumRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Album",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/liked": {
+      "get": {
+        "operationId": "get_liked_albums_albums_liked_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Liked Albums",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}": {
+      "delete": {
+        "operationId": "delete_album_albums__album_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Album",
+        "tags": [
+          "Albums"
+        ]
+      },
+      "get": {
+        "operationId": "get_album_albums__album_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Album",
+        "tags": [
+          "Albums"
+        ]
+      },
+      "patch": {
+        "operationId": "update_album_albums__album_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlbumRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumUpdateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Album",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}/cover": {
+      "post": {
+        "operationId": "upload_cover_photo_albums__album_id__cover_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_cover_photo_albums__album_id__cover_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumCoverResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Upload Cover Photo",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}/like": {
+      "delete": {
+        "operationId": "unlike_album_albums__album_id__like_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Unlike Album",
+        "tags": [
+          "Albums"
+        ]
+      },
+      "post": {
+        "operationId": "like_album_albums__album_id__like_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumLikeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Like Album",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}/tracks": {
+      "post": {
+        "operationId": "add_track_to_album_albums__album_id__tracks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumTrackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add Track To Album",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}/tracks/reorder": {
+      "put": {
+        "operationId": "reorder_album_tracks_albums__album_id__tracks_reorder_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderAlbumTracksRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reorder Album Tracks",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/albums/{album_id}/tracks/{track_id}": {
+      "delete": {
+        "operationId": "remove_track_from_album_albums__album_id__tracks__track_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "album_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Album Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Remove Track From Album",
+        "tags": [
+          "Albums"
+        ]
+      }
+    },
+    "/auth/bootstrap-admin": {
+      "post": {
+        "description": "Create the first admin account using a one-time bootstrap secret.",
+        "operationId": "bootstrap_admin_auth_bootstrap_admin_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Admin-Bootstrap-Secret",
+            "required": true,
+            "schema": {
+              "title": "X-Admin-Bootstrap-Secret",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BootstrapAdminRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBootstrapResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bootstrap Admin",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/check-email": {
+      "get": {
+        "description": "Check if an email address is available for registration.\n\nReturns available: true if the email is not yet registered,\nfalse if it is already taken.",
+        "operationId": "check_email_availability_auth_check_email_get",
+        "parameters": [
+          {
+            "description": "Email address to check",
+            "in": "query",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "description": "Email address to check",
+              "title": "Email",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckEmailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Check Email Availability",
+        "tags": [
+          "Authentication"
+        ]
       }
     },
     "/auth/facebook": {
@@ -4381,6 +7922,48 @@
         ]
       }
     },
+    "/auth/verify-reset-token": {
+      "post": {
+        "description": "Verify that a password reset token is valid and not yet used or expired.\n\nDoes not consume the token \u2014 the user can still call /reset-password\nwith the same token afterwards.\n\nArgs:\n    request (VerifyResetTokenRequest): The reset token to check.\n    db (Session): Database session injected by FastAPI.\n\nReturns:\n    dict: valid=true if the token is usable, false otherwise with a reason.",
+        "operationId": "verify_reset_token_auth_verify_reset_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyResetTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResetTokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify Reset Token",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
     "/conversations": {
       "get": {
         "description": "Get all conversations for the authenticated user.\n\nReturns each conversation with both participants'\nuser_id, display_name, and profile_picture.\nOrdered newest conversation first.\n\nArgs:\n    db (Session): Database session injected by FastAPI.\n    current_user (User): Injected by JWT dependency.\n\nReturns:\n    dict: List of conversations with participant details.",
@@ -4740,6 +8323,240 @@
         "summary": "Mark Message As Read",
         "tags": [
           "Messaging"
+        ]
+      }
+    },
+    "/feed/cached/cache/clear": {
+      "delete": {
+        "description": "Clear the feed cache \u2014 useful for resetting between demo runs.",
+        "operationId": "clear_feed_cache_feed_cached_cache_clear_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheClearResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Clear Feed Cache",
+        "tags": [
+          "Feed Caching (Optimized)"
+        ]
+      }
+    },
+    "/feed/cached/discover/optimized": {
+      "get": {
+        "description": "Discover feed with in-memory cache (60s TTL).\nFirst call hits the DB. Every call within 60s after that is instant.\nCompare against GET /feed/discover which hits the DB every time.",
+        "operationId": "get_discover_cached_feed_cached_discover_optimized_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CachedFeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Discover Cached",
+        "tags": [
+          "Feed Caching (Optimized)"
+        ]
+      }
+    },
+    "/feed/discover": {
+      "get": {
+        "operationId": "get_discover_feed_feed_discover_get",
+        "parameters": [
+          {
+            "description": "Number of tracks per page",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Number of tracks per page",
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Pagination cursor returned by the previous response",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pagination cursor returned by the previous response",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Discover Feed",
+        "tags": [
+          "Feed"
+        ]
+      }
+    },
+    "/feed/following": {
+      "get": {
+        "operationId": "get_following_feed_feed_following_get",
+        "parameters": [
+          {
+            "description": "Number of tracks per page",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "description": "Number of tracks per page",
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Pagination cursor returned by the previous response",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pagination cursor returned by the previous response",
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Following Feed",
+        "tags": [
+          "Feed"
         ]
       }
     },
@@ -5531,6 +9348,52 @@
         ]
       }
     },
+    "/reports": {
+      "post": {
+        "operationId": "submit_report_reports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportSubmissionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Submit Report",
+        "tags": [
+          "Moderation & Admin"
+        ]
+      }
+    },
     "/reposts/tracks/{track_id}": {
       "delete": {
         "operationId": "remove_repost_reposts_tracks__track_id__delete",
@@ -5622,6 +9485,146 @@
         "summary": "Repost Track",
         "tags": [
           "Engagement"
+        ]
+      }
+    },
+    "/search/performance/playlists/optimized": {
+      "get": {
+        "description": "Search playlists using a GIN trigram index on name.\nCompare response time against GET /search/playlists?keyword=...",
+        "operationId": "search_playlists_optimized_search_performance_playlists_optimized_get",
+        "parameters": [
+          {
+            "description": "Search keyword",
+            "in": "query",
+            "name": "keyword",
+            "required": true,
+            "schema": {
+              "description": "Search keyword",
+              "title": "Keyword",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPlaylistsOptimizedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Playlists Optimized",
+        "tags": [
+          "Search Performance (Optimized)"
+        ]
+      }
+    },
+    "/search/performance/tracks/optimized": {
+      "get": {
+        "description": "Search tracks using a GIN trigram index on title.\nCompare response time against GET /search/tracks?keyword=...",
+        "operationId": "search_tracks_optimized_search_performance_tracks_optimized_get",
+        "parameters": [
+          {
+            "description": "Search keyword",
+            "in": "query",
+            "name": "keyword",
+            "required": true,
+            "schema": {
+              "description": "Search keyword",
+              "title": "Keyword",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchTracksOptimizedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Tracks Optimized",
+        "tags": [
+          "Search Performance (Optimized)"
+        ]
+      }
+    },
+    "/search/performance/users/optimized": {
+      "get": {
+        "description": "Search users using a GIN trigram index on display_name.\nCompare response time against GET /search/users?keyword=...",
+        "operationId": "search_users_optimized_search_performance_users_optimized_get",
+        "parameters": [
+          {
+            "description": "Search keyword",
+            "in": "query",
+            "name": "keyword",
+            "required": true,
+            "schema": {
+              "description": "Search keyword",
+              "title": "Keyword",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUsersOptimizedResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Search Users Optimized",
+        "tags": [
+          "Search Performance (Optimized)"
         ]
       }
     },
@@ -5745,9 +9748,135 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Search Users",
         "tags": [
           "Search"
+        ]
+      }
+    },
+    "/subscriptions/me": {
+      "get": {
+        "description": "Get the current user's subscription status and upload usage.\n\nReturns the plan name (\"Free\" or \"Premium\"), how many tracks the user\nhas uploaded, the upload limit (3 for Free, null for Premium), and\nthe billing cycle (\"monthly\", \"yearly\", or null for Free users).\n\nRequires Bearer JWT authentication.",
+        "operationId": "get_subscription_subscriptions_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Subscription",
+        "tags": [
+          "Subscriptions"
+        ]
+      }
+    },
+    "/subscriptions/upgrade/monthly": {
+      "post": {
+        "description": "Upgrade the current user to Premium with a monthly billing cycle ($9.99).\n\nAccepts a Stripe test token and plan=\"Premium\". Charges 999 cents (USD).\n\nRequires Bearer JWT authentication.",
+        "operationId": "upgrade_monthly_subscriptions_upgrade_monthly_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Upgrade Monthly",
+        "tags": [
+          "Subscriptions"
+        ]
+      }
+    },
+    "/subscriptions/upgrade/yearly": {
+      "post": {
+        "description": "Upgrade the current user to Premium with a yearly billing cycle ($99.99).\n\nAccepts a Stripe test token and plan=\"Premium\". Charges 9999 cents (USD).\n\nRequires Bearer JWT authentication.",
+        "operationId": "upgrade_yearly_subscriptions_upgrade_yearly_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Upgrade Yearly",
+        "tags": [
+          "Subscriptions"
         ]
       }
     },
@@ -6053,6 +10182,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Get Track Comments",
         "tags": [
           "Engagement"
@@ -6110,6 +10244,102 @@
           }
         ],
         "summary": "Add Comment",
+        "tags": [
+          "Engagement"
+        ]
+      }
+    },
+    "/tracks/{track_id}/engagement-summary": {
+      "get": {
+        "operationId": "get_track_engagement_summary_tracks__track_id__engagement_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackEngagementSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Track Engagement Summary",
+        "tags": [
+          "Engagement"
+        ]
+      }
+    },
+    "/tracks/{track_id}/likes/count": {
+      "get": {
+        "operationId": "get_track_like_count_tracks__track_id__likes_count_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "track_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Track Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrackLikeCountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Track Like Count",
         "tags": [
           "Engagement"
         ]
@@ -6844,6 +11074,53 @@
           }
         },
         "summary": "Get User Profile",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{username}/albums": {
+      "get": {
+        "operationId": "get_user_albums_users__username__albums_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "username",
+            "required": true,
+            "schema": {
+              "title": "Username",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get User Albums",
         "tags": [
           "Users"
         ]

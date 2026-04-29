@@ -1,21 +1,15 @@
 """HTTP-level oversize-upload contract tests.
 
-Service contracts (current behaviour, see service constants):
-  - ``track_service.TRACK_MAX_SIZE``       = 100 MB; oversize -> HTTP 400
-  - ``track_service.COVER_IMAGE_MAX_SIZE`` =  10 MB; oversize -> HTTP 400
-  - ``user_service.AVATAR_MAX_SIZE``       =   5 MB; oversize -> HTTP 400
-  - ``user_service.COVER_MAX_SIZE``        =  10 MB; oversize -> HTTP 400
-
-The audit recommends 413 / 422 instead of the current 400. We assert the
-*actual* status (400) so the tests document the present contract; if the
-service is later updated to use 413/422 these tests will need a one-line
-edit. See TODO comments below.
+Service contracts (updated — BE-007 fixed):
+  - ``track_service.TRACK_MAX_SIZE``       = 100 MB; oversize -> HTTP 413
+  - ``track_service.COVER_IMAGE_MAX_SIZE`` =  10 MB; oversize -> HTTP 413
+  - ``user_service.AVATAR_MAX_SIZE``       =   5 MB; oversize -> HTTP 413
+  - ``user_service.COVER_MAX_SIZE``        =  10 MB; oversize -> HTTP 413
 
 Speed: the production constants are 5-100 MB which is too expensive to
 materialise per test. Each test below temporarily monkeypatches the
 constant down to a tiny value (``_SMALL_LIMIT``) so the upload buffer is
-``_SMALL_LIMIT + 1`` bytes, while still verifying the same code path
-("file_size > limit -> 400").
+``_SMALL_LIMIT + 1`` bytes, while still verifying the same code path.
 """
 
 from __future__ import annotations
@@ -32,9 +26,9 @@ from app.services import track_service, user_service
 _SMALL_LIMIT = 4 * 1024
 
 
-# TODO clarify upload-size contract: the audit suggests 413 / 422 but the
-# services currently raise 400. Tests assert 400. Update both service and
-# test together when the contract changes.
+
+
+
 
 
 def _oversize_buffer(limit_bytes: int) -> io.BytesIO:
@@ -62,7 +56,7 @@ def shrunk_user_limits(monkeypatch):
 # ── Track upload (POST /tracks/) ─────────────────────────
 
 
-def test_track_upload_oversize_returns_400(
+def test_track_upload_oversize_returns_413(
     client, override_auth, tmp_upload_dir, shrunk_track_limits
 ):
     override_auth()
@@ -75,7 +69,7 @@ def test_track_upload_oversize_returns_400(
         files={"file": ("huge.mp3", payload, "audio/mpeg")},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 413
     assert "100 MB" in response.json()["detail"]
     assert os.path.isdir(tmp_upload_dir)
 
@@ -95,7 +89,7 @@ def test_track_upload_invalid_content_type_returns_400(
     assert response.status_code == 400
 
 
-def test_track_cover_oversize_returns_400(
+def test_track_cover_oversize_returns_413(
     client, override_auth, tmp_upload_dir, shrunk_track_limits
 ):
     """Oversize cover image rejected when uploading a track."""
@@ -113,14 +107,14 @@ def test_track_cover_oversize_returns_400(
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 413
     assert "10 MB" in response.json()["detail"]
 
 
 # ── Avatar upload (PUT /users/me/avatar) ─────────────────
 
 
-def test_avatar_oversize_returns_400(
+def test_avatar_oversize_returns_413(
     client, override_auth, tmp_upload_dir, shrunk_user_limits
 ):
     override_auth()
@@ -132,7 +126,7 @@ def test_avatar_oversize_returns_400(
         files={"file": ("avatar.jpg", big_avatar, "image/jpeg")},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 413
     assert "5 MB" in response.json()["detail"]
 
 
@@ -150,7 +144,7 @@ def test_avatar_invalid_type_returns_400(client, override_auth, tmp_upload_dir):
 # ── Cover photo upload (PUT /users/me/cover) ─────────────
 
 
-def test_user_cover_oversize_returns_400(
+def test_user_cover_oversize_returns_413(
     client, override_auth, tmp_upload_dir, shrunk_user_limits
 ):
     override_auth()
@@ -162,7 +156,7 @@ def test_user_cover_oversize_returns_400(
         files={"file": ("cover.jpg", big_cover, "image/jpeg")},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 413
     assert "10 MB" in response.json()["detail"]
 
 
