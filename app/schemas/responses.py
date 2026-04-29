@@ -1083,35 +1083,22 @@ class CacheClearResponse(BaseModel):
 
 class AlbumTrackItem(BaseModel):
     track_id: str
-    user_id: str
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    tags: Optional[Any] = None
-    release_date: Optional[Any] = None
     stream_url: str
     cover_image_url: Optional[str] = None
-    visibility: str
-    play_count: Optional[int] = None
     duration_seconds: Optional[int] = None
+    play_count: int = 0
     position: int
 
 
 class AlbumData(BaseModel):
     album_id: str
-    user_id: str
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    tags: Optional[Any] = None
-    release_date: Optional[Any] = None
+    year: Optional[int] = None
+    artist_name: str
     cover_photo_url: Optional[str] = None
-    visibility: str
-    upc: Optional[str] = None
-    label: Optional[str] = None
     like_count: int
     track_count: int
-    created_at: Optional[datetime] = None
 
 
 class AlbumResponse(BaseModel):
@@ -1122,19 +1109,12 @@ class AlbumResponse(BaseModel):
 
 class AlbumDetailData(BaseModel):
     album_id: str
-    user_id: str
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    tags: Optional[Any] = None
-    release_date: Optional[Any] = None
+    year: Optional[int] = None
+    artist_name: str
     cover_photo_url: Optional[str] = None
-    visibility: str
-    upc: Optional[str] = None
-    label: Optional[str] = None
     like_count: int
     track_count: int
-    created_at: Optional[datetime] = None
     tracks: List[AlbumTrackItem]
 
 
@@ -1145,15 +1125,12 @@ class AlbumDetailResponse(BaseModel):
 
 class AlbumListItem(BaseModel):
     album_id: str
-    user_id: str
     title: str
-    description: Optional[str] = None
+    year: Optional[int] = None
+    artist_name: str
     cover_photo_url: Optional[str] = None
-    visibility: str
-    genre: Optional[str] = None
     like_count: int
     track_count: int
-    created_at: Optional[datetime] = None
 
 
 class AlbumListResponse(BaseModel):
@@ -1164,9 +1141,7 @@ class AlbumListResponse(BaseModel):
 class AlbumUpdateData(BaseModel):
     album_id: str
     title: str
-    description: Optional[str] = None
-    genre: Optional[str] = None
-    visibility: str
+    year: Optional[int] = None
 
 
 class AlbumUpdateResponse(BaseModel):
