@@ -81,48 +81,62 @@ def startup():
     if AUTO_CREATE_TABLES:
         Base.metadata.create_all(bind=engine)
 
-    existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
+    try:
+        existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
+    except Exception:
+        existing_columns = []
+
     if "created_at" not in existing_columns:
-        with engine.connect() as conn:
-            conn.execute(
-                text(
-                    "ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"
+        try:
+            with engine.connect() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"
+                    )
                 )
-            )
-            conn.commit()
+                conn.commit()
+        except Exception:
+            pass  # column may already exist or dialect doesn't support TIMESTAMPTZ
 
     if "album_id" not in existing_columns:
+        try:
+            with engine.connect() as conn:
+                conn.execute(
+                    text(
+                        "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id UUID "
+                        "REFERENCES albums(album_id) ON DELETE SET NULL"
+                    )
+                )
+                conn.commit()
+        except Exception:
+            pass  # column may already exist or dialect doesn't support IF NOT EXISTS
+
+    # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
+    # Skipped silently on SQLite (e.g. local dev / E2E without Postgres).
+    try:
         with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
             conn.execute(
                 text(
-                    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id UUID "
-                    "REFERENCES albums(album_id) ON DELETE SET NULL"
+                    "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
+                    "ON users USING gin(display_name gin_trgm_ops)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
+                    "ON tracks USING gin(title gin_trgm_ops)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
+                    "ON playlists USING gin(name gin_trgm_ops)"
                 )
             )
             conn.commit()
-
-    # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
-    with engine.connect() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
-                "ON users USING gin(display_name gin_trgm_ops)"
-            )
-        )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
-                "ON tracks USING gin(title gin_trgm_ops)"
-            )
-        )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
-                "ON playlists USING gin(name gin_trgm_ops)"
-            )
-        )
-        conn.commit()
+    except Exception:
+        pass  # pg_trgm not available on SQLite; /search/performance/*/fast will degrade
 
 
 app.include_router(auth_router)
