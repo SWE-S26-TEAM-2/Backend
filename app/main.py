@@ -90,18 +90,24 @@ def startup():
     # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
-        conn.execute(text(
-            "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
-            "ON users USING gin(display_name gin_trgm_ops)"
-        ))
-        conn.execute(text(
-            "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
-            "ON tracks USING gin(title gin_trgm_ops)"
-        ))
-        conn.execute(text(
-            "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
-            "ON playlists USING gin(name gin_trgm_ops)"
-        ))
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
+                "ON users USING gin(display_name gin_trgm_ops)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
+                "ON tracks USING gin(title gin_trgm_ops)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
+                "ON playlists USING gin(name gin_trgm_ops)"
+            )
+        )
         conn.commit()
 
 

@@ -19,6 +19,8 @@ def _safe_image_url(url: str | None) -> str | None:
     if url and url.startswith("/api/uploads/"):
         return None
     return url
+
+
 AVATAR_MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 COVER_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_PROFILE_FIELDS = [
