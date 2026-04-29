@@ -23,6 +23,7 @@ from app.core.cache import feed_cache, cache_get, cache_set, cache_get_timestamp
 from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.repositories.feed_repo import FeedRepository
+from app.schemas.responses import CachedFeedResponse, CacheClearResponse
 from app.services.feed_service import FeedService, _EMPTY_STATS
 
 router = APIRouter(prefix="/feed/cached", tags=["Feed Caching (Optimized)"])
@@ -73,7 +74,7 @@ def _build_discover_result(db: Session, user, limit: int, cursor: str | None) ->
     return {"items": items, "next_cursor": next_cursor, "has_more": has_more}
 
 
-@router.get("/discover/optimized")
+@router.get("/discover/optimized", response_model=CachedFeedResponse)
 def get_discover_cached(
     limit: int = Query(20, ge=1, le=50),
     cursor: str | None = Query(None),
@@ -123,7 +124,7 @@ def get_discover_cached(
     }
 
 
-@router.delete("/cache/clear")
+@router.delete("/cache/clear", response_model=CacheClearResponse)
 def clear_feed_cache(current_user=Depends(get_current_user)):
     """Clear the feed cache — useful for resetting between demo runs."""
     feed_cache.clear()
