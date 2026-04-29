@@ -590,3 +590,58 @@ def test_create_track_json_validation_error():
     assert response.status_code == 422
 
     app.dependency_overrides.clear()
+
+
+# ── BE-006: audio Range edge cases ──────────────────────────────────────────
+
+
+def test_audio_range_past_eof_returns_416(monkeypatch):
+    from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    track_id = uuid4()
+    audio_dir = Path("tmp") / "test-audio-eof"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    audio_file = audio_dir / "eof-test.mp3"
+    audio_file.write_bytes(b"0123456789")  # 10 bytes
+
+    fake_track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        file_url=f"http://127.0.0.1:8000/api/uploads/{audio_file.name}",
+        visibility="public",
+    )
+
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(audio_dir))
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db, tid: fake_track)
+
+    r = client.get(
+        f"/tracks/{track_id}/audio",
+        headers={"Range": "bytes=999999999-"},
+    )
+
+    assert r.status_code == 416
+    assert r.headers.get("content-range") == "bytes */10"
+
+
+def test_audio_404_when_file_missing_on_disk(monkeypatch):
+    from app.repositories.track_repo import TrackRepository
+    from app.services import track_service
+
+    track_id = uuid4()
+    audio_dir = Path("tmp") / "test-audio-missing"
+    audio_dir.mkdir(parents=True, exist_ok=True)
+
+    fake_track = FakeTrack(
+        track_id=track_id,
+        user_id=uuid4(),
+        file_url="http://127.0.0.1:8000/api/uploads/does-not-exist.mp3",
+        visibility="public",
+    )
+
+    monkeypatch.setattr(track_service, "UPLOAD_DIR", str(audio_dir))
+    monkeypatch.setattr(TrackRepository, "get_by_id", lambda db, tid: fake_track)
+
+    r = client.get(f"/tracks/{track_id}/audio")
+
+    assert r.status_code == 404

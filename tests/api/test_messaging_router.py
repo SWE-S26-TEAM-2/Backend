@@ -272,3 +272,62 @@ def test_mark_read_idempotent_on_already_read(
     assert first.status_code == 200
     assert second.status_code == 200
     assert first.json() == second.json()
+
+
+# ── BE-005: PATCH /conversations/{id}/messages/read-all ─────────────────────
+
+
+def test_mark_all_read_without_auth_returns_401(client):
+    r = client.patch(f"/conversations/{uuid.uuid4()}/messages/read-all")
+    assert r.status_code == 401
+
+
+def test_mark_all_read_invalid_uuid_returns_422(client, override_auth):
+    override_auth()
+    r = client.patch("/conversations/not-a-uuid/messages/read-all")
+    assert r.status_code == 422
+
+
+def test_mark_all_read_non_participant_returns_403(client, override_auth, monkeypatch):
+    override_auth()
+    monkeypatch.setattr(
+        MessagingService,
+        "mark_all_messages_as_read",
+        lambda *a, **k: (_ for _ in ()).throw(
+            HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="not participant")
+        ),
+    )
+    r = client.patch(f"/conversations/{uuid.uuid4()}/messages/read-all")
+    assert r.status_code == 403
+
+
+def test_mark_all_read_returns_200_with_marked_count(client, override_auth, monkeypatch):
+    override_auth()
+    monkeypatch.setattr(
+        MessagingService,
+        "mark_all_messages_as_read",
+        lambda *a, **k: {
+            "success": True,
+            "message": "All messages marked as read.",
+            "data": {"marked_read": 3},
+        },
+    )
+    r = client.patch(f"/conversations/{uuid.uuid4()}/messages/read-all")
+    assert r.status_code == 200
+    assert r.json()["data"]["marked_read"] == 3
+
+
+def test_mark_all_read_idempotent_with_zero_unread(client, override_auth, monkeypatch):
+    override_auth()
+    monkeypatch.setattr(
+        MessagingService,
+        "mark_all_messages_as_read",
+        lambda *a, **k: {
+            "success": True,
+            "message": "No unread messages.",
+            "data": {"marked_read": 0},
+        },
+    )
+    r = client.patch(f"/conversations/{uuid.uuid4()}/messages/read-all")
+    assert r.status_code == 200
+    assert r.json()["data"]["marked_read"] == 0
