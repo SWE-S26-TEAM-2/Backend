@@ -20,3 +20,6 @@ httpx
 # Waveform generation
 pydub
 audioop-lts; python_version >= "3.13"
+
+# In-memory caching
+cachetools
