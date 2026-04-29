@@ -1,4 +1,5 @@
 from app.models.follow import Follow
+from app.repositories.album_repo import AlbumRepository
 from app.repositories.playlist_repo import PlaylistRepository
 from app.repositories.track_repo import TrackRepository
 from app.repositories.user_repo import UserRepository
@@ -116,4 +117,28 @@ class SearchService:
         return {
             "success": True,
             "data": {"playlists": playlist_results},
+        }
+
+    @staticmethod
+    def search_albums(db, keyword: str):
+        albums = AlbumRepository.search_by_title(db, keyword)
+
+        def serialize(album):
+            user = UserRepository.get_by_id(db, album.user_id)
+            artist_name = user.display_name if user else "Unknown Artist"
+            return {
+                "album_id": str(album.album_id),
+                "title": album.title,
+                "year": (
+                    album.release_date.year if album.release_date else None
+                ),
+                "artist_name": artist_name,
+                "cover_photo_url": album.cover_photo_url,
+                "like_count": int(album.like_count or 0),
+                "track_count": int(album.track_count or 0),
+            }
+
+        return {
+            "success": True,
+            "data": {"albums": [serialize(a) for a in albums]},
         }

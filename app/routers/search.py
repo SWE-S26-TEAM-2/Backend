@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session  # type: ignore
 from app.core.dependencies import get_current_user
 from app.database.database import get_db
 from app.schemas.responses import (
+    SearchAlbumsResponse,
     SearchUsersResponse,
     SearchTracksResponse,
     SearchPlaylistsResponse,
@@ -45,5 +46,16 @@ def search_playlists(
 ):
     start = time.perf_counter()
     result = SearchService.search_playlists(db, keyword)
+    result["query_time_ms"] = round((time.perf_counter() - start) * 1000, 3)
+    return result
+
+
+@router.get("/albums", response_model=SearchAlbumsResponse)
+def search_albums(
+    keyword: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    start = time.perf_counter()
+    result = SearchService.search_albums(db, keyword)
     result["query_time_ms"] = round((time.perf_counter() - start) * 1000, 3)
     return result

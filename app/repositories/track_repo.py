@@ -1,3 +1,4 @@
+from sqlalchemy import or_  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.track import Track
@@ -44,11 +45,12 @@ class TrackRepository:
 
     @staticmethod
     def search_by_title(db: Session, keyword: str):
+        keyword = keyword.strip()
         return (
             db.query(Track)
             .filter(
                 Track.title.ilike(f"%{keyword}%"),
-                Track.visibility == "public",
+                or_(Track.visibility == "public", Track.visibility.is_(None)),
             )
             .all()
         )

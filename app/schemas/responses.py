@@ -890,6 +890,26 @@ class SearchPlaylistsOptimizedResponse(BaseModel):
     data: SearchPlaylistsData
 
 
+class SearchAlbumItem(BaseModel):
+    album_id: str
+    title: str
+    year: Optional[int] = None
+    artist_name: str
+    cover_photo_url: Optional[str] = None
+    like_count: int
+    track_count: int
+
+
+class SearchAlbumsData(BaseModel):
+    albums: List[SearchAlbumItem]
+
+
+class SearchAlbumsResponse(BaseModel):
+    success: bool
+    query_time_ms: Optional[float] = None
+    data: SearchAlbumsData
+
+
 # ── Notifications ──────────────────────────────────────────────────────────────
 
 
