@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session  # type: ignore
+from sqlalchemy.orm import Session, aliased  # type: ignore
 
 from app.models.notification import Notification  # type: ignore
+from app.models.user import User  # type: ignore
 
 
 class NotificationRepository:
@@ -15,8 +16,10 @@ class NotificationRepository:
 
     @staticmethod
     def get_by_user(db: Session, user_id, limit: int = 50, offset: int = 0):
+        Actor = aliased(User)
         return (
-            db.query(Notification)
+            db.query(Notification, Actor.username, Actor.display_name, Actor.profile_picture)
+            .join(Actor, Notification.actor_id == Actor.user_id)
             .filter(Notification.user_id == user_id)
             .order_by(Notification.created_at.desc())
             .offset(offset)

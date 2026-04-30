@@ -916,6 +916,9 @@ class SearchAlbumsResponse(BaseModel):
 class NotificationItem(BaseModel):
     notification_id: str
     actor_id: str
+    actor_username: str
+    actor_display_name: str
+    actor_profile_picture: Optional[str] = None
     notification_type: str
     target_id: Optional[str] = None
     message: str

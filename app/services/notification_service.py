@@ -27,13 +27,16 @@ class NotificationService:
                     {
                         "notification_id": str(n.notification_id),
                         "actor_id": str(n.actor_id),
+                        "actor_username": username,
+                        "actor_display_name": display_name,
+                        "actor_profile_picture": profile_picture,
                         "notification_type": n.notification_type,
                         "target_id": (str(n.target_id) if n.target_id else None),
                         "message": n.message,
                         "is_read": n.is_read,
                         "created_at": n.created_at,
                     }
-                    for n in notifications
+                    for n, username, display_name, profile_picture in notifications
                 ],
             },
         }
