@@ -913,9 +913,28 @@ class SearchAlbumsResponse(BaseModel):
 # ── Notifications ──────────────────────────────────────────────────────────────
 
 
+_NOTIFICATION_ITEM_EXAMPLE = {
+    "notification_id": "b1c2d3e4-f5a6-7890-bcde-f12345678901",
+    "actor_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "actor_username": "jane_doe",
+    "actor_display_name": "Jane Doe",
+    "actor_profile_picture": "https://cdn.example.com/avatars/jane_doe.jpg",
+    "notification_type": "follow",
+    "target_id": None,
+    "message": "jane_doe started following you.",
+    "is_read": False,
+    "created_at": "2026-04-30T12:00:00Z",
+}
+
+
 class NotificationItem(BaseModel):
+    model_config = ConfigDict(json_schema_extra={"example": _NOTIFICATION_ITEM_EXAMPLE})
+
     notification_id: str
     actor_id: str
+    actor_username: str
+    actor_display_name: str
+    actor_profile_picture: Optional[str] = None
     notification_type: str
     target_id: Optional[str] = None
     message: str
@@ -928,6 +947,17 @@ class NotificationsData(BaseModel):
 
 
 class NotificationsResponse(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "data": {
+                    "notifications": [_NOTIFICATION_ITEM_EXAMPLE],
+                },
+            }
+        }
+    )
+
     success: bool
     data: NotificationsData
 

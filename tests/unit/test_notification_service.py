@@ -23,22 +23,32 @@ def _make_notification(user_id=None, is_read=False):
     return n
 
 
+def _make_notif_row(user_id=None, is_read=False):
+    """Returns a (Notification, username, display_name, profile_picture) tuple as the repo now yields."""
+    n = _make_notification(user_id=user_id, is_read=is_read)
+    return (n, "actor_user", "Actor User", None)
+
+
 class TestGetNotifications:
 
     @patch(NOTIF_REPO)
     def test_get_notifications_success(self, mock_repo):
         db = MagicMock()
         user = make_fake_user()
-        notifs = [
-            _make_notification(user.user_id),
-            _make_notification(user.user_id, is_read=True),
+        rows = [
+            _make_notif_row(user.user_id),
+            _make_notif_row(user.user_id, is_read=True),
         ]
-        mock_repo.get_by_user.return_value = notifs
+        mock_repo.get_by_user.return_value = rows
 
         result = NotificationService.get_notifications(db, user)
 
         assert result["success"] is True
         assert len(result["data"]["notifications"]) == 2
+        notif = result["data"]["notifications"][0]
+        assert notif["actor_username"] == "actor_user"
+        assert notif["actor_display_name"] == "Actor User"
+        assert notif["actor_profile_picture"] is None
         mock_repo.get_by_user.assert_called_once_with(
             db, user.user_id, limit=50, offset=0
         )
