@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint  # type: ignore
+from sqlalchemy import Column, Integer, ForeignKey  # type: ignore
 from sqlalchemy.dialects.postgresql import UUID  # type: ignore
 
 from app.database.database import Base  # type: ignore
@@ -18,7 +18,3 @@ class AlbumTrack(Base):
         primary_key=True,
     )
     position = Column(Integer, nullable=False, default=1)
-
-    __table_args__ = (
-        UniqueConstraint("track_id", name="uq_track_one_album"),
-    )
