@@ -100,7 +100,11 @@ class FollowerService:
                 {"follower_count": max(0, target_user.follower_count - 1)},
             )
 
-        return {"success": True, "message": "Successfully unfollowed."}
+        return {
+            "success": True,
+            "message": "Successfully unfollowed.",
+            "username": target_user.username,
+        }
 
     @staticmethod
     def get_my_followers(db: Session, current_user: User) -> dict:

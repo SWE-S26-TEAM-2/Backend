@@ -17,6 +17,12 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class UnfollowResponse(BaseModel):
+    success: bool
+    message: str
+    username: str
+
+
 # ── Auth ───────────────────────────────────────────────────────────────────────
 
 
