@@ -9,6 +9,7 @@ from app.repositories.like_repo import LikeRepository
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.repost_repo import RepostRepository
 from app.repositories.track_repo import TrackRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.engagement_schema import AddCommentRequest
 
 
@@ -308,5 +309,50 @@ class EngagementService:
                     else None
                 ),
                 "created_at": comment.created_at,
+            },
+        }
+
+    @staticmethod
+    def get_user_reposts(db: Session, username: str) -> dict:
+        """
+        Return all public tracks reposted by a user, identified by username.
+
+        Args:
+            db (Session): The database session.
+            username (str): The username of the user whose reposts to fetch.
+
+        Returns:
+            dict: Success envelope with username and list of reposted tracks.
+
+        Raises:
+            HTTPException: 404 if the user is not found.
+        """
+        user = UserRepository.get_by_username(db, username)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        reposts = RepostRepository.get_by_user_id(db, user.user_id)
+        items = []
+        for repost in reposts:
+            track = TrackRepository.get_by_id(db, repost.track_id)
+            if not track or track.visibility != "public":
+                continue
+            items.append({
+                "repost_id": str(repost.repost_id),
+                "track_id": str(track.track_id),
+                "title": track.title,
+                "stream_url": f"/api/tracks/{track.track_id}/audio",
+                "cover_image_url": getattr(track, "cover_image_url", None),
+                "reposted_at": repost.created_at,
+            })
+
+        return {
+            "success": True,
+            "data": {
+                "username": user.username,
+                "reposts": items,
             },
         }

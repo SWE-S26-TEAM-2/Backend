@@ -15,6 +15,7 @@ from app.schemas.responses import (  # type: ignore
     RepostResponse,
     TrackEngagementSummaryResponse,
     TrackLikeCountResponse,
+    UserRepostsResponse,
 )
 from app.services.engagement_service import EngagementService
 
@@ -76,6 +77,20 @@ def remove_repost(
     current_user: User = Depends(get_current_user),
 ):
     return EngagementService.remove_repost(db, current_user, track_id)
+
+
+@router.get(
+    "/reposts/users/{username}", response_model=UserRepostsResponse
+)
+def get_user_reposts(
+    username: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Get all public tracks reposted by a user, identified by username.
+    No authentication required.
+    """
+    return EngagementService.get_user_reposts(db, username)
 
 
 @router.get("/tracks/{track_id}/comments", response_model=CommentsListResponse)

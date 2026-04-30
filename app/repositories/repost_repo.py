@@ -14,6 +14,15 @@ class RepostRepository:
         )
 
     @staticmethod
+    def get_by_user_id(db: Session, user_id):
+        return (
+            db.query(Repost)
+            .filter(Repost.user_id == user_id)
+            .order_by(Repost.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
     def count_by_track_id(db: Session, track_id) -> int:
         return int(db.query(Repost).filter(Repost.track_id == track_id).count())
 
