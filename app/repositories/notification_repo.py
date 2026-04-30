@@ -18,7 +18,12 @@ class NotificationRepository:
     def get_by_user(db: Session, user_id, limit: int = 50, offset: int = 0):
         Actor = aliased(User)
         return (
-            db.query(Notification, Actor.username, Actor.display_name, Actor.profile_picture)
+            db.query(
+                Notification,
+                Actor.username,
+                Actor.display_name,
+                Actor.profile_picture,
+            )
             .join(Actor, Notification.actor_id == Actor.user_id)
             .filter(Notification.user_id == user_id)
             .order_by(Notification.created_at.desc())
