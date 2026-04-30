@@ -168,7 +168,14 @@ class TrackService:
                 detail="Audio file not found",
             )
 
-        audio = AudioSegment.from_file(file_path)
+        try:
+            audio = AudioSegment.from_file(file_path)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to decode audio file: {e}",
+            )
+
         audio = audio.set_channels(1)
 
         sample_count = 200

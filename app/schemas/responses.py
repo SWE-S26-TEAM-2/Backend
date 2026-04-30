@@ -456,7 +456,7 @@ class PlaybackData(BaseModel):
     expires_in: Optional[int] = None
     content_type: str
     play_count: int
-    processing_status: str
+    processing_status: Optional[str] = None
     genre: Optional[str] = None
     tags: Optional[List[Any]] = None
     release_date: Optional[str] = None
