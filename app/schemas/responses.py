@@ -653,6 +653,25 @@ class RepostResponse(BaseModel):
     data: RepostData
 
 
+class UserRepostItem(BaseModel):
+    repost_id: str
+    track_id: str
+    title: str
+    stream_url: str
+    cover_image_url: Optional[str] = None
+    reposted_at: Optional[datetime] = None
+
+
+class UserRepostsData(BaseModel):
+    username: str
+    reposts: List[UserRepostItem]
+
+
+class UserRepostsResponse(BaseModel):
+    success: bool
+    data: UserRepostsData
+
+
 class CommentItem(BaseModel):
     comment_id: str
     user_id: str

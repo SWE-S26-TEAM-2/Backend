@@ -613,3 +613,77 @@ class TestAddComment:
 
         assert result["success"] is True
         assert result["message"] == "Comment added."
+
+
+# ── GetUserReposts ─────────────────────────────────────────────────────────────
+
+
+class TestGetUserReposts:
+    """Tests for EngagementService.get_user_reposts()"""
+
+    @patch("app.services.engagement_service.TrackRepository")
+    @patch("app.services.engagement_service.RepostRepository")
+    @patch("app.services.engagement_service.UserRepository")
+    def test_returns_public_reposted_tracks(
+        self, mock_user_repo, mock_repost_repo, mock_track_repo, mock_db
+    ):
+        """User has reposts — returns all public tracks."""
+        user = make_fake_user(username="djkhaled")
+        track = _make_track()
+        repost = _make_repost(user.user_id, track.track_id)
+
+        mock_user_repo.get_by_username.return_value = user
+        mock_repost_repo.get_by_user_id.return_value = [repost]
+        mock_track_repo.get_by_id.return_value = track
+
+        result = EngagementService.get_user_reposts(mock_db, "djkhaled")
+
+        assert result["success"] is True
+        assert result["data"]["username"] == user.username
+        assert len(result["data"]["reposts"]) == 1
+        assert result["data"]["reposts"][0]["track_id"] == str(track.track_id)
+
+    @patch("app.services.engagement_service.TrackRepository")
+    @patch("app.services.engagement_service.RepostRepository")
+    @patch("app.services.engagement_service.UserRepository")
+    def test_private_tracks_are_excluded(
+        self, mock_user_repo, mock_repost_repo, mock_track_repo, mock_db
+    ):
+        """Private tracks in reposts are not returned."""
+        user = make_fake_user(username="djkhaled")
+        private_track = _make_track()
+        private_track.visibility = "private"
+        repost = _make_repost(user.user_id, private_track.track_id)
+
+        mock_user_repo.get_by_username.return_value = user
+        mock_repost_repo.get_by_user_id.return_value = [repost]
+        mock_track_repo.get_by_id.return_value = private_track
+
+        result = EngagementService.get_user_reposts(mock_db, "djkhaled")
+
+        assert result["success"] is True
+        assert result["data"]["reposts"] == []
+
+    @patch("app.services.engagement_service.RepostRepository")
+    @patch("app.services.engagement_service.UserRepository")
+    def test_empty_reposts(
+        self, mock_user_repo, mock_repost_repo, mock_db
+    ):
+        """User exists but has no reposts — returns empty list."""
+        user = make_fake_user(username="newuser")
+        mock_user_repo.get_by_username.return_value = user
+        mock_repost_repo.get_by_user_id.return_value = []
+
+        result = EngagementService.get_user_reposts(mock_db, "newuser")
+
+        assert result["success"] is True
+        assert result["data"]["reposts"] == []
+
+    @patch("app.services.engagement_service.UserRepository")
+    def test_user_not_found_raises_404(self, mock_user_repo, mock_db):
+        """Non-existent username raises 404."""
+        mock_user_repo.get_by_username.return_value = None
+
+        with pytest.raises(HTTPException) as exc:
+            EngagementService.get_user_reposts(mock_db, "ghost")
+        assert exc.value.status_code == 404
