@@ -116,15 +116,6 @@ class AlbumService:
                     detail=f"Track {track_id_str} not found",
                 )
 
-            existing = AlbumRepository.get_track_album(db, track_id)
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        f"Track {track_id_str} already belongs to another album."
-                    ),
-                )
-
             AlbumRepository.add_track(db, album.album_id, track_id, position=i)
 
         album.track_count = len(track_ids)
@@ -262,16 +253,6 @@ class AlbumService:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Track is already in this album",
-            )
-
-        existing_album_membership = AlbumRepository.get_track_album(db, track_id)
-        if existing_album_membership:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    "This track already belongs to another album. "
-                    "A track can only be in one album at a time."
-                ),
             )
 
         position = data.position
