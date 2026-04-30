@@ -73,7 +73,12 @@ class AuthService:
             dict: success flag and available bool.
         """
         existing = UserRepository.get_by_email(db, email)
-        return {"success": True, "available": existing is None}
+        is_existing = existing is not None
+        return {
+            "success": True,
+            "available": not is_existing,
+            "isExisting": is_existing,
+        }
 
     @staticmethod
     def register_user(db: Session, data) -> dict:

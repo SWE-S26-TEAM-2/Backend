@@ -577,3 +577,38 @@ class TestResetPassword:
         with pytest.raises(HTTPException) as exc:
             AuthService.reset_password(mock_db, _reset_data())
         assert exc.value.status_code == 410
+
+
+# ── CheckEmailAvailability ─────────────────────────────────────────────────────
+
+
+class TestCheckEmailAvailability:
+    """Tests for AuthService.check_email_availability()"""
+
+    @patch("app.services.auth_service.UserRepository")
+    def test_email_not_registered_returns_available(
+        self, mock_user_repo, mock_db
+    ):
+        """Email not in DB → available=True, isExisting=False."""
+        mock_user_repo.get_by_email.return_value = None
+
+        result = AuthService.check_email_availability(mock_db, "new@example.com")
+
+        assert result["success"] is True
+        assert result["available"] is True
+        assert result["isExisting"] is False
+
+    @patch("app.services.auth_service.UserRepository")
+    def test_email_already_registered_returns_not_available(
+        self, mock_user_repo, mock_db
+    ):
+        """Email already in DB → available=False, isExisting=True."""
+        mock_user_repo.get_by_email.return_value = make_fake_user()
+
+        result = AuthService.check_email_availability(
+            mock_db, "existing@example.com"
+        )
+
+        assert result["success"] is True
+        assert result["available"] is False
+        assert result["isExisting"] is True

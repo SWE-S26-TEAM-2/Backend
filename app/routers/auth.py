@@ -5,7 +5,7 @@ Handles registration, login, email verification,
 and resend verification HTTP routes.
 """
 
-from fastapi import APIRouter, Depends, Header, Query  # type: ignore
+from fastapi import APIRouter, Body, Depends, Header  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 
 from app.database.database import get_db  # type: ignore
@@ -52,16 +52,16 @@ def bootstrap_admin(
     return AuthService.bootstrap_admin(db, request, bootstrap_secret)
 
 
-@router.get("/check-email", response_model=CheckEmailResponse)
+@router.post("/check-email", response_model=CheckEmailResponse)
 def check_email_availability(
-    email: str = Query(..., description="Email address to check"),
+    email: str = Body(..., embed=True),
     db: Session = Depends(get_db),
 ):
     """
-    Check if an email address is available for registration.
+    Check if an email address is already registered.
 
-    Returns available: true if the email is not yet registered,
-    false if it is already taken.
+    Accepts { "email": "..." } in the request body.
+    Returns available (bool) and isExisting (bool).
     """
     return AuthService.check_email_availability(db, email)
 
