@@ -24,7 +24,7 @@ def _make_notification(user_id=None, is_read=False):
 
 
 def _make_notif_row(user_id=None, is_read=False):
-    """Returns a (Notification, username, display_name, profile_picture) tuple as the repo now yields."""
+    """Returns a (Notification, username, display_name, profile_picture) tuple."""
     n = _make_notification(user_id=user_id, is_read=is_read)
     return (n, "actor_user", "Actor User", None)
 
