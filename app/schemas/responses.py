@@ -17,6 +17,12 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class UnfollowResponse(BaseModel):
+    success: bool
+    message: str
+    username: str
+
+
 # ── Auth ───────────────────────────────────────────────────────────────────────
 
 
@@ -64,11 +70,14 @@ class RegisterResponse(BaseModel):
 
 class CheckEmailResponse(BaseModel):
     model_config = ConfigDict(
-        json_schema_extra={"example": {"success": True, "available": True}}
+        json_schema_extra={
+            "example": {"success": True, "available": True, "isExisting": False}
+        }
     )
 
     success: bool
     available: bool
+    isExisting: bool
 
 
 class VerifyResetTokenResponse(BaseModel):

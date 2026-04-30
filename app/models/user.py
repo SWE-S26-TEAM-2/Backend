@@ -24,7 +24,8 @@ class User(Base):
     bio = Column(String, nullable=True)
     location = Column(String, nullable=True)
     is_premium = Column(Boolean, server_default="false")
-    billing_cycle = Column(String, nullable=True)  # "monthly" or "yearly"
+    billing_cycle = Column(String, nullable=True)       # "monthly" or "yearly"
+    subscription_tier = Column(String, nullable=True)   # "standard" or "pro"
     is_private = Column(Boolean, server_default="false")
 
     profile_picture = Column(String, nullable=True)

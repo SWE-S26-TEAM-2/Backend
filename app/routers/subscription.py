@@ -1,8 +1,8 @@
 """
 Subscription router.
 
-Exposes endpoints for reading a user's subscription status and upgrading
-to Premium via Stripe — either monthly ($9.99) or yearly ($99.99).
+Standard Premium — Monthly ($9.99) and Yearly ($99.99).
+Pro             — Monthly ($19.99) and Yearly ($149.99).
 """
 
 from fastapi import APIRouter, Depends
@@ -25,13 +25,15 @@ def get_subscription(
     """
     Get the current user's subscription status and upload usage.
 
-    Returns the plan name ("Free" or "Premium"), how many tracks the user
-    has uploaded, the upload limit (3 for Free, null for Premium), and
-    the billing cycle ("monthly", "yearly", or null for Free users).
+    Returns plan ("Free", "Premium", or "Pro"), billing cycle,
+    tracks uploaded, and upload limit.
 
     Requires Bearer JWT authentication.
     """
     return SubscriptionService.get_subscription(user)
+
+
+# ── Standard Premium ────────────────────────────────────────────────────────────
 
 
 @router.post("/upgrade/monthly", response_model=MessageResponse)
@@ -41,14 +43,13 @@ def upgrade_monthly(
     user=Depends(get_current_user),
 ):
     """
-    Upgrade the current user to Premium with a monthly billing cycle ($9.99).
-
-    Accepts a Stripe test token and plan="Premium". Charges 999 cents (USD).
-
+    Upgrade to Standard Premium with monthly billing ($9.99).
+    Request body: payment_token and plan="Premium".
     Requires Bearer JWT authentication.
     """
-    return SubscriptionService.upgrade(db, user, body.payment_token, body.plan,
-                                       "monthly")
+    return SubscriptionService.upgrade(
+        db, user, body.payment_token, body.plan, "monthly", "standard"
+    )
 
 
 @router.post("/upgrade/yearly", response_model=MessageResponse)
@@ -58,11 +59,45 @@ def upgrade_yearly(
     user=Depends(get_current_user),
 ):
     """
-    Upgrade the current user to Premium with a yearly billing cycle ($99.99).
-
-    Accepts a Stripe test token and plan="Premium". Charges 9999 cents (USD).
-
+    Upgrade to Standard Premium with yearly billing ($99.99).
+    Request body: payment_token and plan="Premium".
     Requires Bearer JWT authentication.
     """
-    return SubscriptionService.upgrade(db, user, body.payment_token, body.plan,
-                                       "yearly")
+    return SubscriptionService.upgrade(
+        db, user, body.payment_token, body.plan, "yearly", "standard"
+    )
+
+
+# ── Pro ─────────────────────────────────────────────────────────────────────────
+
+
+@router.post("/upgrade/pro/monthly", response_model=MessageResponse)
+def upgrade_pro_monthly(
+    body: UpgradeRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Upgrade to Pro with monthly billing ($19.99).
+    Request body: payment_token and plan="Pro".
+    Requires Bearer JWT authentication.
+    """
+    return SubscriptionService.upgrade(
+        db, user, body.payment_token, body.plan, "monthly", "pro"
+    )
+
+
+@router.post("/upgrade/pro/yearly", response_model=MessageResponse)
+def upgrade_pro_yearly(
+    body: UpgradeRequest,
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    """
+    Upgrade to Pro with yearly billing ($149.99).
+    Request body: payment_token and plan="Pro".
+    Requires Bearer JWT authentication.
+    """
+    return SubscriptionService.upgrade(
+        db, user, body.payment_token, body.plan, "yearly", "pro"
+    )

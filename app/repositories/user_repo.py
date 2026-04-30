@@ -157,20 +157,24 @@ class UserRepository:
         return user
 
     @staticmethod
-    def set_premium(db: Session, user: User, billing_cycle: str) -> User:
+    def set_premium(
+        db: Session, user: User, billing_cycle: str, subscription_tier: str
+    ) -> User:
         """
-        Set the user's is_premium flag to True and store the billing cycle.
+        Set the user's is_premium flag, billing cycle, and subscription tier.
 
         Args:
             db (Session): The database session.
             user (User): The user to upgrade.
             billing_cycle (str): "monthly" or "yearly".
+            subscription_tier (str): "standard" or "pro".
 
         Returns:
             User: The updated user object.
         """
         user.is_premium = True
         user.billing_cycle = billing_cycle
+        user.subscription_tier = subscription_tier
         db.commit()
         db.refresh(user)
         return user

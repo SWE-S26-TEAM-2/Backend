@@ -8,6 +8,7 @@ from app.services.block_service import BlockService  # type: ignore
 from app.services.follower_service import FollowerService  # type: ignore
 from app.schemas.responses import (  # type: ignore
     MessageResponse,
+    UnfollowResponse,
     FollowerListResponse,
     FollowingListResponse,
 )
@@ -27,7 +28,9 @@ def follow_user(
 
 
 @router.delete(
-    "/{username}/follow", status_code=status.HTTP_200_OK, response_model=MessageResponse
+    "/{username}/follow",
+    status_code=status.HTTP_200_OK,
+    response_model=UnfollowResponse,
 )
 def unfollow_user(
     username: str,
