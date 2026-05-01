@@ -779,18 +779,17 @@ def test_change_username_taken_raises_409(monkeypatch):
     assert exc_info.value.status_code == 409
 
 
-def test_change_username_same_user_no_conflict(monkeypatch):
-    """Test that re-setting the same username doesn't raise a conflict."""
+def test_change_username_same_username_raises_409(monkeypatch):
+    """Submitting the current username must return 409, not 200."""
+    import pytest
+    from fastapi import HTTPException
+
     db = FakeDB()
-    user_id = uuid.uuid4()
-    user = FakeUser(user_id=user_id, username="myname")
+    user = FakeUser(user_id=uuid.uuid4(), username="myname")
     data = ChangeUsernameRequest(username="myname")
 
-    from app.repositories.user_repo import UserRepository
+    with pytest.raises(HTTPException) as exc:
+        UserService.change_username(db, user, data)
 
-    monkeypatch.setattr(UserRepository, "get_by_username", lambda db_arg, u: user)
-    monkeypatch.setattr(UserRepository, "update_fields", lambda db_arg, u, fields: None)
-
-    result = UserService.change_username(db, user, data)
-
-    assert result["success"] is True
+    assert exc.value.status_code == 409
+    assert "already in use" in exc.value.detail.lower()
