@@ -17,14 +17,14 @@ Scenarios covered
 5. Suspended account tries to login             → 403 (Forbidden)
 6. Existing user logs in successfully           → 200, is_new_user=False
 7. New user is auto-registered                  → 200, is_new_user=True
+8. Response shape — all required fields present → 200
 """
 
 import uuid
-from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import HTTPException, status
+from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.auth_service import AuthService
@@ -72,7 +72,6 @@ def test_google_login_missing_field_returns_422():
     response = client.post("/auth/google", json={})
     assert response.status_code == 422
     detail = response.json()["detail"]
-    # FastAPI validation error points to the missing field
     locs = [err["loc"] for err in detail]
     assert any("google_token" in loc for loc in locs), (
         f"Expected 'google_token' in validation error locs, got: {locs}"
@@ -120,8 +119,8 @@ def test_google_login_invalid_token_returns_401(monkeypatch):
     )
     response = client.post("/auth/google", json={"google_token": "not-a-real-token"})
     assert response.status_code == 401
-    assert "invalid" in response.json()["detail"].lower() or \
-           "expired" in response.json()["detail"].lower()
+    body_detail = response.json()["detail"].lower()
+    assert "invalid" in body_detail or "expired" in body_detail
 
 
 # ---------------------------------------------------------------------------
