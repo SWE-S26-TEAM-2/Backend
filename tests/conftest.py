@@ -1,16 +1,14 @@
 import os
 
-import pytest
 
-
-@pytest.fixture(scope="session", autouse=True)
-def _set_default_env():
+def pytest_configure(config):
     """
-    Ensure DATABASE_URL and SECRET_KEY are present before any module
-    that imports app.core.config is collected by pytest.
+    Set fallback env vars before any test module is imported.
 
-    Uses setdefault so real values from .env or CI secrets are never
-    overridden — this only kicks in when neither source provides them.
+    pytest_configure runs before collection, so app.core.config can
+    be imported without DATABASE_URL / SECRET_KEY being present in
+    the environment. setdefault means real values from .env or CI
+    secrets are never overridden.
     """
     os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
     os.environ.setdefault("SECRET_KEY", "test-secret-key")
