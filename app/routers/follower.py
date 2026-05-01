@@ -78,7 +78,7 @@ def approve_follow_request(
     return FollowerService.approve_follow_request(db, current_user, request_id)
 
 
-@router.post(
+@router.delete(
     "/me/follow-requests/{request_id}/reject",
     status_code=status.HTTP_200_OK,
     response_model=MessageResponse,
