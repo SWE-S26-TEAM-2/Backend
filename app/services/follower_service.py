@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session  # type: ignore
 
 from app.models.user import User  # type: ignore
 from app.repositories.follow_repo import FollowRepository  # type: ignore
+from app.repositories.follow_request_repo import FollowRequestRepository
 from app.repositories.notification_repo import NotificationRepository  # type: ignore
 from app.repositories.user_repo import UserRepository  # type: ignore
 
@@ -40,6 +41,32 @@ class FollowerService:
                 detail=f"You are already following {target_user.display_name}.",
             )
 
+        # Private accounts require a follow request instead of a direct follow
+        if target_user.is_private:
+            existing_request = FollowRequestRepository.get(
+                db, current_user.user_id, target_id
+            )
+            if existing_request:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Follow request already pending.",
+                )
+            FollowRequestRepository.create(db, current_user.user_id, target_id)
+            NotificationRepository.create(
+                db,
+                user_id=target_user.user_id,
+                actor_id=current_user.user_id,
+                notification_type="follow_request",
+                message=(
+                    f"{current_user.display_name} wants to follow you."
+                ),
+            )
+            return {
+                "success": True,
+                "message": "Follow request sent.",
+                "is_pending": True,
+            }
+
         FollowRepository.create_follow(db, current_user.user_id, target_id)
 
         # Notify the followed user
@@ -66,6 +93,7 @@ class FollowerService:
         return {
             "success": True,
             "message": f"You are now following {target_user.display_name}.",
+            "is_pending": False,
         }
 
     @staticmethod
@@ -269,3 +297,88 @@ class FollowerService:
                 "private": False,
             },
         }
+
+    @staticmethod
+    def get_incoming_follow_requests(db: Session, current_user: User) -> dict:
+        """Return all pending follow requests sent to the authenticated user."""
+        requests = FollowRequestRepository.get_pending_for_target(
+            db, current_user.user_id
+        )
+        items = []
+        for req in requests:
+            requester = UserRepository.get_by_id(db, req.requester_id)
+            if requester:
+                items.append({
+                    "request_id": str(req.request_id),
+                    "requester_id": str(req.requester_id),
+                    "requester_username": requester.username,
+                    "requester_display_name": requester.display_name,
+                    "requester_profile_picture": requester.profile_picture,
+                    "requested_at": req.created_at,
+                })
+        return {
+            "success": True,
+            "data": {"requests": items, "count": len(items)},
+        }
+
+    @staticmethod
+    def approve_follow_request(db: Session, current_user: User,
+                               request_id) -> dict:
+        """Approve a pending follow request addressed to the current user."""
+        req = FollowRequestRepository.get_by_id(db, request_id)
+        if not req:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Follow request not found.",
+            )
+        if str(req.target_id) != str(current_user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only approve your own follow requests.",
+            )
+
+        requester = UserRepository.get_by_id(db, req.requester_id)
+        FollowRepository.create_follow(db, req.requester_id, req.target_id)
+
+        if requester:
+            UserRepository.update_fields(
+                db, requester,
+                {"following_count": max(0, requester.following_count + 1)},
+            )
+        UserRepository.update_fields(
+            db, current_user,
+            {"follower_count": max(0, current_user.follower_count + 1)},
+        )
+
+        if requester:
+            NotificationRepository.create(
+                db,
+                user_id=req.requester_id,
+                actor_id=current_user.user_id,
+                notification_type="follow_approved",
+                message=(
+                    f"{current_user.display_name} approved your follow request."
+                ),
+            )
+
+        FollowRequestRepository.delete(db, req)
+        return {"success": True, "message": "Follow request approved."}
+
+    @staticmethod
+    def reject_follow_request(db: Session, current_user: User,
+                              request_id) -> dict:
+        """Reject a pending follow request addressed to the current user."""
+        req = FollowRequestRepository.get_by_id(db, request_id)
+        if not req:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Follow request not found.",
+            )
+        if str(req.target_id) != str(current_user.user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only reject your own follow requests.",
+            )
+
+        FollowRequestRepository.delete(db, req)
+        return {"success": True, "message": "Follow request rejected."}

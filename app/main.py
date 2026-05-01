@@ -28,6 +28,7 @@ from app.models import (  # noqa: F401
     playlist_track,
     playlist_like,
     follow,
+    follow_request,
     block,
     like,
     listening_history,

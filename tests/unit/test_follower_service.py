@@ -32,14 +32,15 @@ class TestFollowUser:
         self, mock_user_repo, mock_follow_repo, mock_db, verified_user
     ):
         """
-        User A follows User B successfully.
-        Expect success=True and a message containing target's name.
+        User A follows public User B successfully.
+        Expect success=True, is_pending=False and a message containing name.
         """
         # SETUP
         target = MagicMock()
         target.user_id = uuid.uuid4()
         target.display_name = "DJ Khaled"
         target.follower_count = 0
+        target.is_private = False
         verified_user.following_count = 0
 
         mock_user_repo.get_by_username.return_value = target
@@ -50,6 +51,7 @@ class TestFollowUser:
 
         # CHECK
         assert result["success"] is True
+        assert result["is_pending"] is False
         assert "DJ Khaled" in result["message"]
         mock_follow_repo.create_follow.assert_called_once()
 
@@ -128,6 +130,7 @@ class TestFollowUser:
         target.user_id = uuid.uuid4()
         target.display_name = "DJ Khaled"
         target.follower_count = 5
+        target.is_private = False
         verified_user.following_count = 3
 
         mock_user_repo.get_by_username.return_value = target
@@ -153,6 +156,7 @@ class TestFollowUser:
         target.user_id = uuid.uuid4()
         target.display_name = "DJ Khaled"
         target.follower_count = 0
+        target.is_private = False
         verified_user.following_count = 0
 
         mock_user_repo.get_by_username.return_value = target
@@ -165,6 +169,192 @@ class TestFollowUser:
         mock_follow_repo.create_follow.assert_called_once_with(
             mock_db, verified_user.user_id, target.user_id
         )
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_follow_private_user_creates_request(
+        self, mock_user_repo, mock_follow_repo, mock_req_repo, mock_db,
+        verified_user
+    ):
+        """Following a private user creates a follow request, not a follow."""
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        target.display_name = "Private Person"
+        target.is_private = True
+
+        mock_user_repo.get_by_username.return_value = target
+        mock_follow_repo.get_follow.return_value = None
+        mock_req_repo.get.return_value = None
+
+        result = FollowerService.follow_user(mock_db, verified_user, "private")
+
+        assert result["success"] is True
+        assert result["is_pending"] is True
+        mock_req_repo.create.assert_called_once()
+        mock_follow_repo.create_follow.assert_not_called()
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_follow_private_user_duplicate_request_raises_400(
+        self, mock_user_repo, mock_follow_repo, mock_req_repo, mock_db,
+        verified_user
+    ):
+        """Sending a second follow request to a private user raises 400."""
+        target = MagicMock()
+        target.user_id = uuid.uuid4()
+        target.is_private = True
+
+        mock_user_repo.get_by_username.return_value = target
+        mock_follow_repo.get_follow.return_value = None
+        mock_req_repo.get.return_value = MagicMock()  # existing request
+
+        with pytest.raises(HTTPException) as exc:
+            FollowerService.follow_user(mock_db, verified_user, "private")
+        assert exc.value.status_code == 400
+        assert "pending" in exc.value.detail.lower()
+
+
+# ══════════════════════════════════════════════════════
+# FOLLOW REQUEST TESTS
+# ══════════════════════════════════════════════════════
+
+
+class TestFollowRequests:
+    """Tests for approve/reject/get follow requests."""
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_incoming_follow_requests(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Returns list of pending requests for the current user."""
+        requester = MagicMock()
+        requester.username = "requester_user"
+        requester.display_name = "Requester"
+        requester.profile_picture = None
+
+        req = MagicMock()
+        req.request_id = uuid.uuid4()
+        req.requester_id = uuid.uuid4()
+        req.target_id = verified_user.user_id
+        req.created_at = None
+
+        mock_req_repo.get_pending_for_target.return_value = [req]
+        mock_user_repo.get_by_id.return_value = requester
+
+        result = FollowerService.get_incoming_follow_requests(
+            mock_db, verified_user
+        )
+
+        assert result["success"] is True
+        assert result["data"]["count"] == 1
+        assert result["data"]["requests"][0]["requester_username"] == "requester_user"
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_get_incoming_follow_requests_empty(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Returns empty list when no pending requests."""
+        mock_req_repo.get_pending_for_target.return_value = []
+
+        result = FollowerService.get_incoming_follow_requests(
+            mock_db, verified_user
+        )
+
+        assert result["data"]["count"] == 0
+        assert result["data"]["requests"] == []
+
+    @patch("app.services.follower_service.FollowRepository")
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_approve_follow_request_success(
+        self, mock_user_repo, mock_req_repo, mock_follow_repo, mock_db,
+        verified_user
+    ):
+        """Approving a request creates a follow and deletes the request."""
+        req = MagicMock()
+        req.request_id = uuid.uuid4()
+        req.requester_id = uuid.uuid4()
+        req.target_id = verified_user.user_id
+
+        mock_req_repo.get_by_id.return_value = req
+        mock_user_repo.get_by_id.return_value = MagicMock(following_count=0)
+
+        result = FollowerService.approve_follow_request(
+            mock_db, verified_user, req.request_id
+        )
+
+        assert result["success"] is True
+        mock_follow_repo.create_follow.assert_called_once()
+        mock_req_repo.delete.assert_called_once_with(mock_db, req)
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_approve_follow_request_not_found_raises_404(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Approving a non-existent request raises 404."""
+        mock_req_repo.get_by_id.return_value = None
+
+        with pytest.raises(HTTPException) as exc:
+            FollowerService.approve_follow_request(
+                mock_db, verified_user, uuid.uuid4()
+            )
+        assert exc.value.status_code == 404
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_approve_follow_request_wrong_user_raises_403(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Approving another user's request raises 403."""
+        req = MagicMock()
+        req.request_id = uuid.uuid4()
+        req.target_id = uuid.uuid4()  # different from verified_user
+
+        mock_req_repo.get_by_id.return_value = req
+
+        with pytest.raises(HTTPException) as exc:
+            FollowerService.approve_follow_request(
+                mock_db, verified_user, req.request_id
+            )
+        assert exc.value.status_code == 403
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_reject_follow_request_success(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Rejecting a request deletes it without creating a follow."""
+        req = MagicMock()
+        req.request_id = uuid.uuid4()
+        req.target_id = verified_user.user_id
+
+        mock_req_repo.get_by_id.return_value = req
+
+        result = FollowerService.reject_follow_request(
+            mock_db, verified_user, req.request_id
+        )
+
+        assert result["success"] is True
+        mock_req_repo.delete.assert_called_once_with(mock_db, req)
+
+    @patch("app.services.follower_service.FollowRequestRepository")
+    @patch("app.services.follower_service.UserRepository")
+    def test_reject_follow_request_not_found_raises_404(
+        self, mock_user_repo, mock_req_repo, mock_db, verified_user
+    ):
+        """Rejecting a non-existent request raises 404."""
+        mock_req_repo.get_by_id.return_value = None
+
+        with pytest.raises(HTTPException) as exc:
+            FollowerService.reject_follow_request(
+                mock_db, verified_user, uuid.uuid4()
+            )
+        assert exc.value.status_code == 404
 
 
 # ══════════════════════════════════════════════════════
