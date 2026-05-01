@@ -217,6 +217,11 @@ class EngagementService:
                     {
                         "comment_id": str(comment.comment_id),
                         "user_id": str(comment.user_id),
+                        "username": (
+                            u.username
+                            if (u := UserRepository.get_by_id(db, comment.user_id))
+                            else None
+                        ),
                         "content": comment.content,
                         "timestamp_in_track": comment.timestamp_in_track,
                         "parent_comment_id": (

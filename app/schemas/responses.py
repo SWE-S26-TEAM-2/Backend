@@ -700,6 +700,7 @@ class UserRepostsResponse(BaseModel):
 class CommentItem(BaseModel):
     comment_id: str
     user_id: str
+    username: Optional[str] = None
     content: str
     timestamp_in_track: Optional[float] = None
     parent_comment_id: Optional[str] = None
