@@ -157,8 +157,13 @@ class UserService:
 
     @staticmethod
     def change_username(db: Session, current_user: User, data) -> dict:
+        if data.username == current_user.username:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username is already in use.",
+            )
         existing = UserRepository.get_by_username(db, data.username)
-        if existing and str(existing.user_id) != str(current_user.user_id):
+        if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Username already taken.",

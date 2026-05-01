@@ -564,6 +564,31 @@ class PlaylistCoverResponse(BaseModel):
 # ── Followers / Social Graph ───────────────────────────────────────────────────
 
 
+class FollowResponse(BaseModel):
+    success: bool
+    message: str
+    is_pending: bool
+
+
+class FollowRequestItem(BaseModel):
+    request_id: str
+    requester_id: str
+    requester_username: str
+    requester_display_name: str
+    requester_profile_picture: Optional[str] = None
+    requested_at: Optional[datetime] = None
+
+
+class FollowRequestListData(BaseModel):
+    requests: List[FollowRequestItem]
+    count: int
+
+
+class FollowRequestListResponse(BaseModel):
+    success: bool
+    data: FollowRequestListData
+
+
 class FollowerItem(BaseModel):
     user_id: str
     display_name: str

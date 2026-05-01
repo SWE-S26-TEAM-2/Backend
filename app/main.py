@@ -9,7 +9,7 @@ import os
 from fastapi import FastAPI  # type: ignore
 from fastapi.staticfiles import StaticFiles  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
-from sqlalchemy import inspect, text  # type: ignore
+from sqlalchemy import text  # type: ignore
 
 from app.core.config import AUTO_CREATE_TABLES
 from app.database.database import Base, engine  # type: ignore
@@ -28,6 +28,7 @@ from app.models import (  # noqa: F401
     playlist_track,
     playlist_like,
     follow,
+    follow_request,
     block,
     like,
     listening_history,
@@ -63,9 +64,17 @@ app = FastAPI(
     root_path="/api",
 )
 
+_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3101",
+    "https://streamline-swp.duckdns.org",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,48 +90,33 @@ def startup():
     if AUTO_CREATE_TABLES:
         Base.metadata.create_all(bind=engine)
 
-    existing_columns = [col["name"] for col in inspect(engine).get_columns("tracks")]
-    if "created_at" not in existing_columns:
+    # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast).
+    # Wrapped in try/except because these are PostgreSQL-only — SQLite and other
+    # databases skip this block silently without affecting core functionality.
+    try:
         with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
             conn.execute(
                 text(
-                    "ALTER TABLE tracks ADD COLUMN created_at TIMESTAMPTZ DEFAULT now()"
+                    "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
+                    "ON users USING gin(display_name gin_trgm_ops)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
+                    "ON tracks USING gin(title gin_trgm_ops)"
+                )
+            )
+            conn.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
+                    "ON playlists USING gin(name gin_trgm_ops)"
                 )
             )
             conn.commit()
-
-    if "album_id" not in existing_columns:
-        with engine.connect() as conn:
-            conn.execute(
-                text(
-                    "ALTER TABLE tracks ADD COLUMN IF NOT EXISTS album_id UUID "
-                    "REFERENCES albums(album_id) ON DELETE SET NULL"
-                )
-            )
-            conn.commit()
-
-    # GIN trigram indexes for fast ILIKE search (used by /search/performance/*/fast)
-    with engine.connect() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_users_display_name_gin "
-                "ON users USING gin(display_name gin_trgm_ops)"
-            )
-        )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_tracks_title_gin "
-                "ON tracks USING gin(title gin_trgm_ops)"
-            )
-        )
-        conn.execute(
-            text(
-                "CREATE INDEX IF NOT EXISTS idx_playlists_name_gin "
-                "ON playlists USING gin(name gin_trgm_ops)"
-            )
-        )
-        conn.commit()
+    except Exception:
+        pass
 
 
 app.include_router(auth_router)

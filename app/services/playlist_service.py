@@ -21,9 +21,6 @@ class PlaylistService:
         )
         PlaylistRepository.create(db, playlist)
 
-        # Automatically like the playlist for the creator
-        PlaylistRepository.create_playlist_like(db, user.user_id, playlist.playlist_id)
-
         return {
             "success": True,
             "message": "Playlist created successfully.",
@@ -184,7 +181,7 @@ class PlaylistService:
         existing = PlaylistRepository.get_playlist_like(db, user.user_id, playlist_id)
         if existing:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="You already liked this playlist",
             )
 
