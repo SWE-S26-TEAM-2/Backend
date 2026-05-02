@@ -591,6 +591,7 @@ class FollowRequestListResponse(BaseModel):
 
 class FollowerItem(BaseModel):
     user_id: str
+    username: str
     display_name: str
     is_premium: bool = False
     billing_cycle: Optional[str] = None
@@ -611,6 +612,7 @@ class FollowerListResponse(BaseModel):
 
 class FollowingItem(BaseModel):
     user_id: str
+    username: str
     display_name: str
     is_premium: bool = False
     billing_cycle: Optional[str] = None
