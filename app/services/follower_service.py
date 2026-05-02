@@ -160,6 +160,7 @@ class FollowerService:
                 followers.append(
                     {
                         "user_id": str(user.user_id),
+                        "username": user.username,
                         "display_name": user.display_name,
                         "is_premium": user.is_premium,
                         "billing_cycle": getattr(user, "billing_cycle", None),
@@ -205,6 +206,7 @@ class FollowerService:
                 followers.append(
                     {
                         "user_id": str(user.user_id),
+                        "username": user.username,
                         "display_name": user.display_name,
                         "is_premium": user.is_premium,
                         "billing_cycle": getattr(user, "billing_cycle", None),
